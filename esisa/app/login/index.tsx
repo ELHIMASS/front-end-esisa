@@ -28,7 +28,7 @@ const LoginScreen: React.FC = () => {
     const handleSubmit = async () => {
 
 
-        const response = await fetch(`http://192.168.1.153:5000/api/login?email=${email}&password=${password}`);
+        const response = await fetch(`http://192.168.1.47:5000/api/login?email=${email}&password=${password}`);
         if (!response.ok) {
             setIsConnected(false);
             alert('Indentifient ou mot de pass incorecte')
