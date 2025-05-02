@@ -26,39 +26,42 @@ const LoginScreen: React.FC = () => {
     const router = useRouter();
 
     const handleSubmit = async () => {
-
-
-        const response = await fetch(`http://192.168.100.219:5000/api/login?email=${email}&password=${password}`);
-        if (!response.ok) {
-            setIsConnected(false);
-            alert('Indentifient ou mot de pass incorecte')
+        try {
+            setLoading(true);
+    
+            const response = await fetch(`http://192.168.1.9:5000/api/login?email=${email}&password=${password}`);
+            const userData = await response.json();
+    
+            console.log("Réponse API :", userData);
+    
+            if (!response.ok || !userData.role) {
+                Alert.alert("Erreur", "Identifiants incorrects.");
+                setLoading(false);
+                return;
+            }
+    
+            if (userData.role === "admin") {
+                await AsyncStorage.setItem("admin", JSON.stringify(userData));
+                router.replace("/admin");
+            } else if (userData.role === "student") {
+                await AsyncStorage.setItem("user", JSON.stringify(userData));
+                router.replace("/(tabs)");
+            } else if (userData.role === "prof") {
+                await AsyncStorage.setItem("prof", JSON.stringify(userData));
+                router.replace("/prof");
+            } else {
+                Alert.alert("Erreur", "Rôle utilisateur inconnu.");
+            }
+    
+        } catch (err) {
+            console.error("Erreur réseau :", err);
+            Alert.alert("Erreur", "Connexion impossible au serveur.");
+        } finally {
             setLoading(false);
-            Alert.alert("Erreur", "Identifiants incorrects.");
-            console.log("Erreur", "Identifiants incorrects.");
-
-            return;
         }
-        setLoading(true);
-        const userData = await response.json();
-        console.log(userData.role);
-        if (userData.role == "admin"){
-            await AsyncStorage.setItem("admin", JSON.stringify(userData));
-            router.replace("/admin");
-            return;
-        }else if(userData.role == "student") {
-            await AsyncStorage.setItem("user", JSON.stringify(userData));
-            setUser(userData);
-            setIsConnected(true);
-            router.replace("/(tabs)");
-        }
-        else if(userData.role == "prof") {
-            await AsyncStorage.setItem("prof", JSON.stringify(userData));
-            setUser(userData);
-            setIsConnected(true);
-            router.replace("/prof");
-        }
-        setLoading(false);
     };
+    
+    
 
     useEffect(() => {
         const loadUser = async () => {
