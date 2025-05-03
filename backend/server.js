@@ -45,6 +45,10 @@ app.use("/api/login", loginRoute);
 const addStudentRoute = require("./routes/addStudent");
 app.use("/api/add", addStudentRoute);
 
+
+const updateStudentRoute = require("./routes/modifieStudent");
+app.use("/api/update", updateStudentRoute);
+
 // Fonction asynchrone pour connecter à MongoDB
 const connectDB = async () => {
   console.log("🔗 Tentative de connexion à :", process.env.MONGO_URI);
