@@ -8,7 +8,6 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  Image,
 } from "react-native";
 import { Icon } from "react-native-elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -239,30 +238,32 @@ export default function AdmissionScreen() {
           </View>
         </View>
 
-        {/* Contact */}
-        <View style={styles.contactContainer}>
-          <Text style={styles.sectionTitle}>Besoin d'informations supplémentaires ?</Text>
-          
-          <View style={styles.contactItem}>
-            <Icon name="mail" size={24} color="#FFD700" />
-            <Text style={styles.contactText}>admission@esisa.ma</Text>
-          </View>
+{/* Contact */}
+<View style={styles.contactContainer}>
+  <Text style={styles.sectionTitle}>Besoin d'informations supplémentaires ?</Text>
+  
+  <View style={styles.contactItem}>
+    <Icon name="mail" size={24} color="#FFD700" />
+    <Text style={styles.contactText}>admission@esisa.ma</Text>
+  </View>
 
-          <View style={styles.contactItem}>
-            <Icon name="phone" size={24} color="#FFD700" />
-            <Text style={styles.contactText}>+212 5 22 27 22 42</Text>
-          </View>
+  <View style={styles.contactItem}>
+    <Icon name="phone" size={24} color="#FFD700" />
+    <Text style={styles.contactText}>+212 5 22 27 22 42</Text>
+  </View>
 
-          <View style={styles.contactItem}>
-            <Icon name="location-on" size={24} color="#FFD700" />
-            <Text style={styles.contactText}>282, Boulevard Zerktouni, Casablanca, Maroc</Text>
-          </View>
-        </View>
+  <View style={styles.contactItem}>
+    <Icon name="location-on" size={24} color="#FFD700" />
+    <Text style={styles.contactText}>282, Boulevard Zerktouni, Casablanca, Maroc</Text>
+  </View>
+</View>
 
-        {/* Call to action */}
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.buttonText}>POSTULER MAINTENANT</Text>
-        </TouchableOpacity>
+<TouchableOpacity 
+  style={styles.actionButton}
+  onPress={() => router.push('/form')}
+>
+  <Text style={styles.buttonText}>POSTULER MAINTENANT</Text>
+</TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
