@@ -8,6 +8,7 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  Image,
 } from "react-native";
 import { Icon } from "react-native-elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -41,19 +42,23 @@ export default function FormationScreen() {
         <Icon name="arrow-back" size={24} color="#FFD700" />
       </TouchableOpacity>
 
-      {/* Logo */}
-      <View style={styles.logoContainer}>
-        <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>ESISA</Text>
-        </View>
-        <View style={styles.glowEffect} />
-      </View>
+     
 
       {/* Content */}
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
       >
+        {/* Logo */}
+            
+              <View style={styles.logoContainer}>
+              <Image
+             source={require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/images/icon.png')}
+                  style={styles.logoImage}
+                          
+                />
+            </View>
+        
         <Text style={styles.pageTitle}>Nos Formations</Text>
         <Text style={styles.sectionDescription}>
           L'enseignement à l'école ESISA est fondé sur un fonctionnement par semestre, 
@@ -152,18 +157,20 @@ export default function FormationScreen() {
           </Text>
         </View>
 
-        {/* Call to action */}
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.buttonText}>DEMANDER PLUS D'INFORMATIONS</Text>
-        </TouchableOpacity>
+       
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+    marginTop: -20,
   },
   contentContainer: {
     paddingHorizontal: 20,

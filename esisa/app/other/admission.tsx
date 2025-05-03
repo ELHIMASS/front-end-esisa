@@ -1,4 +1,3 @@
-// app/admission/admission.tsx
 import React from "react";
 import {
   View,
@@ -8,6 +7,7 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  Image,
 } from "react-native";
 import { Icon } from "react-native-elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -40,19 +40,21 @@ export default function AdmissionScreen() {
         <Icon name="arrow-back" size={24} color="#FFD700" />
       </TouchableOpacity>
 
-      {/* Logo */}
-      <View style={styles.logoContainer}>
-        <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>ESISA</Text>
-        </View>
-        <View style={styles.glowEffect} />
-      </View>
+      
+      
 
       {/* Content */}
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
       >
+        <View style={styles.logoContainer}>
+        <Image
+          source={require("C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/images/icon.png")}
+          style={styles.logoImageTop}
+          resizeMode="contain"
+        />
+      </View>
         <View style={styles.headerContainer}>
           <Icon name="school" size={28} color="#FFD700" />
           <Text style={styles.pageTitle}>PARCOURS ET PROCÉDURE D'ADMISSION</Text>
@@ -61,7 +63,6 @@ export default function AdmissionScreen() {
         <Text style={styles.introText}>
           L'ESISA sélectionne les meilleurs talents pour former l'élite en ingénierie informatique.
         </Text>
-
         <Text style={styles.sectionDescription}>
           À l'ESISA, nous croyons que <Text style={styles.highlightText}>la motivation</Text> et <Text style={styles.highlightText}>la passion pour le numérique</Text> sont les moteurs de l'excellence. 
           Nous recherchons des étudiants déterminés, prêts à façonner le monde de demain grâce aux technologies 
@@ -260,7 +261,7 @@ export default function AdmissionScreen() {
 
 <TouchableOpacity 
   style={styles.actionButton}
-  onPress={() => router.push('/form')}
+  onPress={() => router.push('/other/form')}
 >
   <Text style={styles.buttonText}>POSTULER MAINTENANT</Text>
 </TouchableOpacity>
@@ -270,6 +271,12 @@ export default function AdmissionScreen() {
 }
 
 const styles = StyleSheet.create({
+  logoImageTop: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginTop: -20,
+  },
   scrollView: {
     flex: 1,
   },

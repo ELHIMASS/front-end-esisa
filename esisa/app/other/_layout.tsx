@@ -11,8 +11,9 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen name="explore" options={{ href: null }} />
-      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen name="admission" options={{ href: null }} />
+      <Tabs.Screen name="form" options={{ href: null }} />
     </Tabs>
   );
 }
+

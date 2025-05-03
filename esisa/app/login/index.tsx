@@ -84,6 +84,9 @@ const LoginScreen: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                    <Icon name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 {/* Header avec le logo ESISA */}
                 <View style={styles.header}>
@@ -138,6 +141,12 @@ const LoginScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+    backButton: {
+        position: 'absolute',
+        top: 70,
+        left: 20,
+        zIndex: 1,
+    },
     safeArea: {
         flex: 1,
         backgroundColor: "#0A1F3A",

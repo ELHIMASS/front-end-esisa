@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { Icon } from "react-native-elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -251,15 +252,11 @@ export default function ApplicationFormScreen() {
         }}
       >
         <Icon name="arrow-back" size={24} color="#FFD700" />
+
+    
       </TouchableOpacity>
 
-      {/* Logo */}
-      <View style={styles.logoContainer}>
-        <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>ESISA</Text>
-        </View>
-        <View style={styles.glowEffect} />
-      </View>
+      
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -269,6 +266,13 @@ export default function ApplicationFormScreen() {
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
         >
+             <View style={styles.logoContainer}>
+              <Image
+                source={require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/images/icon.png')}
+                  style={styles.logoImage}
+                  
+                  />
+            </View>
           <View style={styles.headerContainer}>
             <Icon name="edit" size={28} color="#FFD700" />
             <Text style={styles.pageTitle}>FORMULAIRE DE CANDIDATURE</Text>
@@ -585,13 +589,16 @@ const styles = StyleSheet.create({
     paddingTop: 120,
   },
   logoContainer: {
-    position: "absolute",
-    top: 60,
-    left: 0,
-    right: 0,
     alignItems: "center",
-    zIndex: 5,
+    marginTop: -50,
+    marginBottom: 10,
   },
+  logoImage: {
+    width: 80,
+    height: 80,
+  },
+  
+  
   logoCircle: {
     width: 80,
     height: 80,
@@ -759,17 +766,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#36D7B7",
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#FFD700",
-    marginTop: 15,
-    marginBottom: 10,
-  },
-  modalText: {
-    fontSize: 16,
-    color: "#FFF",
-    textAlign: "center",
-    marginBottom: 10,
-  },
+modalTitle: {
+  fontSize: 22,
+  fontWeight: "bold",
+  color: "#FFD700",
+  marginTop: 15,
+  marginBottom: 10,
+},
+modalText: {
+  fontSize: 16,
+  color: "#FFF",
+  textAlign: "center",
+  marginBottom: 10,
+},
+
 });

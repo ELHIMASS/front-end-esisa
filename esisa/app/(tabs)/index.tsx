@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
     View,
@@ -213,11 +214,12 @@ export default function ESISAHomePage() {
 
             {/* Logo de l'université */}
             <View style={styles.logoContainer}>
-                <View style={styles.logoCircle}>
-                    <Text style={styles.logoText}>ESISA</Text>
-                </View>
-                <View style={styles.glowEffect} />
-            </View>
+                    <Image
+                      source={require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/images/icon.png')}
+                        style={styles.logoImage}
+                          resizeMode="contain"
+                        />
+                  </View>
 
             {/* Contenu principal */}
             <View style={styles.mainContent}>
@@ -225,10 +227,10 @@ export default function ESISAHomePage() {
                 <Text style={styles.subText}>Formation d'excellence en développement et sciences informatiques</Text>
 
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/other/formation")}>
                         <Text style={styles.buttonText}>FORMATIONS</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity style={styles.actionButton}onPress={() => router.push("/other/admission")}>
                         <Text style={styles.buttonText}>ADMISSION</Text>
                     </TouchableOpacity>
                 </View>
@@ -253,12 +255,12 @@ export default function ESISAHomePage() {
                         </View>
 
                         {[
-                            { label: "🏠 Accueil", route: "#" },
-                            { label: "🎓 Formations", route: "#" },
+                            { label: "🏠 Accueil", route: "/" },
+                            { label: "🎓 Formations", route: "/other/formation" },
                             { label: "👨‍🏫 Corps enseignant", route: "#" },
                             { label: "📚 Programmes", route: "#" },
                             { label: "🔬 Laboratoires", route: "#" },
-                            { label: "🌐 International", route: "/international/index" },
+                            { label: "🌐 International", route: "/other/international" },
                             { label: "📅 Calendrier", route: "#" },
                             { label: "🏢 Campus", route: "#" },
                             { label: "📞 Contact", route: "#" },
@@ -266,7 +268,12 @@ export default function ESISAHomePage() {
                             <TouchableOpacity
                                 key={index}
                                 style={styles.menuItem}
-                                onPress={toggleMenu}
+                                onPress={() => {
+                                        toggleMenu();
+                                        if (item.route !== "/") {
+                                            router.push(item.route as any);
+                                        }
+                                    }}
                             >
                                 <Text style={styles.menuText}>{item.label}</Text>
                                 <Icon name="chevron-right" size={20} color="#FFD700" />
@@ -279,7 +286,13 @@ export default function ESISAHomePage() {
                                 { borderTopWidth: 1, borderTopColor: "#1A3F6F", marginTop: 20 },
                             ]}
                         >
-                            <Text style={[styles.menuText, { color: "#4CAF50" }]}>
+                            <Text 
+                                style={[styles.menuText, { color: "#4CAF50" }]}
+                                onPress={() => {
+                                    toggleMenu();
+                                    router.push("/login");
+                                }}
+                            >
                                 🔑 Espace étudiant
                             </Text>
                         </TouchableOpacity>
@@ -291,6 +304,11 @@ export default function ESISAHomePage() {
 }
 
 const styles = StyleSheet.create({
+    logoImage: {
+        marginTop: 40,
+        width: 170,
+        height: 170,
+    },
     codeSegment: {
         position: "absolute",
         backgroundColor: "rgba(0, 150, 255, 0.2)",
