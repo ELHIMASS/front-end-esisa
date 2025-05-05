@@ -18,7 +18,6 @@ export default function FormationScreen() {
   const insets = useSafeAreaInsets();
 
   const goBack = () => {
-    // Navigate back using Expo Router
     router.back();
   };
 

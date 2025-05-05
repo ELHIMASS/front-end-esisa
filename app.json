@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "b680639a-842f-452d-908e-7a49892b11be"
+      }
+    },
+    "android": {
+      "package": "com.ismail1223.frontendesisa"
+    }
+  }
+}
