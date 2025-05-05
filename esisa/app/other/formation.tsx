@@ -18,7 +18,7 @@ export default function FormationScreen() {
   const insets = useSafeAreaInsets();
 
   const goBack = () => {
-    router.back();
+    router.replace("/(tabs)"); 
   };
 
   return (
@@ -52,7 +52,7 @@ export default function FormationScreen() {
             
               <View style={styles.logoContainer}>
               <Image
-             source={require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/images/icon.png')}
+             source={require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/icons/icon.png')}
                   style={styles.logoImage}
                           
                 />
