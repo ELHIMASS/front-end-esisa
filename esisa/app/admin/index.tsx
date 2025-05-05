@@ -19,7 +19,11 @@ import { Icon } from "react-native-elements";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
+<<<<<<< HEAD
 const SERVER_IP = "192.168.1.47"; // Remplacez par votre adresse IP réelle
+=======
+const SERVER_IP = "192.168.100.219"; // Remplacez par votre adresse IP réelle
+>>>>>>> ismail
 const API_URL = `http://${SERVER_IP}:5000`;
 
 export default function AdminScreen() {

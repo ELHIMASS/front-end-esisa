@@ -18,58 +18,44 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const { width } = Dimensions.get('window');
 
 const LoginScreen: React.FC = () => {
-    const [email, setEmail] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
-    const [isConnected, setIsConnected] = useState<boolean | null>(null);
-    const [user, setUser] = useState<any>(null);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async () => {
+        try {
+            setLoading(true);
 
+            const response = await fetch(`http://192.168.100.219:5000/api/login?email=${email}&password=${password}`);
+            const userData = await response.json();
 
-        const response = await fetch(`http://192.168.1.47:5000/api/login?email=${email}&password=${password}`);
-        if (!response.ok) {
-            setIsConnected(false);
-            alert('Indentifient ou mot de pass incorecte')
-            setLoading(false);
-            Alert.alert("Erreur", "Identifiants incorrects.");
-            console.log("Erreur", "Identifiants incorrects.");
-
-            return;
-        }
-        setLoading(true);
-        const userData = await response.json();
-        console.log(userData.role);
-        if (userData.role == "admin"){
-            await AsyncStorage.setItem("admin", JSON.stringify(userData));
-            router.replace("/admin");
-            return;
-        }else if(userData.role == "student") {
-            await AsyncStorage.setItem("user", JSON.stringify(userData));
-            setUser(userData);
-            setIsConnected(true);
-            router.replace("/(tabs)");
-        }
-        else if(userData.role == "prof") {
-            await AsyncStorage.setItem("prof", JSON.stringify(userData));
-            setUser(userData);
-            setIsConnected(true);
-            router.replace("/prof");
-        }
-        setLoading(false);
-    };
-
-    useEffect(() => {
-        const loadUser = async () => {
-            const stored = await AsyncStorage.getItem("user");
-            if (stored) {
-                setUser(JSON.parse(stored));
-                setIsConnected(true);
+            if (!response.ok || !userData.role) {
+                Alert.alert("Erreur", "Identifiants incorrects.");
+                return;
             }
-        };
-        loadUser();
-    }, []);
+
+            // Sauvegarde du rôle
+            if (userData.role === "admin") {
+                await AsyncStorage.setItem("admin", JSON.stringify(userData));
+                router.replace("/admin");
+            } else if (userData.role === "student") {
+                await AsyncStorage.setItem("user", JSON.stringify(userData));
+                router.replace("/(tabs)");
+            } else if (userData.role === "prof") {
+                await AsyncStorage.setItem("prof", JSON.stringify(userData));
+                router.replace("/prof");
+            } else {
+                Alert.alert("Erreur", "Rôle utilisateur inconnu.");
+            }
+
+        } catch (err) {
+            console.error("Erreur de connexion :", err);
+            Alert.alert("Erreur", "Connexion impossible au serveur.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -81,14 +67,16 @@ const LoginScreen: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <Icon name="arrow-back" size={28} color="#FFD700" />
+            </TouchableOpacity>
+
             <ScrollView contentContainerStyle={styles.scrollContainer}>
-                {/* Header avec le logo ESISA */}
                 <View style={styles.header}>
                     <Text style={styles.welcomeText}>BIENVENUE À</Text>
                     <Text style={styles.esisaText}>ESISA</Text>
                 </View>
 
-                {/* Formulaire de connexion */}
                 <View style={styles.formContainer}>
                     <View style={styles.inputContainer}>
                         <Icon name="email" size={20} color="#FFD700" style={styles.inputIcon} />
@@ -125,7 +113,6 @@ const LoginScreen: React.FC = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Footer */}
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>ESISA © 2023 - Tous droits réservés</Text>
                 </View>
@@ -135,6 +122,12 @@ const LoginScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+    backButton: {
+        position: 'absolute',
+        top: 70,
+        left: 20,
+        zIndex: 1,
+    },
     safeArea: {
         flex: 1,
         backgroundColor: "#0A1F3A",

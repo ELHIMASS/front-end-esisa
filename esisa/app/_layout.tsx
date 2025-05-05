@@ -32,7 +32,15 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="prof" options={{ headerShown: false }} />
+        <Stack.Screen name="admin" options={{ headerShown: false }} />
+        <Stack.Screen name="other" options={{ headerShown: false }} />
+
+        <Stack.Screen
+        name="index"
+        options={{ headerShown: false }} // 👈 ici on masque le header pour la page Splash
+      />
+  
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

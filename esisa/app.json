@@ -1,5 +1,6 @@
 {
   "expo": {
+<<<<<<< HEAD
     "name": "esisa",
     "slug": "esisa",
     "version": "1.0.0",
@@ -7,13 +8,24 @@
     "icon": "./assets/images/icon.png",
     "scheme": "esisa",
     "userInterfaceStyle": "automatic",
+=======
+    "name": "",
+    "slug": "",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icons/icon.png",
+>>>>>>> ismail
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
+<<<<<<< HEAD
         "foregroundImage": "./assets/images/adaptive-icon.png",
+=======
+        "foregroundImage": "./assets/icons/icon.png",
+>>>>>>> ismail
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
@@ -28,10 +40,17 @@
       [
         "expo-splash-screen",
         {
+<<<<<<< HEAD
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+=======
+          "image": "./assets/icons/icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "preventAutoHide": true
+>>>>>>> ismail
         }
       ]
     ],

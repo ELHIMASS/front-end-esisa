@@ -13,7 +13,8 @@ les utilisateur pour se connecter :
         email    : "admin@esisa.ma"
         password :"admin123"
 
->> Dependance : 
+
+        >> Dependance : 
     > npm install react-native-elements react-native-vector-icons
     > yarn add react-native-elements react-native-vector-icons
     ---
