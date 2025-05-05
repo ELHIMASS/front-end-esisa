@@ -20,17 +20,38 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { Picker } from "@react-native-picker/picker";
 
 
-const SERVER_IP = "192.168.100.219";
+const SERVER_IP = "192.168.100.219"; 
 const API_URL = `http://${SERVER_IP}:5000`;
 export default function ProfessorDashboard() {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [isMenuVisible, setMenuVisible] = useState(false);
-    const [currentTab, setCurrentTab] = useState('notes');
-    const [selectedYear, setSelectedYear] = useState('');
-    const [selectedGroup, setSelectedGroup] = useState('');
-    const [students, setStudents] = useState([]);
-    const [filteredStudents, setFilteredStudents] = useState([]);
+    interface User {
+            name: string;
+            age: number;
+            matiere?: string[];
+        }
+    
+    interface Student {
+            _id: string;
+            name: string;
+            email: string;
+            anne_scolaire: string;
+            group: string;
+            grades: Array<{
+                subject: string;
+                cc: number;
+                partiel: number;
+                projet: number;
+            }>;
+            absences: number;
+        }
+        
+        const [user, setUser] = useState<User | null>(null);
+        const [loading, setLoading] = useState(true);
+        const [isMenuVisible, setMenuVisible] = useState(false);
+        const [currentTab, setCurrentTab] = useState('notes');
+        const [selectedYear, setSelectedYear] = useState('');
+        const [selectedGroup, setSelectedGroup] = useState('');
+        const [students, setStudents] = useState<Student[]>([]);
+    const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
     const [emailSubject, setEmailSubject] = useState('');
     const [emailBody, setEmailBody] = useState('');
     const [suggestionText, setSuggestionText] = useState('');
@@ -47,7 +68,9 @@ export default function ProfessorDashboard() {
     const slideAnim = useState(new Animated.Value(300))[0];
 
     // Données mockées pour démonstration
-    const yearGroups = {
+    type YearGroup = '5ème année' | '4ème année' | '3ème année' | '2ème année' | '1ère année';
+    
+    const yearGroups: Record<YearGroup, string[]> = {
         '5ème année': ['A', 'B', 'C'],
         '4ème année': ['A', 'B', 'C'],
         '3ème année': ['A', 'B', 'C'],
@@ -81,23 +104,29 @@ export default function ProfessorDashboard() {
     }, []);
 
     const loadStudentsFromServer = async () => {
-        
         const response = await fetch(`${API_URL}/api/students`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json"
             }
         });
-
+    
         if (!response.ok) {
             throw new Error("Erreur lors du chargement des étudiants");
         }
-
+    
         const data = await response.json();
-        setStudents(data);
-        await AsyncStorage.setItem("students", JSON.stringify(data));
-        
+    
+        // Corriger absences pour éviter NaN
+        const cleanedData = data.map(s => ({
+            ...s,
+            absences: typeof s.absences === 'number' ? s.absences : 0
+        }));
+    
+        setStudents(cleanedData);
+        await AsyncStorage.setItem("students", JSON.stringify(cleanedData));
     };
+    
 
     
     useEffect(() => {
@@ -151,83 +180,85 @@ export default function ProfessorDashboard() {
 
     const handleEditGrade = (studentId, subject) => {
         const student = students.find(s => s._id === studentId);
-        if (!student) return;
-
-        // Trouver les notes pour la matière sélectionnée
-        const gradeInfo = student.grades.find(g => g.subject === subject);
-        
-        setCurrentStudent(student);
-        setSelectedSubject(subject);
-        
-        if (gradeInfo) {
-            setCcGrade(gradeInfo.cc.toString());
-            setPartielGrade(gradeInfo.partiel.toString());
-            setProjetGrade(gradeInfo.projet.toString());
-        } else {
-            setCcGrade('');
-            setPartielGrade('');
-            setProjetGrade('');
+        if (!student) {
+            Alert.alert("Erreur", "Étudiant introuvable");
+            return;
         }
-        
+    
+        const defaultSubject = subject || (user?.matiere?.[0] || '');
+        const gradeInfo = student.grades?.find(g => g.subject === defaultSubject);
+    
+        setCurrentStudent(student);
+        setSelectedSubject(defaultSubject);
+    
+        setCcGrade(gradeInfo?.cc?.toString() || '');
+        setPartielGrade(gradeInfo?.partiel?.toString() || '');
+        setProjetGrade(gradeInfo?.projet?.toString() || '');
         setShowGradeModal(true);
     };
-
-    const saveGrade = () => {
-        // Vérifier que les notes sont des nombres valides entre 0 et 20
+    
+    
+    const saveGrade = async () => {
+        if (!currentStudent || !selectedSubject) {
+            Alert.alert("Erreur", "Étudiant ou matière non défini");
+            return;
+        }
+    
         const cc = parseFloat(ccGrade);
         const partiel = parseFloat(partielGrade);
         const projet = parseFloat(projetGrade);
-
-        if (isNaN(cc) || cc < 0 || cc > 20 || 
-            isNaN(partiel) || partiel < 0 || partiel > 20 || 
-            isNaN(projet) || projet < 0 || projet > 20) {
+    
+        if (
+            isNaN(cc) || cc < 0 || cc > 20 ||
+            isNaN(partiel) || partiel < 0 || partiel > 20 ||
+            isNaN(projet) || projet < 0 || projet > 20
+        ) {
             Alert.alert("Erreur", "Veuillez entrer des notes valides entre 0 et 20");
             return;
         }
-
-        const updatedStudents = students.map(student => {
-            if (student._id === currentStudent._id) {
-                // Vérifier si la matière existe déjà dans les notes de l'étudiant
-                const gradeIndex = student.grades.findIndex(g => g.subject === selectedSubject);
-                const updatedGrades = [...student.grades];
-                
-                if (gradeIndex !== -1) {
-                    // Mettre à jour les notes existantes
-                    updatedGrades[gradeIndex] = {
-                        ...updatedGrades[gradeIndex],
-                        cc,
-                        partiel,
-                        projet
-                    };
-                } else {
-                    // Ajouter une nouvelle matière avec ses notes
-                    updatedGrades.push({
-                        subject: selectedSubject,
-                        cc,
-                        partiel,
-                        projet
-                    });
-                }
-                
-                return {
-                    ...student,
-                    grades: updatedGrades
-                };
+    
+        const updatedGrades = [...(currentStudent.grades || [])];
+        const gradeIndex = updatedGrades.findIndex(g => g.subject === selectedSubject);
+    
+        if (gradeIndex !== -1) {
+            updatedGrades[gradeIndex] = { ...updatedGrades[gradeIndex], cc, partiel, projet };
+        } else {
+            updatedGrades.push({ subject: selectedSubject, cc, partiel, projet });
+        }
+    
+        try {
+            const response = await fetch(`${API_URL}/api/students/${currentStudent._id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ grades: updatedGrades }),
+            });
+    
+            if (!response.ok) {
+                throw new Error("Erreur lors de la mise à jour des notes");
             }
-            return student;
-        });
-
-        setStudents(updatedStudents);
-        setShowGradeModal(false);
-        
-        // Réinitialiser les champs
-        setCcGrade('');
-        setPartielGrade('');
-        setProjetGrade('');
-        setSelectedSubject('');
-        
-        Alert.alert("Succès", "Les notes ont été enregistrées avec succès");
+    
+            const updatedStudent = await response.json();
+    
+            const updatedStudents = students.map(student =>
+                student._id === updatedStudent._id ? updatedStudent : student
+            );
+    
+            setStudents(updatedStudents);
+            setShowGradeModal(false);
+            setCcGrade('');
+            setPartielGrade('');
+            setProjetGrade('');
+            setSelectedSubject('');
+            Alert.alert("Succès", "Les notes ont été enregistrées avec succès");
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour :", error);
+            Alert.alert("Erreur", "Impossible d'enregistrer les notes");
+        }
     };
+    
+    
 
     const handleAddAbsence = (studentId) => {
         const updatedStudents = students.map(student => {
@@ -341,7 +372,7 @@ export default function ProfessorDashboard() {
                                     toggleMenu();
                                     // Si c'est une vraie route, naviguer vers elle
                                     if (item.route !== "#") {
-                                        router.push(item.route);
+                                        router.push(item.route as any);
                                     }
                                 }}
                             >
@@ -363,85 +394,101 @@ export default function ProfessorDashboard() {
             </Modal>
 
             {/* Grade Edit Modal */}
-            <Modal
-                visible={showGradeModal}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowGradeModal(false)}
+            {/* Grade Edit Modal */}
+<Modal
+    visible={showGradeModal}
+    transparent={true}
+    animationType="fade"
+    onRequestClose={() => setShowGradeModal(false)}
+>
+    <View style={styles.modalBackground}>
+        <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+                {currentStudent?.name || "Étudiant"}
+            </Text>
+
+            <Text style={styles.modalSubtitle}>
+                Groupe {currentStudent?.group || "-"} - {currentStudent?.anne_scolaire || "-"}
+            </Text>
+
+            <Text style={styles.modalLabel}>Matière :</Text>
+            <Picker
+                selectedValue={selectedSubject}
+                onValueChange={(itemValue) => setSelectedSubject(itemValue)}
+                style={styles.picker}
+                dropdownIconColor="#FFD700"
             >
-                <View style={styles.modalBackground}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>
-                            {currentStudent?.name || "Étudiant"}
-                        </Text>
+                <Picker.Item label="Sélectionner une matière" value="" color="#FFF" />
+                {user?.matiere?.map((m, i) => (
+                    <Picker.Item key={i} label={m} value={m} color="#FFF" />
+                ))}
+            </Picker>
 
-                        <Text style={styles.modalSubtitle}>
-                            Groupe {currentStudent?.group} - {currentStudent?.year}
-                        </Text>
+            <View style={styles.gradeInputContainer}>
+                <Text style={styles.gradeLabel}>Contrôle Continu:</Text>
+                <TextInput
+                    style={styles.gradeInput}
+                    value={ccGrade}
+                    onChangeText={setCcGrade}
+                    placeholder="Note /20"
+                    keyboardType="numeric"
+                    placeholderTextColor="#6D8EB4"
+                />
+            </View>
 
-                        <Text style={styles.modalLabel}>Matière: {selectedSubject}</Text>
+            <View style={styles.gradeInputContainer}>
+                <Text style={styles.gradeLabel}>Partiel:</Text>
+                <TextInput
+                    style={styles.gradeInput}
+                    value={partielGrade}
+                    onChangeText={setPartielGrade}
+                    placeholder="Note /20"
+                    keyboardType="numeric"
+                    placeholderTextColor="#6D8EB4"
+                />
+            </View>
 
-                        <View style={styles.gradeInputContainer}>
-                            <Text style={styles.gradeLabel}>Contrôle Continu:</Text>
-                            <TextInput
-                                style={styles.gradeInput}
-                                value={ccGrade}
-                                onChangeText={setCcGrade}
-                                placeholder="Note /20"
-                                keyboardType="numeric"
-                                placeholderTextColor="#6D8EB4"
-                            />
-                        </View>
+            <View style={styles.gradeInputContainer}>
+                <Text style={styles.gradeLabel}>Projet:</Text>
+                <TextInput
+                    style={styles.gradeInput}
+                    value={projetGrade}
+                    onChangeText={setProjetGrade}
+                    placeholder="Note /20"
+                    keyboardType="numeric"
+                    placeholderTextColor="#6D8EB4"
+                />
+            </View>
 
-                        <View style={styles.gradeInputContainer}>
-                            <Text style={styles.gradeLabel}>Partiel:</Text>
-                            <TextInput
-                                style={styles.gradeInput}
-                                value={partielGrade}
-                                onChangeText={setPartielGrade}
-                                placeholder="Note /20"
-                                keyboardType="numeric"
-                                placeholderTextColor="#6D8EB4"
-                            />
-                        </View>
+            <View style={styles.modalButtons}>
+                <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: "#D32F2F" }]}
+                    onPress={() => setShowGradeModal(false)}
+                >
+                    <Text style={styles.buttonText}>Annuler</Text>
+                </TouchableOpacity>
 
-                        <View style={styles.gradeInputContainer}>
-                            <Text style={styles.gradeLabel}>Projet:</Text>
-                            <TextInput
-                                style={styles.gradeInput}
-                                value={projetGrade}
-                                onChangeText={setProjetGrade}
-                                placeholder="Note /20"
-                                keyboardType="numeric"
-                                placeholderTextColor="#6D8EB4"
-                            />
-                        </View>
-
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity
-                                style={[styles.modalButton, { backgroundColor: "#D32F2F" }]}
-                                onPress={() => setShowGradeModal(false)}
-                            >
-                                <Text style={styles.buttonText}>Annuler</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={[styles.modalButton, { backgroundColor: "#2E7D32" }]}
-                                onPress={saveGrade}
-                            >
-                                <Text style={styles.buttonText}>Enregistrer</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: "#2E7D32" }]}
+                    onPress={saveGrade}
+                >
+                    <Text style={styles.buttonText}>Enregistrer</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    </View>
+</Modal>
 
             {/* Main Content */}
             <View style={styles.header}>
                 <View style={styles.avatarContainer}>
                     <View style={styles.avatar}>
                         <Text style={styles.avatarText}>
-                            {user?.name?.split(' ').map((item) => (item[0].toUpperCase())).join('')}
+                        {user?.name?.split(' ')
+                        .filter((item: string | any[]) => item.length > 1)
+                        .map((item) => item[1].toUpperCase())
+                        .join('')}
+
                         </Text>
                     </View>
                     <View style={styles.glowEffect} />
@@ -488,50 +535,47 @@ export default function ProfessorDashboard() {
 
             {/* Filter Section */}
             <View style={styles.filterContainer}>
-                <View style={styles.pickerContainer}>
-                    <Picker
-                        selectedValue={selectedYear}
-                        style={styles.picker}
-                        dropdownIconColor="#FFD700"
-                        onValueChange={(itemValue) => {
-                            setSelectedYear(itemValue);
-                            setSelectedGroup('');
-                        }}
-                    >
-                        <Picker.Item label="Sélectionner une année" value="" color="#FFF" />
-                        {Object.keys(yearGroups).map((year) => (
-                            <Picker.Item key={year} label={year} value={year} color="#FFF" />
-                        ))}
-                    </Picker>
-                </View>
+  {/* Picker Année */}
+  <View style={styles.pickerContainer}>
+    <Picker
+      selectedValue={selectedYear}
+      style={styles.picker}
+      dropdownIconColor="#FFD700"
+      onValueChange={(itemValue) => {
+        setSelectedYear(itemValue);
+        setSelectedGroup('');
+      }}
+    >
+      <Picker.Item label="Sélectionner une année" value="" color="#FFF" />
+      {yearGroups && Object.keys(yearGroups).length > 0 ? (
+        Object.keys(yearGroups).map((year) => (
+          <Picker.Item key={year} label={year} value={year} color="#FFF" />
+        ))
+      ) : (
+        <Picker.Item label="Aucune année disponible" value="none" color="#AAA" />
+      )}
+    </Picker>
+  </View>
+    <View style={styles.pickerContainer}>
+    <Picker
+  selectedValue={selectedGroup}
+  style={styles.picker}
+  dropdownIconColor="#FFD700"
+  enabled={!!selectedYear && selectedYear in yearGroups}
+  onValueChange={(itemValue) => setSelectedGroup(itemValue)}
+>
+  <Picker.Item label="Sélectionner un groupe" value="" color="#FFF" />
+  {selectedYear && (selectedYear in yearGroups) ? (
+    yearGroups[selectedYear as YearGroup].map((group: string) => (
+      <Picker.Item key={group} label={group} value={group} color="#FFF" />
+    ))
+  ) : (
+    <Picker.Item label="Aucun groupe disponible" value="" color="#AAA" />
+  )}
+</Picker>
+  </View>
+</View>
 
-                <View style={styles.pickerContainer}>
-                    <Picker
-                        selectedValue={selectedGroup}
-                        style={styles.picker}
-                        dropdownIconColor="#FFD700"
-                        enabled={!!selectedYear}
-                        onValueChange={(itemValue) => setSelectedGroup(itemValue)}
-                    >
-                        <Picker.Item label="Sélectionner un groupe" value="" color="#FFF" />
-                        {selectedYear && yearGroups[selectedYear]?.map((group) => (
-                            <Picker.Item key={group} label={group} value={group} color="#FFF" />
-                        ))}
-                    </Picker>
-                </View>
-            </View>
-
-            {/* Search Bar */}
-            <View style={styles.searchContainer}>
-                <Icon name="search" size={20} color="#FFD700" style={styles.searchIcon} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Rechercher un étudiant..."
-                    placeholderTextColor="#6D8EB4"
-                    value={searchText}
-                    onChangeText={setSearchText}
-                />
-            </View>
 
             {/* Content Area */}
             <ScrollView style={styles.contentContainer}>
@@ -574,7 +618,7 @@ export default function ProfessorDashboard() {
                                         <View style={styles.tableCell}>
                                             <TouchableOpacity
                                                 style={styles.actionIconButton}
-                                                onPress={() => handleEditGrade(student._id, user.matiere[0])}
+                                                onPress={() => student && student._id && handleEditGrade(student._id, user?.matiere?.[0])}
                                             >
                                                 <Icon name="dashboard" size={20} color="#FFD700" />
                                             </TouchableOpacity>
@@ -618,14 +662,15 @@ export default function ProfessorDashboard() {
                                         </View>
                                         
                                         <View style={styles.tableCell}>
-                                            <Text 
-                                                style={[
-                                                    styles.absenceCount,
-                                                    student.absences > 2 ? styles.highAbsences : styles.lowAbsences
-                                                ]}
-                                            >
-                                                {student.absences}
-                                            </Text>
+                                        <Text
+                                             style={[
+                                                  styles.absenceCount,
+                                                    (student.absences ?? 0) > 2 ? styles.highAbsences : styles.lowAbsences
+                                     ]}
+                                 >
+                                                     {(student.absences ?? 0).toString()}
+                                        </Text>
+
                                         </View>
                                         
                                         <View style={styles.tableCell}>
@@ -896,6 +941,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#0F2A4A",
         color: "#FFF",
     },
+    
     pickerDropdown: {
         backgroundColor: "#0F2A4A",
         borderWidth: 1,

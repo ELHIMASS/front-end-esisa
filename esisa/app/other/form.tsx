@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   picker: {
-    color: "#FFF",
+    color: "black",
     height: 50,
   },
   documentItem: {

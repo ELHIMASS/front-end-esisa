@@ -18,28 +18,24 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const { width } = Dimensions.get('window');
 
 const LoginScreen: React.FC = () => {
-    const [email, setEmail] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
-    const [isConnected, setIsConnected] = useState<boolean | null>(null);
-    const [user, setUser] = useState<any>(null);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async () => {
         try {
             setLoading(true);
-    
+
             const response = await fetch(`http://192.168.100.219:5000/api/login?email=${email}&password=${password}`);
             const userData = await response.json();
-    
-            console.log("Réponse API :", userData);
-    
+
             if (!response.ok || !userData.role) {
                 Alert.alert("Erreur", "Identifiants incorrects.");
-                setLoading(false);
                 return;
             }
-    
+
+            // Sauvegarde du rôle
             if (userData.role === "admin") {
                 await AsyncStorage.setItem("admin", JSON.stringify(userData));
                 router.replace("/admin");
@@ -52,27 +48,14 @@ const LoginScreen: React.FC = () => {
             } else {
                 Alert.alert("Erreur", "Rôle utilisateur inconnu.");
             }
-    
+
         } catch (err) {
-            console.error("Erreur réseau :", err);
+            console.error("Erreur de connexion :", err);
             Alert.alert("Erreur", "Connexion impossible au serveur.");
         } finally {
             setLoading(false);
         }
     };
-    
-    
-
-    useEffect(() => {
-        const loadUser = async () => {
-            const stored = await AsyncStorage.getItem("user");
-            if (stored) {
-                setUser(JSON.parse(stored));
-                setIsConnected(true);
-            }
-        };
-        loadUser();
-    }, []);
 
     if (loading) {
         return (
@@ -85,16 +68,15 @@ const LoginScreen: React.FC = () => {
     return (
         <SafeAreaView style={styles.safeArea}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <Icon name="arrow-back" size={28} color="#FFD700" />
+                <Icon name="arrow-back" size={28} color="#FFD700" />
             </TouchableOpacity>
+
             <ScrollView contentContainerStyle={styles.scrollContainer}>
-                {/* Header avec le logo ESISA */}
                 <View style={styles.header}>
                     <Text style={styles.welcomeText}>BIENVENUE À</Text>
                     <Text style={styles.esisaText}>ESISA</Text>
                 </View>
 
-                {/* Formulaire de connexion */}
                 <View style={styles.formContainer}>
                     <View style={styles.inputContainer}>
                         <Icon name="email" size={20} color="#FFD700" style={styles.inputIcon} />
@@ -131,7 +113,6 @@ const LoginScreen: React.FC = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Footer */}
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>ESISA © 2023 - Tous droits réservés</Text>
                 </View>
