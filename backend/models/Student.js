@@ -11,7 +11,12 @@ const StudentSchema = new mongoose.Schema({
     date: { type: String, required: true }, // format texte accepté pour date de naissance
     group: { type: String, required: true },
     sex: { type: String, required: true },
-    tel: { type: String, required: true }
+    tel: { type: String, required: true },
+    absences: { type: Number, default: 0 },
+    absenceRecords: [{
+    subject: String,
+    date: Date
+}]
 });
 
 module.exports = mongoose.model("Student", StudentSchema, "students");

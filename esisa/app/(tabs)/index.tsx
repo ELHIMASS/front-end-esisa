@@ -10,11 +10,12 @@ import {
   Pressable,
   SafeAreaView,
   useWindowDimensions,
-  Image
+  Image,
 } from "react-native";
 import { Icon } from "react-native-elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 export default function ESISAHomePage() {
   const [isMenuVisible, setMenuVisible] = useState(false);
@@ -23,6 +24,18 @@ export default function ESISAHomePage() {
   const slideAnim = useRef(new Animated.Value(300)).current;
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+
+  // ✅ Effacer la session uniquement au tout premier lancement
+  useEffect(() => {
+    const resetSessionOnFirstLaunch = async () => {
+      const firstLaunch = await AsyncStorage.getItem("firstLaunchDone");
+      if (!firstLaunch) {
+        await AsyncStorage.multiRemove(["user", "prof", "admin"]);
+        await AsyncStorage.setItem("firstLaunchDone", "true");
+      }
+    };
+    resetSessionOnFirstLaunch();
+  }, []);
 
   const codeSegments = 15;
   const [codeTrailPosition, setCodeTrailPosition] = useState([]);
@@ -40,7 +53,7 @@ export default function ESISAHomePage() {
     const initialSymbols = [];
 
     for (let i = 0; i < codeSegments; i++) {
-      initialPositions.push({ x: initialX - (i * segmentSize), y: initialY });
+      initialPositions.push({ x: initialX - i * segmentSize, y: initialY });
       initialSymbols.push(codeSymbols[Math.floor(Math.random() * codeSymbols.length)]);
     }
 
@@ -52,35 +65,34 @@ export default function ESISAHomePage() {
   }, [width, height]);
 
   const moveCodeTrail = () => {
-    setCodeTrailPosition(prevPositions => {
+    setCodeTrailPosition((prevPositions) => {
       if (!prevPositions || prevPositions.length === 0) return prevPositions;
       const newPositions = [...prevPositions];
-      if (!newPositions[0]) return prevPositions;
-
       const head = { x: newPositions[0].x, y: newPositions[0].y };
+
       const centerX = width / 2;
       const centerY = height / 2;
-      const distanceFromCenter = Math.sqrt(Math.pow(head.x - centerX, 2) + Math.pow(head.y - centerY, 2));
+      const distanceFromCenter = Math.sqrt((head.x - centerX) ** 2 + (head.y - centerY) ** 2);
       const changeDirectionProb = Math.min(0.15, 0.05 + (distanceFromCenter / (width + height)) * 0.2);
 
       if (Math.random() < changeDirectionProb) {
-        let preferredX = head.x < centerX ? 1 : -1;
-        let preferredY = head.y < centerY ? 1 : -1;
-        let directions = [];
+        const preferredX = head.x < centerX ? 1 : -1;
+        const preferredY = head.y < centerY ? 1 : -1;
+        const directions = [];
 
         for (let i = 0; i < 3; i++) directions.push({ x: preferredX, y: 0 });
         for (let i = 0; i < 3; i++) directions.push({ x: 0, y: preferredY });
         directions.push({ x: -preferredX, y: 0 });
         directions.push({ x: 0, y: -preferredY });
 
-        const validDirections = directions.filter(dir =>
-          !(dir.x === -directionRef.current.x && dir.y === -directionRef.current.y)
+        const validDirections = directions.filter(
+          (dir) => !(dir.x === -directionRef.current.x && dir.y === -directionRef.current.y)
         );
 
         const newDirection = validDirections[Math.floor(Math.random() * validDirections.length)];
         directionRef.current = newDirection;
 
-        setSegmentSymbols(prevSymbols => {
+        setSegmentSymbols((prevSymbols) => {
           const newSymbols = [...prevSymbols];
           newSymbols[0] = codeSymbols[Math.floor(Math.random() * codeSymbols.length)];
           return newSymbols;
@@ -90,22 +102,10 @@ export default function ESISAHomePage() {
       head.x += directionRef.current.x * segmentSize;
       head.y += directionRef.current.y * segmentSize;
 
-      if (head.x < 0) {
-        head.x = 0;
-        directionRef.current = { x: 1, y: directionRef.current.y };
-      }
-      if (head.x > width - segmentSize) {
-        head.x = width - segmentSize;
-        directionRef.current = { x: -1, y: directionRef.current.y };
-      }
-      if (head.y < 0) {
-        head.y = 0;
-        directionRef.current = { x: directionRef.current.x, y: 1 };
-      }
-      if (head.y > height - segmentSize) {
-        head.y = height - segmentSize;
-        directionRef.current = { x: directionRef.current.x, y: -1 };
-      }
+      if (head.x < 0) head.x = 0;
+      if (head.x > width - segmentSize) head.x = width - segmentSize;
+      if (head.y < 0) head.y = 0;
+      if (head.y > height - segmentSize) head.y = height - segmentSize;
 
       newPositions.unshift(head);
       if (newPositions.length > codeSegments) newPositions.pop();
@@ -131,6 +131,7 @@ export default function ESISAHomePage() {
     }
   };
 
+  // ✅ Lire l’état de connexion
   useEffect(() => {
     const checkLoginStatus = async () => {
       const student = await AsyncStorage.getItem("user");
@@ -152,37 +153,37 @@ export default function ESISAHomePage() {
     };
 
     checkLoginStatus();
-    return () => {};
   }, []);
 
   const handleLogout = async () => {
     await AsyncStorage.multiRemove(["user", "prof", "admin"]);
     setIsLoggedIn(false);
     setUserInfo(null);
+    router.replace("/"); // Rediriger après déconnexion
   };
 
   const menuItems = isLoggedIn
     ? [
-      { label: "🏠 Accueil", route: "/" },
-      { label: "👤 Profil", route: "/explore" },
-      { label: "🎓 Formations", route: "/other/formation" },
-      { label: "👨‍🏫 Corps enseignant", route: "#" },
-      { label: "📚 Programmes", route: "#" },
-      { label: "🔬 Laboratoires", route: "#" },
-      { label: "🌐 International", route: "/other/international" },
-      { label: "📅 Calendrier", route: "/other/calendrier" },
-      { label: "🏢 Campus", route: "#" },
-      { label: "📞 Contact", route: "#" },
-      { label: "🔓 Déconnexion", route: "/", onPress: handleLogout },
-    ]
+        { label: "🏠 Accueil", route: "/" },
+        { label: "👤 Profil", route: "/explore" },
+        { label: "🎓 Formations", route: "/other/formation" },
+        { label: "👨‍🏫 Corps enseignant", route: "#" },
+        { label: "📚 Programmes", route: "#" },
+        { label: "🔬 Laboratoires", route: "#" },
+        { label: "🌐 International", route: "/other/international" },
+        { label: "📅 Calendrier", route: "/other/calendrier" },
+        { label: "🏢 Campus", route: "#" },
+        { label: "📞 Contact", route: "#" },
+        { label: "🔓 Déconnexion", route: "/", onPress: handleLogout },
+      ]
     : [
-      { label: "🏠 Accueil", route: "/" },
-      { label: "🎓 Formations", route: "/other/formation" },
-      { label: "🌐 International", route: "/other/international" },
-      { label: "📅 Calendrier", route: "/other/calendrier" },
-      { label: "📞 Contact", route: "#" },
-      { label: "🔑 Espace étudiant", route: "/login" },
-    ];
+        { label: "🏠 Accueil", route: "/" },
+        { label: "🎓 Formations", route: "/other/formation" },
+        { label: "🌐 International", route: "/other/international" },
+        { label: "📅 Calendrier", route: "/other/calendrier" },
+        { label: "📞 Contact", route: "#" },
+        { label: "🔑 Espace étudiant", route: "/login" },
+      ];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
@@ -194,7 +195,7 @@ export default function ESISAHomePage() {
             {
               left: segment.x,
               top: segment.y,
-              opacity: 1 - (index / codeSegments * 0.6),
+              opacity: 1 - (index / codeSegments) * 0.6,
               width: segmentSize,
               height: segmentSize,
             },
@@ -241,21 +242,12 @@ export default function ESISAHomePage() {
         </View>
       </View>
 
-      <Modal
-        visible={isMenuVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={toggleMenu}
-      >
+      <Modal visible={isMenuVisible} transparent animationType="none" onRequestClose={toggleMenu}>
         <Pressable style={styles.modalBackgroundRight} onPress={toggleMenu}>
-          <Animated.View
-            style={[styles.menuDrawerRight, { transform: [{ translateX: slideAnim }] }]}
-          >
+          <Animated.View style={[styles.menuDrawerRight, { transform: [{ translateX: slideAnim }] }]}>
             <View style={styles.menuHeader}>
               <Text style={styles.menuHeaderText}>ESISA</Text>
-              {userInfo && (
-                <Text style={styles.userNameText}>{userInfo.name}</Text>
-              )}
+              {userInfo && <Text style={styles.userNameText}>{userInfo.name}</Text>}
             </View>
 
             {menuItems.map((item, index) => (
@@ -264,18 +256,15 @@ export default function ESISAHomePage() {
                 style={styles.menuItem}
                 onPress={() => {
                   toggleMenu();
-                  if (item.onPress) {
-                    item.onPress();
-                  } else {
-                    router.push(item.route as any);
-                  }
+                  if (item.onPress) item.onPress();
+                  else router.push(item.route as any);
                 }}
               >
                 <Text
                   style={[
                     styles.menuText,
                     item.label.includes("🔑") ? { color: "#4CAF50" } :
-                      item.label.includes("🔓") ? { color: "#FF5252" } : {},
+                    item.label.includes("🔓") ? { color: "#FF5252" } : {},
                   ]}
                 >
                   {item.label}

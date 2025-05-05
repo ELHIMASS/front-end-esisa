@@ -260,18 +260,45 @@ export default function ProfessorDashboard() {
     
     
 
-    const handleAddAbsence = (studentId) => {
-        const updatedStudents = students.map(student => {
-            if (student._id === studentId) {
-                return { ...student, absences: student.absences + 1 };
+    const handleAddAbsence = async (studentId: string) => {
+        if (!user?.matiere || user.matiere.length === 0) {
+            Alert.alert("Erreur", "Aucune matière trouvée pour ce professeur.");
+            return;
+        }
+    
+        const subject = user.matiere[0];
+        const currentDate = new Date().toISOString();
+    
+        try {
+            const response = await fetch(`${API_URL}/api/students/${studentId}/absence`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    subject,
+                    date: currentDate,
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error("Erreur lors de l'ajout de l'absence");
             }
-            return student;
-        });
-
-        setStudents(updatedStudents);
-        Alert.alert("Succès", "L'absence a été enregistrée");
+    
+            const updatedStudent = await response.json();
+    
+            const updatedStudents = students.map((student) =>
+                student._id === updatedStudent._id ? updatedStudent : student
+            );
+    
+            setStudents(updatedStudents);
+            Alert.alert("Succès", "L'absence a été enregistrée.");
+        } catch (error) {
+            console.error("Erreur:", error);
+            Alert.alert("Erreur", "Impossible d'enregistrer l'absence.");
+        }
     };
-
+    
     const sendEmail = () => {
         if (!emailSubject || !emailBody) {
             Alert.alert("Erreur", "Veuillez remplir tous les champs");

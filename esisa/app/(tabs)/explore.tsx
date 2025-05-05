@@ -20,33 +20,35 @@ export default function ProfilScreen() {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isMenuVisible, setMenuVisible] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const slideAnim = useState(new Animated.Value(300))[0]; // Départ à droite
+    const slideAnim = useState(new Animated.Value(300))[0];
 
     useEffect(() => {
-        const checkSession = async () => {
-            try {
-                const stored = await AsyncStorage.getItem("user");
+        const checkLoginStatus = async () => {
+            const student = await AsyncStorage.getItem("user");
+            const prof = await AsyncStorage.getItem("prof");
+            const admin = await AsyncStorage.getItem("admin");
 
-                if (!stored) {
-                    console.log("❌ Pas d'utilisateur connecté, redirection...");
-                    router.replace("/login");
-                    return;
-                }
+            let userParsed = null;
+            if (student) userParsed = JSON.parse(student);
+            else if (prof) userParsed = JSON.parse(prof);
+            else if (admin) userParsed = JSON.parse(admin);
 
-                const parsed = JSON.parse(stored);
-                setUser(parsed);
-            } catch (error) {
-                console.error("Erreur lors de la vérification de session :", error);
-                Alert.alert("Erreur", "Impossible de charger les données");
+            if (userParsed) {
+                setUser(userParsed);
+                setIsLoggedIn(true);
+            } else {
+                setIsLoggedIn(false);
+                setUser(null);
                 router.replace("/login");
-            } finally {
-                setLoading(false);
             }
+
+            setLoading(false);
         };
 
-        checkSession();
+        checkLoginStatus();
     }, []);
 
     const toggleMenu = () => {
@@ -67,10 +69,27 @@ export default function ProfilScreen() {
     };
 
     const handleLogout = async () => {
-        await AsyncStorage.removeItem("user");
+        await AsyncStorage.multiRemove(["user", "prof", "admin"]);
+        setIsLoggedIn(false);
         setUser(null);
         router.replace("/login");
     };
+
+    const menuItems = isLoggedIn
+        ? [
+              { label: "🏠 Accueil", route: "/(tabs)/index" },
+              { label: "👤 Profil", route: "/explore" },
+              { label: "🎓 Formations", route: "/other/formation" },
+              { label: "👨‍🏫 Corps enseignant", route: "#" },
+              { label: "📚 Programmes", route: "#" },
+              { label: "🔬 Laboratoires", route: "#" },
+              { label: "🌐 International", route: "/other/international" },
+              { label: "📅 Calendrier", route: "/other/calendrier" },
+              { label: "🏢 Campus", route: "#" },
+              { label: "📞 Contact", route: "#" },
+              { label: "🔓 Déconnexion", route: "/", onPress: handleLogout },
+          ]
+        : [];
 
     if (loading) {
         return (
@@ -90,7 +109,6 @@ export default function ProfilScreen() {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
-            {/* Menu Button */}
             <TouchableOpacity
                 onPress={toggleMenu}
                 style={{
@@ -111,7 +129,6 @@ export default function ProfilScreen() {
                 <Icon name="menu" size={30} color="#FFD700" />
             </TouchableOpacity>
 
-            {/* Drawer Menu (de droite vers la gauche) */}
             <Modal
                 visible={isMenuVisible}
                 transparent={true}
@@ -132,38 +149,39 @@ export default function ProfilScreen() {
                             <Text style={styles.menuHeaderText}>MENU</Text>
                         </View>
 
-                        {[
-                            { label: "🏠 Accueil", route: "/(tabs)/index" },
-                            { label: "📄 Documents", route: "#" },
-                            { label: "📆 Réservations", route: "#" },
-                        ].map((item, index) => (
+                        {menuItems.map((item, index) => (
                             <TouchableOpacity
                                 key={index}
-                                style={styles.menuItem}
+                                style={[
+                                    styles.menuItem,
+                                    item.label.includes("Déconnexion") && {
+                                        borderTopWidth: 1,
+                                        borderTopColor: "#1A3F6F",
+                                    },
+                                ]}
                                 onPress={() => {
                                     toggleMenu();
-                                    console.log("Redirection", `Vers ${item.route}`);
-                                    router.replace("/login");
+                                    if (item.onPress) item.onPress();
+                                    else router.replace(item.route);
                                 }}
                             >
-                                <Text style={styles.menuText}>{item.label}</Text>
+                                <Text
+                                    style={[
+                                        styles.menuText,
+                                        item.label.includes("Déconnexion") && {
+                                            color: "#FF5555",
+                                        },
+                                    ]}
+                                >
+                                    {item.label}
+                                </Text>
                                 <Icon name="chevron-right" size={20} color="#FFD700" />
                             </TouchableOpacity>
                         ))}
-
-                        <TouchableOpacity
-                            style={[styles.menuItem, { borderTopWidth: 1, borderTopColor: "#1A3F6F" }]}
-                            onPress={handleLogout}
-                        >
-                            <Text style={[styles.menuText, { color: "#FF5555" }]}>
-                                🚪 Se déconnecter
-                            </Text>
-                        </TouchableOpacity>
                     </Animated.View>
                 </Pressable>
             </Modal>
 
-            {/* Main Content */}
             <ScrollView
                 contentContainerStyle={styles.scroll}
                 showsVerticalScrollIndicator={false}
@@ -171,7 +189,7 @@ export default function ProfilScreen() {
                 <View style={styles.avatarContainer}>
                     <View style={styles.avatar}>
                         <Text style={styles.avatarText}>
-                            {user.name.split(' ').map((item:string) => (item[0].toUpperCase()))}
+                            {user.name.split(' ').map((item: string) => (item[0].toUpperCase()))}
                         </Text>
                     </View>
                     <View style={styles.glowEffect} />

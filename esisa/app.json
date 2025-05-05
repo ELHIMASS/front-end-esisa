@@ -1,16 +1,13 @@
 {
   "expo": {
-    "name": "esisa",
-    "slug": "esisa",
+    "name": "",
+    "slug": "",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icons/icon.png",
-    
-
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
-      
     },
     "android": {
       "adaptiveIcon": {
@@ -30,9 +27,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/icons/icon.png",
-          "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#ffffff",
+          "preventAutoHide": true
         }
       ]
     ],

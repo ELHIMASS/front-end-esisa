@@ -120,7 +120,7 @@ ${formData.motivation}
     // Configure email options
     const mailOptions = {
       from: process.env.SMTP_USER,
-      to: process.env.RECIPIENT_EMAIL || 'a.diouri@esisa.ac.ma',
+      to: process.env.RECIPIENT_EMAIL || 'houasliothman@gmail.com',
       subject: `Candidature ESISA - ${formData.nom} ${formData.prenom}`,
       text: emailBody,
       // We'll handle attachments later when implementing file upload
@@ -225,7 +225,7 @@ ${formData.motivation}
     // Configure email options
     const mailOptions = {
       from: process.env.SMTP_USER,
-      to: process.env.RECIPIENT_EMAIL || 'a.diouri@esisa.ac.ma',
+      to: process.env.RECIPIENT_EMAIL || 'houasliothman@gmail.com',
       subject: `Candidature ESISA - ${formData.nom} ${formData.prenom}`,
       html: `
   <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -298,6 +298,44 @@ ${formData.motivation}
   }
 });
 console.log("SMTP_USER:", process.env.SMTP_USER);
+
+app.put("/api/students/:id/absence", async (req, res) => {
+    const { subject, date } = req.body;
+    const { id } = req.params;
+  
+    try {
+      const student = await Student.findById(id);
+      if (!student) {
+        return res.status(404).json({ message: "Étudiant non trouvé" });
+      }
+  
+      // Initialisation si absences n'existe pas
+      if (typeof student.absences !== 'number') {
+        student.absences = 0;
+      }
+  
+      // Incrémenter le compteur d'absences
+      student.absences += 1;
+  
+      // Initialisation si absenceRecords n'existe pas
+      if (!Array.isArray(student.absenceRecords)) {
+        student.absenceRecords = [];
+      }
+  
+      // Ajouter un enregistrement d'absence
+      student.absenceRecords.push({
+        subject: subject || "matière inconnue",
+        date: date ? new Date(date) : new Date()
+      });
+  
+      await student.save();
+  
+      res.json(student);
+    } catch (error) {
+      console.error("Erreur ajout absence:", error);
+      res.status(500).json({ message: "Erreur serveur lors de l'ajout de l'absence" });
+    }
+  });
 
 // Lancer le serveur
 const PORT = process.env.PORT || 5000;
