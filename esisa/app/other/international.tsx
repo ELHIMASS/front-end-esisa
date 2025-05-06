@@ -27,7 +27,7 @@ const InternationalPage = () => {
   const insets = useSafeAreaInsets();
 
   const goBack = () => {
-    router.back();
+    router.replace('/(tabs)');
   };
 
   return (
@@ -53,7 +53,7 @@ const InternationalPage = () => {
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
      <View style={styles.logoContainer}>
         <Image
-          source={require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/images/icon.png')}
+          source={require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/icons/icon.png')}
             style={styles.logoImage}
               resizeMode="contain"
             />
