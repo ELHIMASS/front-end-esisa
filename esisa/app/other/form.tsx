@@ -268,7 +268,7 @@ export default function ApplicationFormScreen() {
         >
              <View style={styles.logoContainer}>
               <Image
-                source={require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/images/icon.png')}
+                source={require('../../assets/icons/icon.png')}
                   style={styles.logoImage}
                   
                   />

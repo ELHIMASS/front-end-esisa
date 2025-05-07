@@ -120,7 +120,7 @@ ${formData.motivation}
     // Configure email options
     const mailOptions = {
       from: process.env.SMTP_USER,
-      to: process.env.RECIPIENT_EMAIL || 'houasliothman@gmail.com',
+      to: process.env.RECIPIENT_EMAIL || 'i.elhimass@esisa.ac.ma',
       subject: `Candidature ESISA - ${formData.nom} ${formData.prenom}`,
       text: emailBody,
       // We'll handle attachments later when implementing file upload
@@ -225,7 +225,7 @@ ${formData.motivation}
     // Configure email options
     const mailOptions = {
       from: process.env.SMTP_USER,
-      to: process.env.RECIPIENT_EMAIL || 'houasliothman@gmail.com',
+      to: process.env.RECIPIENT_EMAIL || 'i.elhimass@esisa.ac.ma',
       subject: `Candidature ESISA - ${formData.nom} ${formData.prenom}`,
       html: `
   <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">

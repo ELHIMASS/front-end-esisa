@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, Image, StyleSheet, Animated } from "react-native";
+import { View, Text, StyleSheet, Animated } from "react-native";
 import { Audio } from "expo-av";
 import { router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -12,19 +12,6 @@ export default function SplashScreenPage() {
   const [displayedText, setDisplayedText] = useState("");
   const logoAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    let i = 0;
-    const interval = setInterval(() => {
-      // Prend un sous-ensemble correct des caractères, pas concaténation hasardeuse
-      setDisplayedText(fullText.slice(0, i + 1));
-      i++;
-  
-      if (i === fullText.length) clearInterval(interval);
-    }, 90);
-  
-    return () => clearInterval(interval);
-  }, []);
-  
   // Animation logo
   useEffect(() => {
     Animated.timing(logoAnim, {
@@ -34,7 +21,7 @@ export default function SplashScreenPage() {
     }).start();
   }, []);
 
-  // Texte lettre par lettre (corrigé)
+  // Texte lettre par lettre
   useEffect(() => {
     let i = 0;
     const animateText = () => {
@@ -89,6 +76,7 @@ export default function SplashScreenPage() {
         resizeMode="contain"
       />
       <Text style={styles.text}>{displayedText}</Text>
+      <Text style={styles.footer}>Powered by : Learnify</Text>
     </LinearGradient>
   );
 }
@@ -98,6 +86,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingBottom: 40,
   },
   logo: {
     width: 180,
@@ -108,6 +97,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: "#FFD700",
-
+  },
+  footer: {
+    position: "absolute",
+    bottom: 20,
+    fontSize: 14,
+    color: "#6D8EB4",
   },
 });

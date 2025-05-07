@@ -50,7 +50,7 @@ export default function AdmissionScreen() {
       >
         <View style={styles.logoContainer}>
         <Image
-          source={require("C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/icons/icon.png")}
+          source={require('../../assets/icons/icon.png')}
           style={styles.logoImageTop}
           resizeMode="contain"
         />

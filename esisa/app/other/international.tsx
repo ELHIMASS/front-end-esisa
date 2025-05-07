@@ -5,22 +5,23 @@ import { View, Text, StyleSheet, ScrollView, Dimensions, Image, TouchableOpacity
 import { router } from 'expo-router';
 
 const logos = [
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/amu.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/cote1.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/cotedazur.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/ensiie1.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/iscid.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/isima1.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/poly1.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/paris81.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/lor1.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/lyon1.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/lille1.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/uca1.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/unvop1.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/paris131.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/unvbou1.png'),
-  require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/partenaire/lis1.png'),
+  require('../../assets/icons/icon.png'),
+  require('../../assets/partenaire/amu.png'),
+  require('../../assets/partenaire/cote1.png'),
+  require('../../assets/partenaire/cotedazur.png'),
+  require('../../assets/partenaire/ensiie1.png'),
+  require('../../assets/partenaire/iscid.png'),
+  require('../../assets/partenaire/isima1.png'),
+  require('../../assets/partenaire/poly1.png'),
+  require('../../assets/partenaire/paris81.png'),
+  require('../../assets/partenaire/lor1.png'),
+  require('../../assets/partenaire/lyon1.png'),
+  require('../../assets/partenaire/lille1.png'),
+  require('../../assets/partenaire/uca1.png'),
+  require('../../assets/partenaire/unvop1.png'),
+  require('../../assets/partenaire/paris131.png'),
+  require('../../assets/partenaire/unvbou1.png'),
+  require('../../assets/partenaire/lis1.png'),
 ];
 
 const InternationalPage = () => {
@@ -53,7 +54,7 @@ const InternationalPage = () => {
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
      <View style={styles.logoContainer}>
         <Image
-          source={require('C:/Users/ismai/Desktop/front-end-esisa/esisa/assets/icons/icon.png')}
+          source={require('../../assets/icons/icon.png')}
             style={styles.logoImage}
               resizeMode="contain"
             />
