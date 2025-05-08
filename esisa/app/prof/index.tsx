@@ -1,1299 +1,1036 @@
-import React, { useEffect, useState } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    ActivityIndicator,
-    Alert,
-    TouchableOpacity,
-    Modal,
-    Pressable,
-    Animated,
-    TextInput,
-    FlatList
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-import { Icon } from "react-native-elements";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Picker } from "@react-native-picker/picker";
+import React, { useEffect, useState } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  TouchableOpacity, 
+  Modal, 
+  TextInput, 
+  Alert,
+  ScrollView,
+  ActivityIndicator,
+  Pressable,
+  Animated
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import { Icon } from 'react-native-elements';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Picker } from '@react-native-picker/picker';
 
+const API_URL = 'http://localhost:5000/api';
 
-const SERVER_IP = "192.168.100.219"; 
-const API_URL = `http://${SERVER_IP}:5000`;
+type Evaluation = {
+  type: string;
+  score: number;
+  weight: number;
+  date: string;
+  comment?: string;
+};
+
+type Grade = {
+  subject: string;
+  academicYear: string;
+  semester: string;
+  evaluations: Evaluation[];
+};
+
+type Absence = {
+  date: string;
+  subject: string;
+  justified: boolean;
+  comment: string;
+};
+
+type Student = {
+  _id: string;
+  email: string;
+  name: string;
+  anne_scolaire: string;
+  group: string;
+  grades?: Grade[];
+  absences?: Absence[];
+};
+
+type User = {
+  name: string;
+  matiere: string[];
+};
+
 export default function ProfessorDashboard() {
-    interface User {
-            name: string;
-            age: number;
-            matiere?: string[];
-        }
-    
-    interface Student {
-            _id: string;
-            name: string;
-            email: string;
-            anne_scolaire: string;
-            group: string;
-            grades: Array<{
-                subject: string;
-                cc: number;
-                partiel: number;
-                projet: number;
-            }>;
-            absences: number;
+  // États
+  const [user, setUser] = useState<User | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [currentTab, setCurrentTab] = useState('notes');
+  const [loading, setLoading] = useState(true);
+  
+  // États pour les modals
+  const [showGradeModal, setShowGradeModal] = useState(false);
+  const [showAbsenceModal, setShowAbsenceModal] = useState(false);
+  const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [ccGrade, setCcGrade] = useState('');
+  const [partielGrade, setPartielGrade] = useState('');
+  const [projetGrade, setProjetGrade] = useState('');
+  const [absenceDate, setAbsenceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [absenceComment, setAbsenceComment] = useState('');
+  const [absenceJustified, setAbsenceJustified] = useState(false);
+  const [isMenuVisible, setMenuVisible] = useState(false);
+
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const slideAnim = useState(new Animated.Value(300))[0];
+
+  // Chargement des données
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const profData = await AsyncStorage.getItem('prof');
+        if (!profData) {
+          router.replace('/login');
+          return;
         }
         
-        const [user, setUser] = useState<User | null>(null);
-        const [loading, setLoading] = useState(true);
-        const [isMenuVisible, setMenuVisible] = useState(false);
-        const [currentTab, setCurrentTab] = useState('notes');
-        const [selectedYear, setSelectedYear] = useState('');
-        const [selectedGroup, setSelectedGroup] = useState('');
-        const [students, setStudents] = useState<Student[]>([]);
-    const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
-    const [emailSubject, setEmailSubject] = useState('');
-    const [emailBody, setEmailBody] = useState('');
-    const [suggestionText, setSuggestionText] = useState('');
-    const [showGradeModal, setShowGradeModal] = useState(false);
-    const [currentStudent, setCurrentStudent] = useState(null);
-    const [searchText, setSearchText] = useState('');
-    const [selectedSubject, setSelectedSubject] = useState('');
-    const [ccGrade, setCcGrade] = useState('');
-    const [partielGrade, setPartielGrade] = useState('');
-    const [projetGrade, setProjetGrade] = useState('');
-
-    const router = useRouter();
-    const insets = useSafeAreaInsets();
-    const slideAnim = useState(new Animated.Value(300))[0];
-
-    // Données mockées pour démonstration
-    type YearGroup = '5ème année' | '4ème année' | '3ème année' | '2ème année' | '1ère année';
-    
-    const yearGroups: Record<YearGroup, string[]> = {
-        '5ème année': ['A', 'B', 'C'],
-        '4ème année': ['A', 'B', 'C'],
-        '3ème année': ['A', 'B', 'C'],
-        '2ème année': ['A', 'B', 'C'],
-        '1ère année': ['A', 'B', 'C'],
-    };
-
-    useEffect(() => {
-        const checkSession = async () => {
-            
-            const stored = await AsyncStorage.getItem("prof");
-
-            if (!stored) {
-                console.log("❌ Pas d'utilisateur connecté, redirection...");
-                router.replace("/login");
-                return;
-            }
-
-            const parsedUser = JSON.parse(stored);
-            setUser(parsedUser);
-            
-            
-                await loadStudentsFromServer();
-            
-            
-            setLoading(false);
-
-        };
-
-        checkSession();
-    }, []);
-
-    const loadStudentsFromServer = async () => {
-        const response = await fetch(`${API_URL}/api/students`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        });
-    
-        if (!response.ok) {
-            throw new Error("Erreur lors du chargement des étudiants");
-        }
-    
+        const parsedUser = JSON.parse(profData);
+        setUser(parsedUser);
+        
+        const response = await fetch(`${API_URL}/students`);
         const data = await response.json();
-    
-        // Corriger absences pour éviter NaN
-        const cleanedData = data.map(s => ({
-            ...s,
-            absences: typeof s.absences === 'number' ? s.absences : 0
-        }));
-    
-        setStudents(cleanedData);
-        await AsyncStorage.setItem("students", JSON.stringify(cleanedData));
+        setStudents(data);
+        setFilteredStudents(data);
+        setLoading(false);
+      } catch (error) {
+        Alert.alert('Erreur', 'Impossible de charger les données');
+        setLoading(false);
+      }
     };
-    
+    loadData();
+  }, []);
 
+  // Filtrage des étudiants
+  useEffect(() => {
+    let filtered = [...students];
     
-    useEffect(() => {
-        let filtered = [...students];
-
-        if (selectedYear) {
-            filtered = filtered.filter(student => student.anne_scolaire === selectedYear);
-        }
-
-        if (selectedGroup) {
-            filtered = filtered.filter(student => student.group === selectedGroup);
-        }
-
-        if (searchText) {
-            filtered = filtered.filter(student =>
-                student.name.toLowerCase().includes(searchText.toLowerCase()) ||
-                student.email.toLowerCase().includes(searchText.toLowerCase())
-            );
-        }
-
-        setFilteredStudents(filtered);
-    }, [students, selectedYear, selectedGroup, searchText]);
-
-    const toggleMenu = () => {
-        if (isMenuVisible) {
-            Animated.timing(slideAnim, {
-                toValue: 300,
-                duration: 300,
-                useNativeDriver: true,
-            }).start(() => setMenuVisible(false));
-        } else {
-            setMenuVisible(true);
-            Animated.timing(slideAnim, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: true,
-            }).start();
-        }
-    };
-
-    const handleLogout = async () => {
-        try {
-            await AsyncStorage.removeItem("prof");
-            setUser(null);
-            router.replace("/login");
-        } catch (error) {
-            console.error("Erreur lors de la déconnexion:", error);
-            Alert.alert("Erreur", "Un problème est survenu lors de la déconnexion. Veuillez réessayer.");
-        }
-    };
-
-    const handleEditGrade = (studentId, subject) => {
-        const student = students.find(s => s._id === studentId);
-        if (!student) {
-            Alert.alert("Erreur", "Étudiant introuvable");
-            return;
-        }
-    
-        const defaultSubject = subject || (user?.matiere?.[0] || '');
-        const gradeInfo = student.grades?.find(g => g.subject === defaultSubject);
-    
-        setCurrentStudent(student);
-        setSelectedSubject(defaultSubject);
-    
-        setCcGrade(gradeInfo?.cc?.toString() || '');
-        setPartielGrade(gradeInfo?.partiel?.toString() || '');
-        setProjetGrade(gradeInfo?.projet?.toString() || '');
-        setShowGradeModal(true);
-    };
-    
-    
-    const saveGrade = async () => {
-        if (!currentStudent || !selectedSubject) {
-            Alert.alert("Erreur", "Étudiant ou matière non défini");
-            return;
-        }
-    
-        const cc = parseFloat(ccGrade);
-        const partiel = parseFloat(partielGrade);
-        const projet = parseFloat(projetGrade);
-    
-        if (
-            isNaN(cc) || cc < 0 || cc > 20 ||
-            isNaN(partiel) || partiel < 0 || partiel > 20 ||
-            isNaN(projet) || projet < 0 || projet > 20
-        ) {
-            Alert.alert("Erreur", "Veuillez entrer des notes valides entre 0 et 20");
-            return;
-        }
-    
-        const updatedGrades = [...(currentStudent.grades || [])];
-        const gradeIndex = updatedGrades.findIndex(g => g.subject === selectedSubject);
-    
-        if (gradeIndex !== -1) {
-            updatedGrades[gradeIndex] = { ...updatedGrades[gradeIndex], cc, partiel, projet };
-        } else {
-            updatedGrades.push({ subject: selectedSubject, cc, partiel, projet });
-        }
-    
-        try {
-            const response = await fetch(`${API_URL}/api/students/${currentStudent._id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ grades: updatedGrades }),
-            });
-    
-            if (!response.ok) {
-                throw new Error("Erreur lors de la mise à jour des notes");
-            }
-    
-            const updatedStudent = await response.json();
-    
-            const updatedStudents = students.map(student =>
-                student._id === updatedStudent._id ? updatedStudent : student
-            );
-    
-            setStudents(updatedStudents);
-            setShowGradeModal(false);
-            setCcGrade('');
-            setPartielGrade('');
-            setProjetGrade('');
-            setSelectedSubject('');
-            Alert.alert("Succès", "Les notes ont été enregistrées avec succès");
-        } catch (error) {
-            console.error("Erreur lors de la mise à jour :", error);
-            Alert.alert("Erreur", "Impossible d'enregistrer les notes");
-        }
-    };
-    
-    
-
-    const handleAddAbsence = async (studentId: string) => {
-        if (!user?.matiere || user.matiere.length === 0) {
-            Alert.alert("Erreur", "Aucune matière trouvée pour ce professeur.");
-            return;
-        }
-    
-        const subject = user.matiere[0];
-        const currentDate = new Date().toISOString();
-    
-        try {
-            const response = await fetch(`${API_URL}/api/students/${studentId}/absence`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    subject,
-                    date: currentDate,
-                }),
-            });
-    
-            if (!response.ok) {
-                throw new Error("Erreur lors de l'ajout de l'absence");
-            }
-    
-            const updatedStudent = await response.json();
-    
-            const updatedStudents = students.map((student) =>
-                student._id === updatedStudent._id ? updatedStudent : student
-            );
-    
-            setStudents(updatedStudents);
-            Alert.alert("Succès", "L'absence a été enregistrée.");
-        } catch (error) {
-            console.error("Erreur:", error);
-            Alert.alert("Erreur", "Impossible d'enregistrer l'absence.");
-        }
-    };
-    
-    const sendEmail = () => {
-        if (!emailSubject || !emailBody) {
-            Alert.alert("Erreur", "Veuillez remplir tous les champs");
-            return;
-        }
-
-        if (!selectedGroup) {
-            Alert.alert("Erreur", "Veuillez sélectionner un groupe");
-            return;
-        }
-
-        Alert.alert("Succès", `Email envoyé à tous les étudiants du groupe ${selectedGroup}`);
-        setEmailSubject('');
-        setEmailBody('');
-    };
-
-    const sendSuggestion = () => {
-        if (!suggestionText) {
-            Alert.alert("Erreur", "Veuillez rédiger votre suggestion");
-            return;
-        }
-
-        Alert.alert("Succès", "Votre suggestion a été envoyée anonymement");
-        setSuggestionText('');
-    };
-
-    // Calculer la moyenne pour une matière donnée
-    const calculateAverage = (grades, subject) => {
-        const subjectGrades = grades.find(g => g.subject === subject);
-        if (!subjectGrades) return "-";
-        
-        const { cc, partiel, projet } = subjectGrades;
-        // Pondération: CC (30%), Partiel (40%), Projet (30%)
-        return ((cc * 0.3) + (partiel * 0.4) + (projet * 0.3)).toFixed(2);
-    };
-
-    if (loading) {
-        return (
-            <View style={[styles.center, { backgroundColor: "#0A1F3A" }]}>
-                <ActivityIndicator size="large" color="#FFD700" />
-            </View>
-        );
+    if (selectedYear) {
+      filtered = filtered.filter(student => 
+        student.anne_scolaire === selectedYear
+      );
     }
+    
+    if (selectedGroup) {
+      filtered = filtered.filter(student => 
+        student.group === selectedGroup
+      );
+    }
+    
+    if (searchText) {
+      filtered = filtered.filter(student =>
+        student.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        (student.email && student.email.toLowerCase().includes(searchText.toLowerCase()))
+      );
+    }
+    
+    setFilteredStudents(filtered);
+  }, [students, selectedYear, selectedGroup, searchText]);
 
+  // Menu animation
+  const toggleMenu = () => {
+    if (isMenuVisible) {
+      Animated.timing(slideAnim, {
+        toValue: 300,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setMenuVisible(false));
+    } else {
+      setMenuVisible(true);
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("prof");
+      router.replace("/login");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+      Alert.alert("Erreur", "Un problème est survenu lors de la déconnexion.");
+    }
+  };
+
+  // Mise à jour d'un étudiant
+  const updateStudent = async (email: string, updateData: Partial<Student>) => {
+    try {
+      const response = await fetch(`${API_URL}/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, ...updateData })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Échec de la mise à jour');
+      }
+      
+      const updatedData = await response.json();
+      
+      setStudents(students.map(student => 
+        student.email === updatedData.email ? updatedData : student
+      ));
+      
+      return updatedData;
+    } catch (error) {
+      console.error('Erreur:', error);
+      Alert.alert('Erreur', error.message || 'Échec de la mise à jour');
+      throw error;
+    }
+  };
+
+  // Gestion des notes
+  const handleAddGrade = (student: Student) => {
+    setCurrentStudent(student);
+    setSelectedSubject(user?.matiere[0] || '');
+    setShowGradeModal(true);
+  };
+
+  const saveGrade = async () => {
+    if (!currentStudent || !selectedSubject) return;
+
+    try {
+      const currentDate = new Date().toISOString();
+      const academicYear = getAcademicYear();
+      const semester = getCurrentSemester();
+
+      const newGrade: Grade = {
+        subject: selectedSubject,
+        academicYear,
+        semester,
+        evaluations: [
+          {
+            type: "CC",
+            score: parseFloat(ccGrade) || 0,
+            weight: 0.3,
+            date: currentDate
+          },
+          {
+            type: "Partiel",
+            score: parseFloat(partielGrade) || 0,
+            weight: 0.4,
+            date: currentDate
+          },
+          {
+            type: "Projet",
+            score: parseFloat(projetGrade) || 0,
+            weight: 0.3,
+            date: currentDate
+          }
+        ]
+      };
+
+      await updateStudent(currentStudent.email, {
+        grades: [...(currentStudent.grades || []), newGrade]
+      });
+
+      setShowGradeModal(false);
+      setCcGrade('');
+      setPartielGrade('');
+      setProjetGrade('');
+      Alert.alert('Succès', 'Notes enregistrées avec succès');
+    } catch (error) {
+      console.error('Erreur lors de l\'enregistrement:', error);
+    }
+  };
+
+  // Gestion des absences
+  const handleAddAbsence = (student: Student) => {
+    setCurrentStudent(student);
+    setSelectedSubject(user?.matiere[0] || '');
+    setShowAbsenceModal(true);
+  };
+
+  const saveAbsence = async () => {
+    if (!currentStudent || !selectedSubject) return;
+
+    try {
+      const newAbsence: Absence = {
+        date: absenceDate,
+        subject: selectedSubject,
+        justified: absenceJustified,
+        comment: absenceComment || ''
+      };
+
+      await updateStudent(currentStudent.email, {
+        absences: [...(currentStudent.absences || []), newAbsence]
+      });
+
+      setShowAbsenceModal(false);
+      setAbsenceComment('');
+      setAbsenceJustified(false);
+      Alert.alert('Succès', 'Absence enregistrée avec succès');
+    } catch (error) {
+      console.error('Erreur lors de l\'enregistrement:', error);
+    }
+  };
+
+  // Helpers
+  const getAcademicYear = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    return `${year}-${year + 1}`;
+  };
+
+  const getCurrentSemester = () => {
+    const month = new Date().getMonth();
+    return month >= 8 ? "S1" : "S2";
+  };
+
+  if (loading) {
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
-            {/* Menu Button */}
-            <TouchableOpacity
-                onPress={toggleMenu}
-                style={{
-                    position: "absolute",
-                    top: insets.top + 10,
-                    right: 20,
-                    zIndex: 1,
-                    backgroundColor: "#1A3F6F",
-                    borderRadius: 20,
-                    padding: 10,
-                    elevation: 5,
-                    shadowColor: "#FFD700",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.8,
-                    shadowRadius: 3,
+      <View style={[styles.center, { backgroundColor: "#0A1F3A" }]}>
+        <ActivityIndicator size="large" color="#FFD700" />
+      </View>
+    );
+  }
+
+  if (!user?.matiere?.length) {
+    return (
+      <View style={[styles.center, { backgroundColor: "#0A1F3A" }]}>
+        <Text style={styles.errorText}>
+          Aucune matière n'est assignée à votre compte.
+          Veuillez contacter l'administration.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
+      {/* Menu Button */}
+      <TouchableOpacity
+        onPress={toggleMenu}
+        style={{
+          position: "absolute",
+          top: insets.top + 10,
+          right: 20,
+          zIndex: 1,
+          backgroundColor: "#1A3F6F",
+          borderRadius: 20,
+          padding: 10,
+          elevation: 5,
+          shadowColor: "#FFD700",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.8,
+          shadowRadius: 3,
+        }}
+      >
+        <Icon name="menu" size={30} color="#FFD700" />
+      </TouchableOpacity>
+
+      {/* Drawer Menu */}
+      <Modal
+        visible={isMenuVisible}
+        transparent={true}
+        animationType="none"
+        onRequestClose={toggleMenu}
+      >
+        <Pressable
+          style={styles.modalBackgroundRight}
+          onPress={toggleMenu}
+        >
+          <Animated.View
+            style={[
+              styles.menuDrawerRight,
+              { transform: [{ translateX: slideAnim }] }
+            ]}
+          >
+            <View style={styles.menuHeader}>
+              <Text style={styles.menuHeaderText}>MENU PROFESSEUR</Text>
+            </View>
+
+            {[
+              { label: "🏠 Accueil", route: "/(tabs)/index" },
+              { label: "📊 Tableau de bord", route: "#" },
+              { label: "📝 Mon profil", route: "#" },
+            ].map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.menuItem}
+                onPress={() => {
+                  toggleMenu();
+                  if (item.route !== "#") {
+                    router.push(item.route);
+                  }
                 }}
+              >
+                <Text style={styles.menuText}>{item.label}</Text>
+                <Icon name="chevron-right" size={20} color="#FFD700" />
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              style={[styles.menuItem, { borderTopWidth: 1, borderTopColor: "#1A3F6F" }]}
+              onPress={handleLogout}
             >
-                <Icon name="menu" size={30} color="#FFD700" />
+              <Text style={[styles.menuText, { color: "#FF5555" }]}>
+                🚪 Se déconnecter
+              </Text>
             </TouchableOpacity>
+          </Animated.View>
+        </Pressable>
+      </Modal>
 
-            {/* Drawer Menu */}
-            <Modal
-                visible={isMenuVisible}
-                transparent={true}
-                animationType="none"
-                onRequestClose={toggleMenu}
-            >
-                <Pressable
-                    style={styles.modalBackgroundRight}
-                    onPress={toggleMenu}
+      {/* Main Content */}
+      <View style={styles.header}>
+        <View style={styles.avatarContainer}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {user?.name?.split(' ')
+                .filter((item) => item.length > 1)
+                .map((item) => item[0].toUpperCase())
+                .join('')}
+            </Text>
+          </View>
+          <View style={styles.glowEffect} />
+        </View>
+
+        <Text style={styles.title}>ESPACE PROFESSEUR</Text>
+        <Text style={styles.subtitle}>{user?.name}</Text>
+        <Text style={styles.subjectList}>
+          {user?.matiere?.join(' • ') || "Aucune matière assignée"}
+        </Text>
+
+        {/* Filter Section */}
+        <View style={styles.filterContainer}>
+          <View style={styles.filterRow}>
+            <View style={styles.filterPicker}>
+              <Text style={styles.filterLabel}>Année:</Text>
+              <Picker
+                selectedValue={selectedYear}
+                style={styles.picker}
+                dropdownIconColor="#FFD700"
+                onValueChange={setSelectedYear}
+              >
+                <Picker.Item label="Toutes années" value="" color="#FFF" />
+                <Picker.Item label="1ère année" value="1ère année" color="#FFF" />
+                <Picker.Item label="2ème année" value="2ème année" color="#FFF" />
+                <Picker.Item label="3ème année" value="3ème année" color="#FFF" />
+              </Picker>
+            </View>
+
+            <View style={styles.filterPicker}>
+              <Text style={styles.filterLabel}>Groupe:</Text>
+              <Picker
+                selectedValue={selectedGroup}
+                style={styles.picker}
+                dropdownIconColor="#FFD700"
+                onValueChange={setSelectedGroup}
+              >
+                <Picker.Item label="Tous groupes" value="" color="#FFF" />
+                <Picker.Item label="Groupe A" value="A" color="#FFF" />
+                <Picker.Item label="Groupe B" value="B" color="#FFF" />
+                <Picker.Item label="Groupe C" value="C" color="#FFF" />
+              </Picker>
+            </View>
+          </View>
+
+          <View style={styles.searchContainer}>
+            <Icon name="search" size={20} color="#FFD700" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Rechercher un étudiant..."
+              placeholderTextColor="#6D8EB4"
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+          </View>
+        </View>
+
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, currentTab === 'notes' && styles.activeTab]}
+            onPress={() => setCurrentTab('notes')}
+          >
+            <Text style={[styles.tabText, currentTab === 'notes' && styles.activeTabText]}>
+              Notes
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.tab, currentTab === 'absences' && styles.activeTab]}
+            onPress={() => setCurrentTab('absences')}
+          >
+            <Text style={[styles.tabText, currentTab === 'absences' && styles.activeTabText]}>
+              Absences
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Students List */}
+      <ScrollView style={styles.content}>
+        {filteredStudents.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Icon name="school" size={50} color="#1A3F6F" />
+            <Text style={styles.emptyStateText}>
+              {selectedYear || selectedGroup || searchText
+                ? "Aucun étudiant ne correspond aux critères de recherche"
+                : "Aucun étudiant disponible"}
+            </Text>
+          </View>
+        ) : (
+          filteredStudents.map((student) => (
+            <View key={student._id} style={styles.studentCard}>
+              <View style={styles.studentHeader}>
+                <Text style={styles.studentName}>{student.name}</Text>
+                <Text style={styles.studentInfo}>
+                  {student.anne_scolaire} - Groupe {student.group}
+                </Text>
+              </View>
+
+              {currentTab === 'notes' ? (
+                <TouchableOpacity 
+                  style={styles.addButton}
+                  onPress={() => handleAddGrade(student)}
                 >
-                    <Animated.View
-                        style={[
-                            styles.menuDrawerRight,
-                            { transform: [{ translateX: slideAnim }] }
-                        ]}
-                    >
-                        <View style={styles.menuHeader}>
-                            <Text style={styles.menuHeaderText}>MENU PROFESSEUR</Text>
-                        </View>
+                  <Text style={styles.addButtonText}>+ Ajouter notes</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity 
+                  style={styles.addButton}
+                  onPress={() => handleAddAbsence(student)}
+                >
+                  <Text style={styles.addButtonText}>+ Ajouter absence</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ))
+        )}
+      </ScrollView>
 
-                        {[
-                            { label: "🏠 Accueil", route: "/(tabs)/index" },
-                            { label: "📊 Tableau de bord", route: "#" },
-                            { label: "📝 Mon profil", route: "#" },
-                        ].map((item, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={styles.menuItem}
-                                onPress={() => {
-                                    toggleMenu();
-                                    // Si c'est une vraie route, naviguer vers elle
-                                    if (item.route !== "#") {
-                                        router.push(item.route as any);
-                                    }
-                                }}
-                            >
-                                <Text style={styles.menuText}>{item.label}</Text>
-                                <Icon name="chevron-right" size={20} color="#FFD700" />
-                            </TouchableOpacity>
-                        ))}
-
-                        <TouchableOpacity
-                            style={[styles.menuItem, { borderTopWidth: 1, borderTopColor: "#1A3F6F" }]}
-                            onPress={handleLogout}
-                        >
-                            <Text style={[styles.menuText, { color: "#FF5555" }]}>
-                                🚪 Se déconnecter
-                            </Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-                </Pressable>
-            </Modal>
-
-            {/* Grade Edit Modal */}
-            {/* Grade Edit Modal */}
-<Modal
-    visible={showGradeModal}
-    transparent={true}
-    animationType="fade"
-    onRequestClose={() => setShowGradeModal(false)}
->
-    <View style={styles.modalBackground}>
-        <View style={styles.modalContent}>
+      {/* Grade Modal */}
+      <Modal
+        visible={showGradeModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowGradeModal(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
-                {currentStudent?.name || "Étudiant"}
+              {currentStudent?.name || "Étudiant"}
             </Text>
 
             <Text style={styles.modalSubtitle}>
-                Groupe {currentStudent?.group || "-"} - {currentStudent?.anne_scolaire || "-"}
+              Groupe {currentStudent?.group || "-"} - {currentStudent?.anne_scolaire || "-"}
             </Text>
 
-            <Text style={styles.modalLabel}>Matière :</Text>
-            <Picker
+            <Text style={styles.modalLabel}>Matière:</Text>
+            <View style={styles.absencePickerContainer}>
+              <Picker
                 selectedValue={selectedSubject}
-                onValueChange={(itemValue) => setSelectedSubject(itemValue)}
-                style={styles.picker}
+                style={styles.absencePicker}
                 dropdownIconColor="#FFD700"
-            >
-                <Picker.Item label="Sélectionner une matière" value="" color="#FFF" />
-                {user?.matiere?.map((m, i) => (
-                    <Picker.Item key={i} label={m} value={m} color="#FFF" />
+                onValueChange={setSelectedSubject}
+              >
+                {user?.matiere?.map((subject, index) => (
+                  <Picker.Item key={index} label={subject} value={subject} color="#FFF" />
                 ))}
-            </Picker>
-
-            <View style={styles.gradeInputContainer}>
-                <Text style={styles.gradeLabel}>Contrôle Continu:</Text>
-                <TextInput
-                    style={styles.gradeInput}
-                    value={ccGrade}
-                    onChangeText={setCcGrade}
-                    placeholder="Note /20"
-                    keyboardType="numeric"
-                    placeholderTextColor="#6D8EB4"
-                />
+              </Picker>
             </View>
 
             <View style={styles.gradeInputContainer}>
-                <Text style={styles.gradeLabel}>Partiel:</Text>
-                <TextInput
-                    style={styles.gradeInput}
-                    value={partielGrade}
-                    onChangeText={setPartielGrade}
-                    placeholder="Note /20"
-                    keyboardType="numeric"
-                    placeholderTextColor="#6D8EB4"
-                />
+              <Text style={styles.gradeLabel}>Contrôle Continu:</Text>
+              <TextInput
+                style={styles.gradeInput}
+                value={ccGrade}
+                onChangeText={setCcGrade}
+                placeholder="Note /20"
+                keyboardType="numeric"
+                placeholderTextColor="#6D8EB4"
+              />
             </View>
 
             <View style={styles.gradeInputContainer}>
-                <Text style={styles.gradeLabel}>Projet:</Text>
-                <TextInput
-                    style={styles.gradeInput}
-                    value={projetGrade}
-                    onChangeText={setProjetGrade}
-                    placeholder="Note /20"
-                    keyboardType="numeric"
-                    placeholderTextColor="#6D8EB4"
-                />
+              <Text style={styles.gradeLabel}>Partiel:</Text>
+              <TextInput
+                style={styles.gradeInput}
+                value={partielGrade}
+                onChangeText={setPartielGrade}
+                placeholder="Note /20"
+                keyboardType="numeric"
+                placeholderTextColor="#6D8EB4"
+              />
+            </View>
+
+            <View style={styles.gradeInputContainer}>
+              <Text style={styles.gradeLabel}>Projet:</Text>
+              <TextInput
+                style={styles.gradeInput}
+                value={projetGrade}
+                onChangeText={setProjetGrade}
+                placeholder="Note /20"
+                keyboardType="numeric"
+                placeholderTextColor="#6D8EB4"
+              />
             </View>
 
             <View style={styles.modalButtons}>
-                <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: "#D32F2F" }]}
-                    onPress={() => setShowGradeModal(false)}
-                >
-                    <Text style={styles.buttonText}>Annuler</Text>
-                </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#D32F2F" }]}
+                onPress={() => setShowGradeModal(false)}
+              >
+                <Text style={styles.buttonText}>Annuler</Text>
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: "#2E7D32" }]}
-                    onPress={saveGrade}
-                >
-                    <Text style={styles.buttonText}>Enregistrer</Text>
-                </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#2E7D32" }]}
+                onPress={saveGrade}
+              >
+                <Text style={styles.buttonText}>Enregistrer</Text>
+              </TouchableOpacity>
             </View>
+          </View>
         </View>
-    </View>
-</Modal>
+      </Modal>
 
-            {/* Main Content */}
-            <View style={styles.header}>
-                <View style={styles.avatarContainer}>
-                    <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>
-                        {user?.name?.split(' ')
-                        .filter((item: string | any[]) => item.length > 1)
-                        .map((item) => item[1].toUpperCase())
-                        .join('')}
+      {/* Absence Modal */}
+      <Modal
+        visible={showAbsenceModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAbsenceModal(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              Ajouter une absence
+            </Text>
 
-                        </Text>
-                    </View>
-                    <View style={styles.glowEffect} />
-                </View>
+            <Text style={styles.modalSubtitle}>
+              {currentStudent?.name || "Étudiant"} - Groupe {currentStudent?.group || "-"}
+            </Text>
 
-                <Text style={styles.title}>ESPACE PROFESSEUR</Text>
-                <Text style={styles.subtitle}>{user?.name} - {user?.age} ans</Text>
+            <Text style={styles.modalLabel}>Matière:</Text>
+            <View style={styles.absencePickerContainer}>
+              <Picker
+                selectedValue={selectedSubject}
+                style={styles.absencePicker}
+                dropdownIconColor="#FFD700"
+                onValueChange={setSelectedSubject}
+              >
+                {user?.matiere?.map((subject, index) => (
+                  <Picker.Item key={index} label={subject} value={subject} color="#FFF" />
+                ))}
+              </Picker>
             </View>
 
-            {/* Navigation Tabs */}
-            <View style={styles.tabContainer}>
-                <TouchableOpacity
-                    style={[styles.tab, currentTab === 'notes' && styles.activeTab]}
-                    onPress={() => setCurrentTab('notes')}
-                >
-                    <Icon name="assignment" size={20} color={currentTab === 'notes' ? "#FFD700" : "#6D8EB4"} />
-                    <Text style={[styles.tabText, currentTab === 'notes' && styles.activeTabText]}>Notes</Text>
-                </TouchableOpacity>
+            <Text style={styles.modalLabel}>Date (AAAA-MM-JJ):</Text>
+            <TextInput
+              style={styles.dateInput}
+              value={absenceDate}
+              onChangeText={setAbsenceDate}
+              placeholder="2023-01-01"
+              placeholderTextColor="#6D8EB4"
+            />
 
-                <TouchableOpacity
-                    style={[styles.tab, currentTab === 'absences' && styles.activeTab]}
-                    onPress={() => setCurrentTab('absences')}
-                >
-                    <Icon name="event-busy" size={20} color={currentTab === 'absences' ? "#FFD700" : "#6D8EB4"} />
-                    <Text style={[styles.tabText, currentTab === 'absences' && styles.activeTabText]}>Absences</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.tab, currentTab === 'annonces' && styles.activeTab]}
-                    onPress={() => setCurrentTab('annonces')}
-                >
-                    <Icon name="email" size={20} color={currentTab === 'annonces' ? "#FFD700" : "#6D8EB4"} />
-                    <Text style={[styles.tabText, currentTab === 'annonces' && styles.activeTabText]}>Annonces</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.tab, currentTab === 'suggestions' && styles.activeTab]}
-                    onPress={() => setCurrentTab('suggestions')}
-                >
-                    <Icon name="feedback" size={20} color={currentTab === 'suggestions' ? "#FFD700" : "#6D8EB4"} />
-                    <Text style={[styles.tabText, currentTab === 'suggestions' && styles.activeTabText]}>Suggestions</Text>
-                </TouchableOpacity>
+            <View style={styles.checkboxContainer}>
+              <Text style={styles.modalLabel}>Justifiée:</Text>
+              <TouchableOpacity
+                style={[styles.checkbox, absenceJustified && styles.checkboxChecked]}
+                onPress={() => setAbsenceJustified(!absenceJustified)}
+              >
+                {absenceJustified && <Text style={styles.checkboxIcon}>✓</Text>}
+              </TouchableOpacity>
             </View>
 
-            {/* Filter Section */}
-            <View style={styles.filterContainer}>
-  {/* Picker Année */}
-  <View style={styles.pickerContainer}>
-    <Picker
-      selectedValue={selectedYear}
-      style={styles.picker}
-      dropdownIconColor="#FFD700"
-      onValueChange={(itemValue) => {
-        setSelectedYear(itemValue);
-        setSelectedGroup('');
-      }}
-    >
-      <Picker.Item label="Sélectionner une année" value="" color="#FFF" />
-      {yearGroups && Object.keys(yearGroups).length > 0 ? (
-        Object.keys(yearGroups).map((year) => (
-          <Picker.Item key={year} label={year} value={year} color="#FFF" />
-        ))
-      ) : (
-        <Picker.Item label="Aucune année disponible" value="none" color="#AAA" />
-      )}
-    </Picker>
-  </View>
-    <View style={styles.pickerContainer}>
-    <Picker
-  selectedValue={selectedGroup}
-  style={styles.picker}
-  dropdownIconColor="#FFD700"
-  enabled={!!selectedYear && selectedYear in yearGroups}
-  onValueChange={(itemValue) => setSelectedGroup(itemValue)}
->
-  <Picker.Item label="Sélectionner un groupe" value="" color="#FFF" />
-  {selectedYear && (selectedYear in yearGroups) ? (
-    yearGroups[selectedYear as YearGroup].map((group: string) => (
-      <Picker.Item key={group} label={group} value={group} color="#FFF" />
-    ))
-  ) : (
-    <Picker.Item label="Aucun groupe disponible" value="" color="#AAA" />
-  )}
-</Picker>
-  </View>
-</View>
+            <Text style={styles.modalLabel}>Commentaire:</Text>
+            <TextInput
+              style={styles.commentInput}
+              value={absenceComment}
+              onChangeText={setAbsenceComment}
+              placeholder="Commentaire (optionnel)"
+              placeholderTextColor="#6D8EB4"
+              multiline={true}
+              numberOfLines={3}
+            />
 
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#D32F2F" }]}
+                onPress={() => setShowAbsenceModal(false)}
+              >
+                <Text style={styles.buttonText}>Annuler</Text>
+              </TouchableOpacity>
 
-            {/* Content Area */}
-            <ScrollView style={styles.contentContainer}>
-                {currentTab === 'notes' && (
-                    <View>
-                        <Text style={styles.contentTitle}>GESTION DES NOTES</Text>
-
-                        {filteredStudents.length > 0 ? (
-                            <View style={styles.tableContainer}>
-                                {/* Table Header */}
-                                <View style={styles.tableHeader}>
-                                    <Text style={[styles.headerCell, { flex: 2.5 }]}>Étudiant</Text>
-                                    {user.matiere && user.matiere.map((subject, index) => (
-                                        <Text key={index} style={styles.headerCell}>{subject}</Text>
-                                    ))}
-                                    <Text style={styles.headerCell}>Actions</Text>
-                                </View>
-                                
-                                {/* Table Rows */}
-                                {filteredStudents.map((student) => (
-                                    <View key={student._id} style={styles.tableRow}>
-                                        <View style={[styles.tableCell, { flex: 2.5 }]}>
-                                            <Text style={styles.studentNameInTable}>{student.name}</Text>
-                                            <Text style={styles.studentEmailInTable}>{student.email}</Text>
-                                        </View>
-                                        
-                                        {user.matiere && user.matiere.map((subject, index) => (
-                                            <TouchableOpacity 
-                                                key={index} 
-                                                style={styles.tableCell}
-                                                onPress={() => handleEditGrade(student._id, subject)}
-                                            >
-                                                <Text style={styles.gradeText}>
-                                                    {calculateAverage(student.grades, subject)}
-                                                </Text>
-                                                <Icon name="edit" size={16} color="#FFD700" />
-                                            </TouchableOpacity>
-                                        ))}
-                                        
-                                        <View style={styles.tableCell}>
-                                            <TouchableOpacity
-                                                style={styles.actionIconButton}
-                                                onPress={() => student && student._id && handleEditGrade(student._id, user?.matiere?.[0])}
-                                            >
-                                                <Icon name="dashboard" size={20} color="#FFD700" />
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                ))}
-                            </View>
-                        ) : (
-                            <View style={styles.emptyState}>
-                                <Icon name="search-off" size={60} color="#6D8EB4" />
-                                <Text style={styles.emptyStateText}>
-                                    Aucun étudiant trouvé
-                                </Text>
-                                <Text style={styles.emptyStateSubtext}>
-                                    Veuillez modifier vos critères de recherche
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-                )}
-
-                {currentTab === 'absences' && (
-                    <View>
-                        <Text style={styles.contentTitle}>GESTION DES ABSENCES</Text>
-
-                        {filteredStudents.length > 0 ? (
-                            <View style={styles.tableContainer}>
-                                {/* Table Header */}
-                                <View style={styles.tableHeader}>
-                                    <Text style={[styles.headerCell, { flex: 2 }]}>Étudiant</Text>
-                                    <Text style={styles.headerCell}>Absences</Text>
-                                    <Text style={styles.headerCell}>Actions</Text>
-                                </View>
-                                
-                                {/* Table Rows */}
-                                {filteredStudents.map((student) => (
-                                    <View key={student._id} style={styles.tableRow}>
-                                        <View style={[styles.tableCell, { flex: 2 }]}>
-                                            <Text style={styles.studentNameInTable}>{student.name}</Text>
-                                            <Text style={styles.studentEmailInTable}>{student.email}</Text>
-                                        </View>
-                                        
-                                        <View style={styles.tableCell}>
-                                        <Text
-                                             style={[
-                                                  styles.absenceCount,
-                                                    (student.absences ?? 0) > 2 ? styles.highAbsences : styles.lowAbsences
-                                     ]}
-                                 >
-                                                     {(student.absences ?? 0).toString()}
-                                        </Text>
-
-                                        </View>
-                                        
-                                        <View style={styles.tableCell}>
-                                            <TouchableOpacity
-                                                style={styles.absenceActionButton}
-                                                onPress={() => handleAddAbsence(student._id)}
-                                            >
-                                                <Icon name="add-circle" size={18} color="#FFD700" />
-                                                <Text style={styles.absenceActionButtonText}>Ajouter</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                ))}
-                            </View>
-                        ) : (
-                            <View style={styles.emptyState}>
-                                <Icon name="search-off" size={60} color="#6D8EB4" />
-                                <Text style={styles.emptyStateText}>
-                                    Aucun étudiant trouvé
-                                </Text>
-                                <Text style={styles.emptyStateSubtext}>
-                                    Veuillez modifier vos critères de recherche
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-                )}
-
-                {currentTab === 'annonces' && (
-                    <View>
-                        <Text style={styles.contentTitle}>ENVOI D'ANNONCES</Text>
-                        
-                        <View style={styles.formContainer}>
-                            <Text style={styles.formLabel}>Destinataires</Text>
-                            <View style={styles.recipientInfo}>
-                                <Icon name="people" size={20} color="#FFD700" />
-                                <Text style={styles.recipientText}>
-                                    {selectedYear && selectedGroup 
-                                        ? `${selectedYear}  ${selectedGroup}` 
-                                        : "Veuillez sélectionner un groupe"}
-                                </Text>
-                            </View>
-
-                            <Text style={styles.formLabel}>Sujet</Text>
-                            <TextInput
-                                style={styles.textInput}
-                                placeholder="Entrez le sujet de l'email..."
-                                placeholderTextColor="#6D8EB4"
-                                value={emailSubject}
-                                onChangeText={setEmailSubject}
-                            />
-
-                            <Text style={styles.formLabel}>Contenu</Text>
-                            <TextInput
-                                style={[styles.textInput, styles.multilineInput]}
-                                placeholder="Rédigez votre message..."
-                                placeholderTextColor="#6D8EB4"
-                                multiline={true}
-                                numberOfLines={5}
-                                textAlignVertical="top"
-                                value={emailBody}
-                                onChangeText={setEmailBody}
-                            />
-
-                            <TouchableOpacity 
-                                style={[
-                                    styles.sendButton,
-                                    (!selectedGroup || !emailSubject || !emailBody) && styles.disabledButton
-                                ]}
-                                onPress={sendEmail}
-                                disabled={!selectedGroup || !emailSubject || !emailBody}
-                            >
-                                <Icon name="send" size={20} color="#0A1F3A" />
-                                <Text style={styles.sendButtonText}>Envoyer</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.infoCard}>
-                            <Text style={styles.infoCardTitle}>Note</Text>
-                            <Text style={styles.infoCardText}>
-                                Les emails seront envoyés à tous les étudiants du groupe sélectionné.
-                                Assurez-vous de vérifier votre message avant l'envoi.
-                            </Text>
-                        </View>
-                    </View>
-                )}
-
-                {currentTab === 'suggestions' && (
-                    <View>
-                        <Text style={styles.contentTitle}>SUGGESTIONS</Text>
-                        
-                        <View style={styles.formContainer}>
-                            <Text style={styles.formLabel}>Suggérez une amélioration</Text>
-                            <Text style={styles.formSubLabel}>
-                                Vos suggestions seront transmises de manière anonyme à l'administration
-                            </Text>
-
-                            <TextInput
-                                style={[styles.textInput, styles.multilineInput]}
-                                placeholder="Partagez vos idées pour améliorer l'application ou le système éducatif..."
-                                placeholderTextColor="#6D8EB4"
-                                multiline={true}
-                                numberOfLines={8}
-                                textAlignVertical="top"
-                                value={suggestionText}
-                                onChangeText={setSuggestionText}
-                            />
-
-                            <TouchableOpacity 
-                                style={[
-                                    styles.sendButton,
-                                    !suggestionText && styles.disabledButton
-                                ]}
-                                onPress={sendSuggestion}
-                                disabled={!suggestionText}
-                            >
-                                <Icon name="lightbulb" size={20} color="#0A1F3A" />
-                                <Text style={styles.sendButtonText}>Envoyer la suggestion</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.infoCard}>
-                            <Text style={styles.infoCardTitle}>Confidentialité</Text>
-                            <Text style={styles.infoCardText}>
-                                Toutes les suggestions sont envoyées de manière anonyme.
-                                Votre identité ne sera pas révélée à l'administration.
-                            </Text>
-                        </View>
-                    </View>
-                )}
-            </ScrollView>
-
-            {/* Floating Action Button for quick actions */}
-            <TouchableOpacity
-                style={styles.floatingButton}
-                onPress={() => Alert.alert(
-                    "Actions rapides",
-                    "Choisissez une action",
-                    [
-                        {
-                            text: "Exporter les notes",
-                            onPress: () => Alert.alert("Export", "Les notes ont été exportées avec succès")
-                        },
-                        {
-                            text: "Importer des données",
-                            onPress: () => Alert.alert("Import", "Fonctionnalité à venir")
-                        },
-                        { text: "Annuler", style: "cancel" }
-                    ]
-                )}
-            >
-                <Icon name="add" size={30} color="#0A1F3A" />
-            </TouchableOpacity>
-        </SafeAreaView>
-    );
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#2E7D32" }]}
+                onPress={saveAbsence}
+              >
+                <Text style={styles.buttonText}>Enregistrer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    center: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    header: {
-        paddingVertical: 20,
-        paddingHorizontal: 15,
-        alignItems: "center",
-        backgroundColor: "#0F2A4A",
-        borderBottomWidth: 1,
-        borderBottomColor: "#1A3F6F",
-    },
-    avatarContainer: {
-        position: 'relative',
-        width: 70,
-        height: 70,
-        marginBottom: 10,
-    },
-    avatar: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        backgroundColor: "#1A3F6F",
-        justifyContent: "center",
-        alignItems: "center",
-        borderWidth: 2,
-        borderColor: "#FFD700",
-        shadowColor: "#FFD700",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.6,
-        shadowRadius: 10,
-        elevation: 8,
-        zIndex: 2,
-    },
-    glowEffect: {
-        position: 'absolute',
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: 'rgba(255, 215, 0, 0.2)',
-        top: -5,
-        left: -5,
-        zIndex: 1,
-    },
-    avatarText: {
-        fontSize: 24,
-        color: "#FFD700",
-        fontWeight: "bold",
-    },
-    title: {
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#FFD700",
-        textAlign: "center",
-        marginBottom: 5,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: "#B4C6E1",
-        textAlign: "center",
-    },
-    tabContainer: {
-        flexDirection: "row",
-        backgroundColor: "#0F2A4A",
-        paddingHorizontal: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: "#1A3F6F",
-    },
-    tab: {
-        flex: 1,
-        paddingVertical: 15,
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "row",
-        gap: 8,
-    },
-    activeTab: {
-        borderBottomWidth: 3,
-        borderBottomColor: "#FFD700",
-    },
-    tabText: {
-        fontSize: 14,
-        color: "#6D8EB4",
-    },
-    activeTabText: {
-        color: "#FFD700",
-        fontWeight: "bold",
-    },
-    filterContainer: {
-        flexDirection: "row",
-        padding: 10,
-        backgroundColor: "#0A1F3A",
-    },
-    pickerContainer: {
-        flex: 1,
-        marginHorizontal: 5,
-        backgroundColor: "#1A3F6F",
-        borderRadius: 8,
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: "#2A5597",
-    },
-    picker: {
-        height: 50,
-        color: "#FFF",
-        backgroundColor: "#0F2A4A",
-    },
-    pickerItem: {
-        backgroundColor: "#0F2A4A",
-        color: "#FFF",
-    },
-    
-    pickerDropdown: {
-        backgroundColor: "#0F2A4A",
-        borderWidth: 1,
-        borderColor: "#FFD700",
-    },
-    searchContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 10,
-        backgroundColor: "#0A1F3A",
-    },
-    searchIcon: {
-        marginHorizontal: 10,
-    },
-    searchInput: {
-        flex: 1,
-        height: 50,
-        backgroundColor: "#1A3F6F",
-        color: "#FFF",
-        borderRadius: 8,
-        paddingHorizontal: 15,
-        fontSize: 16,
-        borderWidth: 1,
-        borderColor: "#2A5597",
-    },
-    contentContainer: {
-        flex: 1,
-        backgroundColor: "#0A1F3A",
-        paddingHorizontal: 10,
-        paddingVertical: 15,
-    },
-    contentTitle: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#FFD700",
-        marginBottom: 15,
-        textAlign: "center",
-    },
-    tableContainer: {
-        backgroundColor: "#0F2A4A",
-        borderRadius: 10,
-        overflow: "hidden",
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: "#1A3F6F",
-    },
-    tableHeader: {
-        flexDirection: "row",
-        backgroundColor: "#1A3F6F",
-        paddingVertical: 12,
-        paddingHorizontal: 8,
-    },
-    headerCell: {
-        flex: 1,
-        color: "#FFD700",
-        fontWeight: "bold",
-        fontSize: 14,
-        textAlign: "center",
-    },
-    tableRow: {
-        flexDirection: "row",
-        borderBottomWidth: 1,
-        borderBottomColor: "#1A3F6F",
-        paddingVertical: 10,
-        paddingHorizontal: 8,
-    },
-    tableCell: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 5,
-    },
-    studentNameInTable: {
-        fontSize: 14,
-        color: "#FFF",
-        fontWeight: "bold",
-        textAlign: "left",
-    },
-    studentEmailInTable: {
-        fontSize: 12,
-        color: "#6D8EB4",
-        textAlign: "left",
-    },
-    gradeText: {
-        fontSize: 16,
-        color: "#FFF",
-        fontWeight: "bold",
-        marginBottom: 5,
-    },
-    actionIconButton: {
-        padding: 8,
-        backgroundColor: "#1A3F6F",
-        borderRadius: 20,
-        width: 40,
-        height: 40,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    absenceCount: {
-        fontSize: 18,
-        fontWeight: "bold",
-        borderRadius: 15,
-        width: 30,
-        height: 30,
-        textAlign: "center",
-        lineHeight: 30,
-    },
-    lowAbsences: {
-        color: "#4CAF50",
-        backgroundColor: "rgba(76, 175, 80, 0.2)",
-    },
-    highAbsences: {
-        color: "#F44336",
-        backgroundColor: "rgba(244, 67, 54, 0.2)",
-    },
-    absenceActionButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "#1A3F6F",
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        borderRadius: 15,
-        gap: 5,
-    },
-    absenceActionButtonText: {
-        color: "#FFD700",
-        fontSize: 12,
-        fontWeight: "bold",
-    },
-    emptyState: {
-        alignItems: "center",
-        justifyContent: "center",
-        paddingVertical: 50,
-    },
-    emptyStateText: {
-        color: "#FFF",
-        fontSize: 18,
-        fontWeight: "bold",
-        marginTop: 15,
-    },
-    emptyStateSubtext: {
-        color: "#6D8EB4",
-        fontSize: 14,
-        marginTop: 5,
-        textAlign: "center",
-    },
-    formContainer: {
-        backgroundColor: "#0F2A4A",
-        borderRadius: 10,
-        padding: 15,
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: "#1A3F6F",
-    },
-    formLabel: {
-        fontSize: 16,
-        color: "#FFD700",
-        marginBottom: 8,
-        marginTop: 15,
-    },
-    formDescription: {
-        fontSize: 14,
-        color: "#B4C6E1",
-        marginBottom: 15,
-        lineHeight: 20,
-    },
-    formInput: {
-        backgroundColor: "#1A3F6F",
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
-        color: "#FFF",
-        borderWidth: 1,
-        borderColor: "#2A5597",
-    },
-    multilineInput: {
-        minHeight: 120,
-        textAlignVertical: "top",
-    },
-    submitButton: {
-        backgroundColor: "#2A5597",
-        borderRadius: 25,
-        padding: 15,
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        marginTop: 20,
-        gap: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        elevation: 8,
-    },
-    submitButtonText: {
-        color: "#FFF",
-        fontWeight: "bold",
-        fontSize: 16,
-    },
-    statsContainer: {
-        flexDirection: "row",
-        backgroundColor: "#0F2A4A",
-        paddingVertical: 15,
-        paddingHorizontal: 10,
-        borderTopWidth: 1,
-        borderTopColor: "#1A3F6F",
-    },
-    statItem: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    statValue: {
-        fontSize: 20,
-        fontWeight: "bold",
-        color: "#FFD700",
-    },
-    statLabel: {
-        fontSize: 14,
-        color: "#6D8EB4",
-        marginTop: 5,
-    },
-    modalBackgroundRight: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.6)",
-    },
-    menuDrawerRight: {
-        position: "absolute",
-        right: 0,
-        width: 300,
-        height: "100%",
-        backgroundColor: "#0A1F3A",
-        borderLeftWidth: 1,
-        borderLeftColor: "#1A3F6F",
-    },
-    menuHeader: {
-        padding: 20,
-        backgroundColor: "#0F2A4A",
-        borderBottomWidth: 1,
-        borderBottomColor: "#1A3F6F",
-        alignItems: "center",
-    },
-    menuHeaderText: {
-        color: "#FFD700",
-        fontSize: 18,
-        fontWeight: "bold",
-    },
-    menuItem: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: "#1A3F6F",
-    },
-    menuText: {
-        color: "#FFF",
-        fontSize: 16,
-    },
-    modalBackground: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.6)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    modalContent: {
-        backgroundColor: "#0F2A4A",
-        borderRadius: 15,
-        width: "90%",
-        padding: 20,
-        borderWidth: 1,
-        borderColor: "#1A3F6F",
-    },
-    modalTitle: {
-        fontSize: 18,
-        color: "#FFD700",
-        fontWeight: "bold",
-        textAlign: "center",
-        marginBottom: 5,
-    },
-    modalSubtitle: {
-        fontSize: 14,
-        color: "#B4C6E1",
-        textAlign: "center",
-        marginBottom: 15,
-    },
-    modalLabel: {
-        fontSize: 16,
-        color: "#FFD700",
-        marginBottom: 20,
-        textAlign: "center",
-    },
-    gradeInputContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 15,
-    },
-    gradeLabel: {
-        flex: 1,
-        fontSize: 14,
-        color: "#FFF",
-    },
-    gradeInput: {
-        flex: 1,
-        backgroundColor: "#1A3F6F",
-        color: "#FFF",
-        borderRadius: 8,
-        padding: 10,
-        borderWidth: 1,
-        borderColor: "#2A5597",
-    },
-    modalButtons: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 20,
-    },
-    modalButton: {
-        flex: 1,
-        padding: 12,
-        borderRadius: 8,
-        alignItems: "center",
-        marginHorizontal: 5,
-    },
-    buttonText: {
-        color: "#FFF",
-        fontWeight: "bold",
-    },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
+    backgroundColor: "#0A1F3A",
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1A3F6F",
+  },
+  avatarContainer: {
+    alignItems: "center",
+    marginTop: 10,
+    position: "relative",
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#1A3F6F",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FFD700",
+    elevation: 5,
+  },
+  glowEffect: {
+    position: "absolute",
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    backgroundColor: "rgba(255, 215, 0, 0.2)",
+  },
+  avatarText: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#FFD700",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFD700",
+    textAlign: "center",
+    marginTop: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginTop: 5,
+  },
+  subjectList: {
+    fontSize: 14,
+    color: "#6D8EB4",
+    textAlign: "center",
+    marginTop: 5,
+  },
+  filterContainer: {
+    marginTop: 15,
+    paddingHorizontal: 10,
+  },
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  filterPicker: {
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  filterLabel: {
+    color: "#FFD700",
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  picker: {
+    backgroundColor: "#1A3F6F",
+    color: "#FFFFFF",
+    height: 40,
+    borderRadius: 5,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1A3F6F",
+    borderRadius: 10,
+    marginTop: 10,
+    paddingHorizontal: 10,
+    height: 40,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 14,
+    height: 40,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    marginTop: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1A3F6F",
+  },
+  tab: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  activeTab: {
+    borderBottomWidth: 3,
+    borderBottomColor: "#FFD700",
+  },
+  tabText: {
+    color: "#6D8EB4",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  activeTabText: {
+    color: "#FFD700",
+    fontWeight: "bold",
+  },
+  content: {
+    flex: 1,
+    backgroundColor: "#0A1F3A",
+    paddingHorizontal: 15,
+    paddingTop: 15,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(26, 63, 111, 0.3)",
+    borderRadius: 10,
+    paddingVertical: 40,
+    marginTop: 20,
+  },
+  emptyStateText: {
+    color: "#6D8EB4",
+    fontSize: 16,
+    marginTop: 10,
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+  studentCard: {
+    backgroundColor: "#1A3F6F",
+    borderRadius: 10,
+    marginBottom: 15,
+    padding: 15,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  studentHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#0A1F3A",
+    paddingBottom: 10,
+    marginBottom: 10,
+  },
+  studentName: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  studentInfo: {
+    color: "#6D8EB4",
+    fontSize: 14,
+    marginTop: 3,
+  },
+  addButton: {
+    backgroundColor: "#32507B",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#e74c3c",
+    textAlign: "center",
+    margin: 20,
+  },
+  modalBackgroundRight: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  menuDrawerRight: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 270,
+    backgroundColor: "#0A1F3A",
+    padding: 20,
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  menuHeader: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#FFD700",
+    paddingBottom: 15,
+    marginBottom: 20,
+  },
+  menuHeaderText: {
+    color: "#FFD700",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  menuItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  menuText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#1A3F6F",
+    borderRadius: 10,
+    padding: 20,
+    width: "90%",
+    maxWidth: 450,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  modalTitle: {
+    color: "#FFD700",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    marginBottom: 15,
+  },
+  modalLabel: {
+    color: "#FFD700",
+    fontSize: 16,
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  gradeInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginVertical: 8,
+  },
+  gradeLabel: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    flex: 1,
+  },
+  gradeInput: {
+    backgroundColor: "#32507B",
+    borderRadius: 5,
+    padding: 10,
+    color: "#FFFFFF",
+    width: 100,
+    textAlign: "center",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    minWidth: 100,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  absencePickerContainer: {
+    backgroundColor: "#32507B",
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  absencePicker: {
+    height: 40,
+    color: "#FFFFFF",
+  },
+  dateInput: {
+    backgroundColor: "#32507B",
+    borderRadius: 5,
+    padding: 10,
+    color: "#FFFFFF",
+    marginBottom: 15,
+  },
+  commentInput: {
+    backgroundColor: "#32507B",
+    borderRadius: 5,
+    padding: 10,
+    color: "#FFFFFF",
+    marginBottom: 15,
+    height: 80,
+    textAlignVertical: "top",
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#3498db",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 10,
+  },
+  checkboxChecked: {
+    backgroundColor: "#3498db",
+  },
+  checkboxIcon: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
 });
