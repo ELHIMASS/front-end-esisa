@@ -337,6 +337,12 @@ app.put("/api/students/:id/absence", async (req, res) => {
     }
   });
 
+  // 🔽 Importer ta route email
+const emailRoutes = require("./routes/emailRoute");
+
+// 🔽 Utiliser la route (chemin complet sera /api/send-email)
+app.use("/api", emailRoutes);
+
 // Lancer le serveur
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Serveur lancé sur le port ${PORT}`));

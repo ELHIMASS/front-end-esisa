@@ -74,6 +74,7 @@ export default function ProfessorDashboard() {
   // États pour les modals
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [showAbsenceModal, setShowAbsenceModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [ccGrade, setCcGrade] = useState('');
@@ -83,6 +84,11 @@ export default function ProfessorDashboard() {
   const [absenceComment, setAbsenceComment] = useState('');
   const [absenceJustified, setAbsenceJustified] = useState(false);
   const [isMenuVisible, setMenuVisible] = useState(false);
+  
+  // États pour l'email
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -113,6 +119,7 @@ export default function ProfessorDashboard() {
     };
     loadData();
   }, []);
+  
   const playSound = async (file) => {
     try {
       const { sound } = await Audio.Sound.createAsync(file);
@@ -178,6 +185,54 @@ export default function ProfessorDashboard() {
     }
   };
   
+  const sendEmailToGroupOrYear = async () => {
+    if (!emailSubject.trim() || !emailMessage.trim()) {
+      Alert.alert("Données manquantes", "Veuillez saisir un sujet et un message.");
+      return;
+    }
+    
+    if (filteredStudents.length === 0) {
+      Alert.alert("Aucun destinataire", "Aucun étudiant trouvé pour ce filtre.");
+      return;
+    }
+    
+    try {
+      setSendingEmail(true);
+      await playSound(require("../../assets/audio/done.mp3"));
+      
+      const recipients = filteredStudents.map((student) => student.email);
+      
+      const response = await fetch(`${API_URL}/send-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipients,
+          subject: emailSubject,
+          message: emailMessage
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de l'envoi");
+      }
+      
+      await playSound(require("../../assets/audio/done.mp3"));
+      Alert.alert(
+        "Succès", 
+        `Email envoyé à ${recipients.length} étudiant${recipients.length > 1 ? 's' : ''} !`
+      );
+      
+      setShowEmailModal(false);
+      setEmailSubject('');
+      setEmailMessage('');
+    } catch (error) {
+      console.error("Erreur d'envoi :", error);
+      Alert.alert("Erreur", error.message || "Impossible d'envoyer l'email");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   // Mise à jour d'un étudiant
   const updateStudent = async (email: string, updateData: Partial<Student>) => {
@@ -324,6 +379,22 @@ export default function ProfessorDashboard() {
     );
   }
 
+  const getFilterDescription = () => {
+    let description = '';
+    
+    if (selectedYear && selectedGroup) {
+      description = `${selectedYear} - Groupe ${selectedGroup}`;
+    } else if (selectedYear) {
+      description = selectedYear;
+    } else if (selectedGroup) {
+      description = `Groupe ${selectedGroup}`;
+    } else {
+      description = 'Tous les étudiants';
+    }
+    
+    return description;
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
       {/* Menu Button */}
@@ -466,6 +537,17 @@ export default function ProfessorDashboard() {
               onChangeText={setSearchText}
             />
           </View>
+          
+          {/* Email Button */}
+          <TouchableOpacity 
+            style={styles.emailButton}
+            onPress={() => setShowEmailModal(true)}
+          >
+            <Icon name="email" size={18} color="#FFD700" style={styles.emailIcon} />
+            <Text style={styles.emailButtonText}>
+              Envoyer un email aux étudiants filtrés
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Tab Navigation */}
@@ -502,32 +584,40 @@ export default function ProfessorDashboard() {
             </Text>
           </View>
         ) : (
-          filteredStudents.map((student) => (
-            <View key={student._id} style={styles.studentCard}>
-              <View style={styles.studentHeader}>
-                <Text style={styles.studentName}>{student.name}</Text>
-                <Text style={styles.studentInfo}>
-                  {student.anne_scolaire} - Groupe {student.group}
-                </Text>
-              </View>
-
-              {currentTab === 'notes' ? (
-                <TouchableOpacity 
-                  style={styles.addButton}
-                  onPress={() => handleAddGrade(student)}
-                >
-                  <Text style={styles.addButtonText}>+ Ajouter notes</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity 
-                  style={styles.addButton}
-                  onPress={() => handleAddAbsence(student)}
-                >
-                  <Text style={styles.addButtonText}>+ Ajouter absence</Text>
-                </TouchableOpacity>
-              )}
+          <>
+            <View style={styles.resultsHeader}>
+              <Text style={styles.resultsText}>
+                {filteredStudents.length} étudiant{filteredStudents.length > 1 ? 's' : ''} trouvé{filteredStudents.length > 1 ? 's' : ''}
+              </Text>
             </View>
-          ))
+            
+            {filteredStudents.map((student) => (
+              <View key={student._id} style={styles.studentCard}>
+                <View style={styles.studentHeader}>
+                  <Text style={styles.studentName}>{student.name}</Text>
+                  <Text style={styles.studentInfo}>
+                    {student.anne_scolaire} - Groupe {student.group}
+                  </Text>
+                </View>
+
+                {currentTab === 'notes' ? (
+                  <TouchableOpacity 
+                    style={styles.addButton}
+                    onPress={() => handleAddGrade(student)}
+                  >
+                    <Text style={styles.addButtonText}>+ Ajouter notes</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity 
+                    style={styles.addButton}
+                    onPress={() => handleAddAbsence(student)}
+                  >
+                    <Text style={styles.addButtonText}>+ Ajouter absence</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
+          </>
         )}
       </ScrollView>
 
@@ -696,356 +786,447 @@ export default function ProfessorDashboard() {
           </View>
         </View>
       </Modal>
+      
+      {/* Email Modal */}
+      <Modal
+        visible={showEmailModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => !sendingEmail && setShowEmailModal(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              Envoyer un email
+            </Text>
+
+            <Text style={styles.modalSubtitle}>
+              Destinataires: {getFilterDescription()} ({filteredStudents.length} étudiant{filteredStudents.length > 1 ? 's' : ''})
+            </Text>
+
+            <Text style={styles.modalLabel}>Sujet:</Text>
+            <TextInput
+              style={styles.dateInput}
+              value={emailSubject}
+              onChangeText={setEmailSubject}
+              placeholder="Sujet de l'email"
+              placeholderTextColor="#6D8EB4"
+              editable={!sendingEmail}
+            />
+
+            <Text style={styles.modalLabel}>Message:</Text>
+            <TextInput
+              style={[styles.commentInput, { height: 120 }]}
+              value={emailMessage}
+              onChangeText={setEmailMessage}
+              placeholder="Votre message ici..."
+              placeholderTextColor="#6D8EB4"
+              multiline={true}
+              numberOfLines={6}
+              editable={!sendingEmail}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.modalButton, 
+                  { backgroundColor: "#D32F2F", opacity: sendingEmail ? 0.5 : 1 }
+                ]}
+                onPress={() => !sendingEmail && setShowEmailModal(false)}
+                disabled={sendingEmail}
+              >
+                <Text style={styles.buttonText}>Annuler</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: "#2E7D32", opacity: sendingEmail ? 0.5 : 1 }
+                ]}
+                onPress={sendEmailToGroupOrYear}
+                disabled={sendingEmail}
+              >
+                {sendingEmail ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.buttonText}>Envoyer</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  header: {
-    backgroundColor: "#0A1F3A",
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1A3F6F",
-  },
-  avatarContainer: {
-    alignItems: "center",
-    marginTop: 10,
-    position: "relative",
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#1A3F6F",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#FFD700",
-    elevation: 5,
-  },
-  glowEffect: {
-    position: "absolute",
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-    backgroundColor: "rgba(255, 215, 0, 0.2)",
-  },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#FFD700",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFD700",
-    textAlign: "center",
-    marginTop: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginTop: 5,
-  },
-  subjectList: {
-    fontSize: 14,
-    color: "#6D8EB4",
-    textAlign: "center",
-    marginTop: 5,
-  },
-  filterContainer: {
-    marginTop: 15,
-    paddingHorizontal: 10,
-  },
-  filterRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  filterPicker: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  filterLabel: {
-    color: "#FFD700",
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  picker: {
-    backgroundColor: "#1A3F6F",
-    color: "#FFFFFF",
-    height: 40,
-    borderRadius: 5,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1A3F6F",
-    borderRadius: 10,
-    marginTop: 10,
-    paddingHorizontal: 10,
-    height: 40,
-  },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    color: "#FFFFFF",
-    fontSize: 14,
-    height: 40,
-  },
-  tabContainer: {
-    flexDirection: "row",
-    marginTop: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1A3F6F",
-  },
-  tab: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 10,
-  },
-  activeTab: {
-    borderBottomWidth: 3,
-    borderBottomColor: "#FFD700",
-  },
-  tabText: {
-    color: "#6D8EB4",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  activeTabText: {
-    color: "#FFD700",
-    fontWeight: "bold",
-  },
-  content: {
-    flex: 1,
-    backgroundColor: "#0A1F3A",
-    paddingHorizontal: 15,
-    paddingTop: 15,
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(26, 63, 111, 0.3)",
-    borderRadius: 10,
-    paddingVertical: 40,
-    marginTop: 20,
-  },
-  emptyStateText: {
-    color: "#6D8EB4",
-    fontSize: 16,
-    marginTop: 10,
-    textAlign: "center",
-    paddingHorizontal: 20,
-  },
-  studentCard: {
-    backgroundColor: "#1A3F6F",
-    borderRadius: 10,
-    marginBottom: 15,
-    padding: 15,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  studentHeader: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#0A1F3A",
-    paddingBottom: 10,
-    marginBottom: 10,
-  },
-  studentName: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  studentInfo: {
-    color: "#6D8EB4",
-    fontSize: 14,
-    marginTop: 3,
-  },
-  addButton: {
-    backgroundColor: "#32507B",
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  addButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-  },
-  errorText: {
-    fontSize: 16,
-    color: "#e74c3c",
-    textAlign: "center",
-    margin: 20,
-  },
-  modalBackgroundRight: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  menuDrawerRight: {
-    position: "absolute",
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 270,
-    backgroundColor: "#0A1F3A",
-    padding: 20,
-    elevation: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-  },
-  menuHeader: {
-    borderBottomWidth: 2,
-    borderBottomColor: "#FFD700",
-    paddingBottom: 15,
-    marginBottom: 20,
-  },
-  menuHeaderText: {
-    color: "#FFD700",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  menuItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  menuText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-  },
-  modalBackground: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: "#1A3F6F",
-    borderRadius: 10,
-    padding: 20,
-    width: "90%",
-    maxWidth: 450,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-  },
-  modalTitle: {
-    color: "#FFD700",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    marginBottom: 15,
-  },
-  modalLabel: {
-    color: "#FFD700",
-    fontSize: 16,
-    marginTop: 10,
-    marginBottom: 5,
-  },
-  gradeInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginVertical: 8,
-  },
-  gradeLabel: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    flex: 1,
-  },
-  gradeInput: {
-    backgroundColor: "#32507B",
-    borderRadius: 5,
-    padding: 10,
-    color: "#FFFFFF",
-    width: 100,
-    textAlign: "center",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 20,
-  },
-  modalButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    minWidth: 100,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  absencePickerContainer: {
-    backgroundColor: "#32507B",
-    borderRadius: 5,
-    marginBottom: 15,
-  },
-  absencePicker: {
-    height: 40,
-    color: "#FFFFFF",
-  },
-  dateInput: {
-    backgroundColor: "#32507B",
-    borderRadius: 5,
-    padding: 10,
-    color: "#FFFFFF",
-    marginBottom: 15,
-  },
-  commentInput: {
-    backgroundColor: "#32507B",
-    borderRadius: 5,
-    padding: 10,
-    color: "#FFFFFF",
-    marginBottom: 15,
-    height: 80,
-    textAlignVertical: "top",
-  },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#3498db",
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 10,
-  },
-  checkboxChecked: {
-    backgroundColor: "#3498db",
-  },
-  checkboxIcon: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-});
+    center: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    header: {
+      backgroundColor: "#0A1F3A",
+      paddingHorizontal: 20,
+      paddingBottom: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: "#1A3F6F",
+    },
+    avatarContainer: {
+      alignItems: "center",
+      marginTop: 10,
+      position: "relative",
+    },
+    avatar: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: "#1A3F6F",
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 2,
+      borderColor: "#FFD700",
+      elevation: 5,
+    },
+    glowEffect: {
+      position: "absolute",
+      width: 86,
+      height: 86,
+      borderRadius: 43,
+      backgroundColor: "rgba(255, 215, 0, 0.2)",
+    },
+    avatarText: {
+      fontSize: 32,
+      fontWeight: "bold",
+      color: "#FFD700",
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: "#FFD700",
+      textAlign: "center",
+      marginTop: 10,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: "#FFFFFF",
+      textAlign: "center",
+      marginTop: 5,
+    },
+    subjectList: {
+      fontSize: 14,
+      color: "#6D8EB4",
+      textAlign: "center",
+      marginTop: 5,
+    },
+    filterContainer: {
+      marginTop: 15,
+      paddingHorizontal: 10,
+    },
+    filterRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    filterPicker: {
+      flex: 1,
+      marginHorizontal: 5,
+    },
+    filterLabel: {
+      color: "#FFD700",
+      fontSize: 12,
+      marginBottom: 2,
+    },
+    picker: {
+      backgroundColor: "#1A3F6F",
+      color: "#FFFFFF",
+      height: 40,
+      borderRadius: 5,
+    },
+    searchContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: "#1A3F6F",
+      borderRadius: 10,
+      marginTop: 10,
+      paddingHorizontal: 10,
+      height: 40,
+    },
+    searchIcon: {
+      marginRight: 10,
+    },
+    searchInput: {
+      flex: 1,
+      color: "#FFFFFF",
+      fontSize: 14,
+      height: 40,
+    },
+    emailButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 10,
+      backgroundColor: "#32507B",
+      padding: 10,
+      borderRadius: 8,
+      justifyContent: "center",
+    },
+    emailIcon: {
+      marginRight: 8,
+    },
+    emailButtonText: {
+      color: "#FFD700",
+      fontWeight: "bold",
+    },
+    tabContainer: {
+      flexDirection: "row",
+      marginTop: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: "#1A3F6F",
+    },
+    tab: {
+      flex: 1,
+      alignItems: "center",
+      paddingVertical: 10,
+    },
+    activeTab: {
+      borderBottomWidth: 3,
+      borderBottomColor: "#FFD700",
+    },
+    tabText: {
+      color: "#6D8EB4",
+      fontSize: 16,
+      fontWeight: "500",
+    },
+    activeTabText: {
+      color: "#FFD700",
+      fontWeight: "bold",
+    },
+    content: {
+      flex: 1,
+      backgroundColor: "#0A1F3A",
+      paddingHorizontal: 15,
+      paddingTop: 15,
+    },
+    resultsHeader: {
+      marginBottom: 10,
+    },
+    resultsText: {
+      color: "#FFD700",
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    emptyState: {
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(26, 63, 111, 0.3)",
+      borderRadius: 10,
+      paddingVertical: 40,
+      marginTop: 20,
+    },
+    emptyStateText: {
+      color: "#6D8EB4",
+      fontSize: 16,
+      marginTop: 10,
+      textAlign: "center",
+      paddingHorizontal: 20,
+    },
+    studentCard: {
+      backgroundColor: "#1A3F6F",
+      borderRadius: 10,
+      marginBottom: 15,
+      padding: 15,
+      elevation: 2,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 3,
+    },
+    studentHeader: {
+      borderBottomWidth: 1,
+      borderBottomColor: "#0A1F3A",
+      paddingBottom: 10,
+      marginBottom: 10,
+    },
+    studentName: {
+      color: "#FFFFFF",
+      fontSize: 18,
+      fontWeight: "bold",
+    },
+    studentInfo: {
+      color: "#6D8EB4",
+      fontSize: 14,
+      marginTop: 3,
+    },
+    addButton: {
+      backgroundColor: "#32507B",
+      padding: 10,
+      borderRadius: 5,
+      alignItems: "center",
+      marginTop: 10,
+    },
+    addButtonText: {
+      color: "#FFFFFF",
+      fontWeight: "bold",
+    },
+    errorText: {
+      fontSize: 16,
+      color: "#e74c3c",
+      textAlign: "center",
+      margin: 20,
+    },
+    modalBackground: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      padding: 20,
+    },
+    modalContent: {
+      backgroundColor: "#1A3F6F",
+      borderRadius: 10,
+      padding: 20,
+      width: "90%",
+      maxWidth: 450,
+      elevation: 5,
+    },
+    modalTitle: {
+      color: "#FFD700",
+      fontSize: 20,
+      fontWeight: "bold",
+      marginBottom: 8,
+    },
+    modalSubtitle: {
+      color: "#FFFFFF",
+      fontSize: 16,
+      marginBottom: 15,
+    },
+    modalLabel: {
+      color: "#FFD700",
+      fontSize: 16,
+      marginTop: 10,
+      marginBottom: 5,
+    },
+    gradeInputContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginVertical: 8,
+    },
+    gradeLabel: {
+      color: "#FFFFFF",
+      fontSize: 16,
+      flex: 1,
+    },
+    gradeInput: {
+      backgroundColor: "#32507B",
+      borderRadius: 5,
+      padding: 10,
+      color: "#FFFFFF",
+      width: 100,
+      textAlign: "center",
+    },
+    dateInput: {
+      backgroundColor: "#32507B",
+      borderRadius: 5,
+      padding: 10,
+      color: "#FFFFFF",
+      marginBottom: 15,
+    },
+    commentInput: {
+      backgroundColor: "#32507B",
+      borderRadius: 5,
+      padding: 10,
+      color: "#FFFFFF",
+      marginBottom: 15,
+      height: 80,
+      textAlignVertical: "top",
+    },
+    checkboxContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 15,
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: "#3498db",
+      justifyContent: "center",
+      alignItems: "center",
+      marginLeft: 10,
+    },
+    checkboxChecked: {
+      backgroundColor: "#3498db",
+    },
+    checkboxIcon: {
+      color: "#fff",
+      fontWeight: "bold",
+    },
+    modalButtons: {
+      flexDirection: "row",
+      justifyContent: "space-around",
+      marginTop: 20,
+    },
+    modalButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 5,
+      minWidth: 100,
+      alignItems: "center",
+    },
+    buttonText: {
+      color: "#FFFFFF",
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    absencePickerContainer: {
+      backgroundColor: "#32507B",
+      borderRadius: 5,
+      marginBottom: 15,
+    },
+    absencePicker: {
+      height: 40,
+      color: "#FFFFFF",
+    },
+    modalBackgroundRight: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+    },
+    menuDrawerRight: {
+      position: "absolute",
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: 270,
+      backgroundColor: "#0A1F3A",
+      padding: 20,
+      elevation: 10,
+      shadowColor: "#000",
+      shadowOffset: { width: -2, height: 0 },
+      shadowOpacity: 0.3,
+      shadowRadius: 5,
+    },
+    menuHeader: {
+      borderBottomWidth: 2,
+      borderBottomColor: "#FFD700",
+      paddingBottom: 15,
+      marginBottom: 20,
+    },
+    menuHeaderText: {
+      color: "#FFD700",
+      fontSize: 18,
+      fontWeight: "bold",
+    },
+    menuItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 12,
+    },
+    menuText: {
+      color: "#FFFFFF",
+      fontSize: 16,
+    },
+  });
+  
