@@ -15,7 +15,7 @@ import {
 import { Icon } from "react-native-elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { Audio } from "expo-av"; // ✅ IMPORT AUDIO
 
 export default function ESISAHomePage() {
   const [isMenuVisible, setMenuVisible] = useState(false);
@@ -24,6 +24,18 @@ export default function ESISAHomePage() {
   const slideAnim = useRef(new Animated.Value(300)).current;
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+
+  // ✅ Audio : fonction pour jouer le son de clic
+  const playClickSound = async () => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../assets/audio/tap.mp3")
+      );
+      await sound.playAsync();
+    } catch (error) {
+      console.log("Erreur de lecture du son :", error);
+    }
+  };
 
   // ✅ Effacer la session uniquement au tout premier lancement
   useEffect(() => {
@@ -131,7 +143,6 @@ export default function ESISAHomePage() {
     }
   };
 
-  // ✅ Lire l’état de connexion
   useEffect(() => {
     const checkLoginStatus = async () => {
       const student = await AsyncStorage.getItem("user");
@@ -159,7 +170,7 @@ export default function ESISAHomePage() {
     await AsyncStorage.multiRemove(["user", "prof", "admin"]);
     setIsLoggedIn(false);
     setUserInfo(null);
-    router.replace("/"); // Rediriger après déconnexion
+    router.replace("/");
   };
 
   const menuItems = isLoggedIn
@@ -222,7 +233,7 @@ export default function ESISAHomePage() {
 
       <View style={styles.logoContainer}>
         <Image
-          source={require('../../assets/icons/icon.png')}
+          source={require("../../assets/icons/icon.png")}
           style={styles.logoImage}
           resizeMode="contain"
         />
@@ -233,10 +244,22 @@ export default function ESISAHomePage() {
         <Text style={styles.subText}>Formation d'excellence en développement et sciences informatiques</Text>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/other/formation")}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={async () => {
+              await playClickSound();
+              router.push("/other/formation");
+            }}
+          >
             <Text style={styles.buttonText}>FORMATIONS</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => router.push("/other/admission")}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={async () => {
+              await playClickSound();
+              router.push("/other/admission");
+            }}
+          >
             <Text style={styles.buttonText}>ADMISSION</Text>
           </TouchableOpacity>
         </View>
@@ -254,11 +277,13 @@ export default function ESISAHomePage() {
               <TouchableOpacity
                 key={index}
                 style={styles.menuItem}
-                onPress={() => {
+                onPress={async () => {
+                  await playClickSound(); // 🔊 jouer le son avant
                   toggleMenu();
                   if (item.onPress) item.onPress();
                   else router.push(item.route as any);
                 }}
+                
               >
                 <Text
                   style={[
