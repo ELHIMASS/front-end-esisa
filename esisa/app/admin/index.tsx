@@ -542,10 +542,10 @@ export default function AdminScreen() {
                     await playSound(require("../../assets/audio/error.mp3"));
                     setAddModalVisible(false);
                     router.replace("/admin"); 
-  }}
->
-  <Icon name="close" size={24} color="#FF5555" />
-</TouchableOpacity>
+                     }}
+                    >
+                        <Icon name="close" size={24} color="#FF5555" />
+                    </TouchableOpacity>
 
                         </View>
                         <ScrollView>
