@@ -27,7 +27,7 @@ const LoginScreen: React.FC = () => {
         try {
             setLoading(true);
 
-            const response = await fetch(`http://192.168.100.219:5000/api/login?email=${email}&password=${password}`);
+            const response = await fetch(`http://192.168.1.180:5000/api/login?email=${email}&password=${password}`);
             const userData = await response.json();
 
             if (!response.ok || !userData.role) {

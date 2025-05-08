@@ -19,7 +19,7 @@ import { Icon } from "react-native-elements";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
-const SERVER_IP = "192.168.100.219"; // Remplacez par votre adresse IP réelle
+const SERVER_IP = "192.168.1.180"; // Remplacez par votre adresse IP réelle
 const API_URL = `http://${SERVER_IP}:5000`;
 
 export default function AdminScreen() {
@@ -47,20 +47,22 @@ export default function AdminScreen() {
     } as student);
 
     interface student {
-        id: string,
-        name: string,
-        email: string,
-        age: string,
-        major: string,
-        anne_scolaire: string,
-        date: string,
-        group: string,
-        sex: string,
-        tel: string,
-        role: string,
-        password: string
+        _id?: string;
+        id?: string;
+        name: string;
+        email: string;
+        age: string;
+        major: string;
+        anne_scolaire: string;
+        date: string;
+        group: string;
+        sex: string;
+        tel: string;
+        role: string;
+        password: string;
+        absences?: Array<any>;
+        grades?: Array<any>;
     }
-
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const slideAnim = useState(new Animated.Value(300))[0];
@@ -194,7 +196,7 @@ export default function AdminScreen() {
                 sex: "",
                 tel: "",
                 role: "student",
-                password: "password_par_defaut"
+                password: "1234"
             });
         } catch (error) {
             console.error("Erreur lors de l'ajout:", error);
@@ -207,34 +209,39 @@ export default function AdminScreen() {
             Alert.alert("Erreur", "Le nom et l'email sont obligatoires");
             return;
         }
-
+    
         try {
-            const updatedStudents = students.map(student =>
-                student.id === selectedStudent.id ? selectedStudent : student
-            );
-            setStudents(updatedStudents);
-            await AsyncStorage.setItem("students", JSON.stringify(updatedStudents));
-
-            // Appel API
-            const studentId = selectedStudent.id || selectedStudent._id;
-            const response = await fetch(`${API_URL}/api/students/${studentId}`, {
+            // Appel API pour la modification
+            const response = await fetch(`${API_URL}/api/update`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(selectedStudent)
+                body: JSON.stringify({
+                    email: selectedStudent.email, // L'email original pour identifier l'étudiant
+                    ...selectedStudent // Les nouvelles données
+                })
             });
-
+    
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Erreur lors de la modification");
             }
-
+    
+            // Mise à jour locale si la modification est réussie
+            const updatedStudents = students.map(student =>
+                student.id === selectedStudent.id || student._id === selectedStudent._id || student.email === selectedStudent.email 
+                    ? selectedStudent 
+                    : student
+            );
+            
+            setStudents(updatedStudents);
+            await AsyncStorage.setItem("students", JSON.stringify(updatedStudents));
+    
             setEditModalVisible(false);
             setSelectedStudent(null);
             Alert.alert("Succès", "Étudiant modifié avec succès");
-
-            await loadStudentsFromServer();
+    
         } catch (error) {
             console.error("Erreur lors de la modification:", error);
             Alert.alert("Erreur", error.message || "Erreur lors de la modification de l'étudiant");

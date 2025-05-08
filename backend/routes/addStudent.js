@@ -1,66 +1,101 @@
 const express = require("express");
 const router = express.Router();
 const Student = require("../models/Student");
+const mongoose = require("mongoose");
 
-// ✅ Route POST pour ajouter un étudiant
+// ✅ Route POST pour ajouter un étudiant - Version corrigée selon le modèle
 router.post("/", async (req, res) => {
-    const {
-        name,
-        email,
-        role,
-        major,
-        password,
-        age,
-        anne_scolaire,
-        date,
-        group,
-        sex,
-        tel,
-        // Nouvelles propriétés
-        absences,
-        grades
-    } = req.body;
+    try {
+        const {
+            name,
+            email,
+            password,
+            age,
+            major,
+            group,
+            sex,
+            tel,
+            anne_scolaire,
+            date,
+            // Champs optionnels
+            absences = [],
+            grades = []
+        } = req.body;
 
-    const existingStudent = await Student.findOne({ email });
-    if (existingStudent) {
-        return res.status(409).json({ message: "Email déjà utilisé" });
-    }
-
-    // Structure par défaut pour les notes si non fournies
-    const defaultGrades = [
-        {
-            subject: "Mathématiques",
-            cc: 0,
-            partiel: 0,
-            projet: 0
-        },
-        {
-            subject: "Physique",
-            cc: 0,
-            partiel: 0,
-            projet: 0
+        // Validation des champs obligatoires
+        if (!name || !email || !password || !age || !major || !group || !sex || !tel || !anne_scolaire || !date) {
+            return res.status(400).json({ 
+                message: "Tous les champs obligatoires doivent être fournis",
+                requiredFields: ["name", "email", "password", "age", "major", "group", "sex", "tel", "anne_scolaire", "date"]
+            });
         }
-    ];
 
-    const newStudent = new Student({
-        name,
-        email,
-        role,
-        major,
-        password,
-        age,
-        anne_scolaire,
-        date,
-        group,
-        sex,
-        tel,
-        // Ajout des nouvelles propriétés avec valeurs par défaut si non fournies
-        absences: absences || 0,
-        grades: grades  || defaultGrades
-    });
+        // Vérification de l'unicité de l'email
+        const existingStudent = await Student.findOne({ email });
+        if (existingStudent) {
+            return res.status(409).json({ 
+                message: "Email déjà utilisé",
+                existingStudent: {
+                    _id: existingStudent._id,
+                    name: existingStudent.name,
+                    email: existingStudent.email
+                }
+            });
+        }
 
-    await newStudent.save();
-    res.status(201).json({ message: "✅ Étudiant ajouté avec succès", student: newStudent });
+        // Création du nouvel étudiant selon le modèle exact
+        const newStudent = new Student({
+            name,
+            email,
+            password,
+            age: Number(age),
+            major,
+            group,
+            sex,
+            tel,
+            anne_scolaire,
+            date,
+            role: "student", // Valeur par défaut
+            absences: Array.isArray(absences) ? absences : [],
+            grades: Array.isArray(grades) ? grades : []
+        });
+
+        // Validation du schéma avant sauvegarde
+        const validationError = newStudent.validateSync();
+        if (validationError) {
+            return res.status(400).json({
+                message: "Erreur de validation",
+                errors: validationError.errors
+            });
+        }
+
+        // Sauvegarde dans la base de données
+        const savedStudent = await newStudent.save();
+
+        // Réponse avec l'étudiant créé (on exclut le mot de passe par sécurité)
+        const studentResponse = savedStudent.toObject();
+        delete studentResponse.password;
+
+        res.status(201).json({ 
+            message: "✅ Étudiant ajouté avec succès",
+            student: studentResponse
+        });
+
+    } catch (error) {
+        console.error("Erreur lors de l'ajout de l'étudiant:", error);
+        
+        if (error instanceof mongoose.Error.ValidationError) {
+            return res.status(400).json({
+                message: "Erreur de validation des données",
+                errors: error.errors
+            });
+        }
+
+        res.status(500).json({ 
+            message: "Erreur serveur lors de l'ajout de l'étudiant",
+            error: error.message 
+        });
+    }
 });
 
 module.exports = router;

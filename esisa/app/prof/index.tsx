@@ -18,8 +18,8 @@ import { useRouter } from 'expo-router';
 import { Icon } from 'react-native-elements';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
-
-const API_URL = 'http://localhost:5000/api';
+const IP = "192.168.1.180";
+const API_URL = `http://${IP}:5000/api`;
 
 type Evaluation = {
   type: string;
@@ -422,6 +422,8 @@ export default function ProfessorDashboard() {
                 <Picker.Item label="1ère année" value="1ère année" color="#FFF" />
                 <Picker.Item label="2ème année" value="2ème année" color="#FFF" />
                 <Picker.Item label="3ème année" value="3ème année" color="#FFF" />
+                <Picker.Item label="4ème année" value="4ème année" color="#FFF" />
+                <Picker.Item label="5ème année" value="5ème année" color="#FFF" />
               </Picker>
             </View>
 
