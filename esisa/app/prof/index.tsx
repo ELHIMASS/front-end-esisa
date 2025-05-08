@@ -18,6 +18,8 @@ import { useRouter } from 'expo-router';
 import { Icon } from 'react-native-elements';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
+import { Audio } from "expo-av";
+
 const IP = "192.168.100.219";
 const API_URL = `http://${IP}:5000/api`;
 
@@ -111,6 +113,15 @@ export default function ProfessorDashboard() {
     };
     loadData();
   }, []);
+  const playSound = async (file) => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(file);
+      await sound.playAsync();
+    } catch (error) {
+      console.error("Erreur lors de la lecture du son :", error);
+    }
+  };
+  
 
   // Filtrage des étudiants
   useEffect(() => {
@@ -158,13 +169,15 @@ export default function ProfessorDashboard() {
 
   const handleLogout = async () => {
     try {
-        await AsyncStorage.clear();
-        router.replace("/(tabs)");
+      await playSound(require("../../assets/audio/done.mp3")); 
+      await AsyncStorage.clear();
+      router.replace("/(tabs)");
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       Alert.alert("Erreur", "Un problème est survenu lors de la déconnexion.");
     }
   };
+  
 
   // Mise à jour d'un étudiant
   const updateStudent = async (email: string, updateData: Partial<Student>) => {

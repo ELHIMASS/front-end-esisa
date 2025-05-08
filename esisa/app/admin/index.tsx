@@ -17,6 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Icon } from "react-native-elements";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { Audio } from "expo-av";
 
 // Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
 const SERVER_IP = "192.168.100.219"; // Remplacez par votre adresse IP réelle
@@ -108,6 +109,16 @@ export default function AdminScreen() {
         checkSession();
     }, []);
 
+    const playSound = async (file) => {
+        try {
+          const { sound } = await Audio.Sound.createAsync(file);
+          await sound.playAsync();
+        } catch (error) {
+          console.error("Erreur de lecture audio :", error);
+        }
+      };
+      
+
     const loadStudentsFromServer = async () => {
         try {
             const response = await fetch(`${API_URL}/api/students`, {
@@ -130,28 +141,32 @@ export default function AdminScreen() {
         }
     };
 
-    const toggleMenu = () => {
+    const toggleMenu = async () => {
+        await playSound(require("../../assets/audio/tap.mp3")); 
+      
         if (isMenuVisible) {
-            Animated.timing(slideAnim, {
-                toValue: 300,
-                duration: 300,
-                useNativeDriver: true,
-            }).start(() => setMenuVisible(false));
+          Animated.timing(slideAnim, {
+            toValue: 300,
+            duration: 300,
+            useNativeDriver: true,
+          }).start(() => setMenuVisible(false));
         } else {
-            setMenuVisible(true);
-            Animated.timing(slideAnim, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: true,
-            }).start();
+          setMenuVisible(true);
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }).start();
         }
-    };
-
-    const handleLogout = async () => {
+      };
+      
+      const handleLogout = async () => {
+        await playSound(require("../../assets/audio/done.mp3")); // 🔊 remplace par le bon chemin si besoin
         await AsyncStorage.clear();
         setAdmin(null);
         router.replace("/(tabs)");
-    };
+      };
+      
 
     const handleAddStudent = async () => {
         if (!newStudent.name || !newStudent.email) {
@@ -271,6 +286,7 @@ export default function AdminScreen() {
             }
 
             Alert.alert("Succès", "Étudiant supprimé avec succès");
+            await playSound(require("../../assets/audio/supprimer.mp3")); 
 
         } catch (error) {
             console.error("Erreur lors de la suppression :", error);

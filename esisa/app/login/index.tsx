@@ -13,6 +13,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Audio } from "expo-av";
+
 
 const { width } = Dimensions.get('window');
 
@@ -38,13 +40,25 @@ const LoginScreen: React.FC = () => {
     checkAlreadyLoggedIn();
   }, []);
 
+  const playSound = async (file: any) => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(file);
+      await sound.playAsync();
+    } catch (error) {
+      console.warn("Erreur audio :", error);
+    }
+  };
+  
+
   const handleSubmit = async () => {
     setErrorMessage(""); // reset l'erreur
 
     if (!email || !password) {
-      setErrorMessage("Veuillez remplir tous les champs.");
-      return;
-    }
+        await playSound(require('../../assets/audio/error.mp3'));
+        setErrorMessage("Veuillez remplir tous les champs.");
+        return;
+      }
+      
 
     try {
       setLoading(true);
@@ -52,20 +66,26 @@ const LoginScreen: React.FC = () => {
       const userData = await response.json();
 
       if (!response.ok || !userData.role) {
+        await playSound(require('../../assets/audio/error.mp3'));
         setErrorMessage("Email ou mot de passe incorrect.");
         return;
       }
+      
 
       if (userData.role === "admin") {
+        await playSound(require('../../assets/audio/done.mp3'));
         await AsyncStorage.setItem("admin", JSON.stringify(userData));
         router.replace("/admin");
       } else if (userData.role === "student") {
+        await playSound(require('../../assets/audio/done.mp3'));
         await AsyncStorage.setItem("user", JSON.stringify(userData));
         router.replace("/(tabs)");
       } else if (userData.role === "prof") {
+        await playSound(require('../../assets/audio/done.mp3'));
         await AsyncStorage.setItem("prof", JSON.stringify(userData));
         router.replace("/prof");
       } else {
+        await playSound(require('../../assets/audio/error.mp3'));
         setErrorMessage("Rôle utilisateur inconnu.");
       }
 

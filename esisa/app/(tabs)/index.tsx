@@ -127,7 +127,15 @@ export default function ESISAHomePage() {
     });
   };
 
-  const toggleMenu = () => {
+  const toggleMenu = async () => {
+    const sound = new Audio.Sound();
+    try {
+      await sound.loadAsync(require("../../assets/audio/tap.mp3")); // adapte le chemin si besoin
+      await sound.playAsync();
+    } catch (e) {
+      console.warn("Erreur lecture son :", e);
+    }
+  
     if (isMenuVisible) {
       Animated.timing(slideAnim, {
         toValue: width * 0.75,
@@ -143,6 +151,7 @@ export default function ESISAHomePage() {
       }).start();
     }
   };
+  
 
   useEffect(() => {
     const checkLoginStatus = async () => {
