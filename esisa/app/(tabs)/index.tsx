@@ -16,6 +16,7 @@ import { Icon } from "react-native-elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Audio } from "expo-av"; // ✅ IMPORT AUDIO
+import { red } from "react-native-reanimated/lib/typescript/Colors";
 
 export default function ESISAHomePage() {
   const [isMenuVisible, setMenuVisible] = useState(false);
@@ -145,14 +146,18 @@ export default function ESISAHomePage() {
 
   useEffect(() => {
     const checkLoginStatus = async () => {
+      if (await AsyncStorage.getItem("prof")) {
+        router.replace("/prof");
+        return;
+      }else if (await AsyncStorage.getItem("admin")) {
+        router.replace("/admin");
+        return;
+      }
       const student = await AsyncStorage.getItem("user");
-      const prof = await AsyncStorage.getItem("prof");
-      const admin = await AsyncStorage.getItem("admin");
 
       let user = null;
       if (student) user = JSON.parse(student);
-      else if (prof) user = JSON.parse(prof);
-      else if (admin) user = JSON.parse(admin);
+      
 
       if (user) {
         setIsLoggedIn(true);
@@ -167,10 +172,10 @@ export default function ESISAHomePage() {
   }, []);
 
   const handleLogout = async () => {
-    await AsyncStorage.multiRemove(["user", "prof", "admin"]);
+    await AsyncStorage.clear();
     setIsLoggedIn(false);
     setUserInfo(null);
-    router.replace("/");
+    router.replace("/login");
   };
 
   const menuItems = isLoggedIn

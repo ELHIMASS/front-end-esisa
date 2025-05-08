@@ -18,7 +18,7 @@ import { useRouter } from 'expo-router';
 import { Icon } from 'react-native-elements';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
-const IP = "192.168.1.180";
+const IP = "192.168.100.219";
 const API_URL = `http://${IP}:5000/api`;
 
 type Evaluation = {
@@ -158,8 +158,8 @@ export default function ProfessorDashboard() {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem("prof");
-      router.replace("/login");
+        await AsyncStorage.clear();
+        router.replace("/(tabs)");
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       Alert.alert("Erreur", "Un problème est survenu lors de la déconnexion.");

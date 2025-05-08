@@ -19,7 +19,7 @@ import { Icon } from "react-native-elements";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
-const SERVER_IP = "192.168.1.180"; // Remplacez par votre adresse IP réelle
+const SERVER_IP = "192.168.100.219"; // Remplacez par votre adresse IP réelle
 const API_URL = `http://${SERVER_IP}:5000`;
 
 export default function AdminScreen() {
@@ -82,7 +82,7 @@ export default function AdminScreen() {
                 if (parsed.role !== "admin") {
                     console.log("❌ L'utilisateur n'a pas les droits d'administration");
                     Alert.alert("Erreur", "Vous n'avez pas les droits d'administration");
-                    router.replace("/login");
+                    router.replace("/(tabs)");
                     return;
                 }
 
@@ -148,9 +148,9 @@ export default function AdminScreen() {
     };
 
     const handleLogout = async () => {
-        await AsyncStorage.removeItem("admin");
+        await AsyncStorage.clear();
         setAdmin(null);
-        router.replace("/login");
+        router.replace("/(tabs)");
     };
 
     const handleAddStudent = async () => {
