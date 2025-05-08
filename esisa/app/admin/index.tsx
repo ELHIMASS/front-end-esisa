@@ -213,6 +213,7 @@ export default function AdminScreen() {
                 role: "student",
                 password: "1234"
             });
+            router.replace("/admin"); 
         } catch (error) {
             console.error("Erreur lors de l'ajout:", error);
             Alert.alert("Erreur", error.message || "Erreur lors de l'ajout de l'étudiant");
@@ -536,9 +537,16 @@ export default function AdminScreen() {
                     <View style={styles.modalContainer}>
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>AJOUTER UN ÉTUDIANT</Text>
-                            <TouchableOpacity onPress={() => setAddModalVisible(false)}>
-                                <Icon name="close" size={24} color="#FF5555" />
-                            </TouchableOpacity>
+                            <TouchableOpacity
+                    onPress={async () => {
+                    await playSound(require("../../assets/audio/error.mp3"));
+                    setAddModalVisible(false);
+                    router.replace("/admin"); 
+  }}
+>
+  <Icon name="close" size={24} color="#FF5555" />
+</TouchableOpacity>
+
                         </View>
                         <ScrollView>
                             {renderStudentForm(newStudent, setNewStudent)}
