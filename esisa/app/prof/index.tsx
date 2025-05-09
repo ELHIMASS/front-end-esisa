@@ -19,6 +19,10 @@ import { Icon } from 'react-native-elements';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
 import { Audio } from "expo-av";
+import * as DocumentPicker from 'expo-document-picker';
+
+
+
 
 const IP = "192.168.100.219";
 const API_URL = `http://${IP}:5000/api`;
@@ -185,54 +189,83 @@ export default function ProfessorDashboard() {
     }
   };
   
-  const sendEmailToGroupOrYear = async () => {
+
+const sendEmailToGroupOrYear = async () => {
     if (!emailSubject.trim() || !emailMessage.trim()) {
       Alert.alert("Données manquantes", "Veuillez saisir un sujet et un message.");
       return;
     }
-    
+  
     if (filteredStudents.length === 0) {
       Alert.alert("Aucun destinataire", "Aucun étudiant trouvé pour ce filtre.");
       return;
     }
-    
+  
     try {
       setSendingEmail(true);
       await playSound(require("../../assets/audio/done.mp3"));
-      
-      const recipients = filteredStudents.map((student) => student.email);
-      
-      const response = await fetch(`${API_URL}/send-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recipients,
-          subject: emailSubject,
-          message: emailMessage
-        }),
-      });
   
+      const recipients = filteredStudents.map((s) => s.email);
+      const formData = new FormData();
+        formData.append("subject", emailSubject);
+        formData.append("message", emailMessage);
+        formData.append("recipients", JSON.stringify(recipients));
+
+        for (let i = 0; i < attachments.length; i++) {
+            const file = attachments[i];
+            formData.append("attachments", {
+              uri: file.uri,
+              name: file.name,
+              type: file.mimeType
+            } as any);
+          }
+          
+
+const response = await fetch(`${API_URL}/send-email`, {
+  method: "POST",
+  body: formData
+});
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erreur lors de l'envoi");
+        const err = await response.json();
+        throw new Error(err.error || "Erreur lors de l'envoi");
       }
-      
+  
       await playSound(require("../../assets/audio/done.mp3"));
-      Alert.alert(
-        "Succès", 
-        `Email envoyé à ${recipients.length} étudiant${recipients.length > 1 ? 's' : ''} !`
-      );
-      
+      Alert.alert("Succès", `Email envoyé à ${recipients.length} étudiant(s)`);
+  
       setShowEmailModal(false);
       setEmailSubject('');
       setEmailMessage('');
-    } catch (error) {
-      console.error("Erreur d'envoi :", error);
-      Alert.alert("Erreur", error.message || "Impossible d'envoyer l'email");
+      setAttachments([]);
+    } catch (err) {
+      Alert.alert("Erreur", err.message || "Échec de l'envoi");
     } finally {
       setSendingEmail(false);
     }
   };
+
+  const [attachments, setAttachments] = useState<File[]>([]);
+
+  const pickDocument = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "*/*",
+      multiple: true,
+      copyToCacheDirectory: true
+    });
+  
+    if (!result.canceled && result.assets) {
+      const files = result.assets.map((asset) => ({
+        uri: asset.uri,
+        name: asset.name,
+        mimeType: asset.mimeType || 'application/octet-stream'
+      }));
+  
+      setAttachments((prev) => [...prev, ...files]);
+    }
+  };
+  
+  
 
   // Mise à jour d'un étudiant
   const updateStudent = async (email: string, updateData: Partial<Student>) => {
@@ -794,6 +827,18 @@ export default function ProfessorDashboard() {
         animationType="fade"
         onRequestClose={() => !sendingEmail && setShowEmailModal(false)}
       >
+
+<View style={{ marginTop: 10 }}>
+  <Text style={styles.modalLabel}>Fichiers joints :</Text>
+  {attachments.map((file, index) => (
+    <Text key={index} style={{ color: "#fff", fontSize: 12 }}>{file.name}</Text>
+  ))}
+</View>
+
+<TouchableOpacity onPress={pickDocument} style={[styles.modalButton, { backgroundColor: "#1A3F6F", marginTop: 10 }]}>
+  <Text style={styles.buttonText}>+ Ajouter une pièce jointe</Text>
+</TouchableOpacity>
+
         <View style={styles.modalBackground}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>

@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "expo": "^53.0.8"
+  },
+  "dependencies": {
+    "expo-document-picker": "~13.1.5"
   }
 }
