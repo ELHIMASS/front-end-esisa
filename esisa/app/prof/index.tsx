@@ -828,16 +828,16 @@ const response = await fetch(`${API_URL}/send-email`, {
         onRequestClose={() => !sendingEmail && setShowEmailModal(false)}
       >
 
-<View style={{ marginTop: 10 }}>
-  <Text style={styles.modalLabel}>Fichiers joints :</Text>
+<View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 }}>
   {attachments.map((file, index) => (
-    <Text key={index} style={{ color: "#fff", fontSize: 12 }}>{file.name}</Text>
+    <Text key={index} style={{ fontSize: 28, marginRight: 5, marginBottom: 5 }}>
+      📎
+    </Text>
   ))}
 </View>
 
-<TouchableOpacity onPress={pickDocument} style={[styles.modalButton, { backgroundColor: "#1A3F6F", marginTop: 10 }]}>
-  <Text style={styles.buttonText}>+ Ajouter une pièce jointe</Text>
-</TouchableOpacity>
+
+
 
         <View style={styles.modalBackground}>
           <View style={styles.modalContent}>
@@ -859,17 +859,42 @@ const response = await fetch(`${API_URL}/send-email`, {
               editable={!sendingEmail}
             />
 
-            <Text style={styles.modalLabel}>Message:</Text>
-            <TextInput
-              style={[styles.commentInput, { height: 120 }]}
-              value={emailMessage}
-              onChangeText={setEmailMessage}
-              placeholder="Votre message ici..."
-              placeholderTextColor="#6D8EB4"
-              multiline={true}
-              numberOfLines={6}
-              editable={!sendingEmail}
-            />
+<Text style={styles.modalLabel}>Message:</Text>
+<View style={{ flexDirection: "row", alignItems: "flex-start", position: "relative" }}>
+  <TextInput
+    style={[styles.commentInput, { flex: 1, paddingRight: 40, height: 120 }]}
+    value={emailMessage}
+    onChangeText={setEmailMessage}
+    placeholder="Votre message ici..."
+    placeholderTextColor="#6D8EB4"
+    multiline={true}
+    numberOfLines={6}
+    editable={!sendingEmail}
+  />
+  <TouchableOpacity
+  onPress={pickDocument}
+  style={{
+    position: "absolute",
+    right: 10,
+    bottom: 30,
+    backgroundColor: "blue",
+    borderRadius: 20,
+    width: 36,
+    height: 27,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  }}
+>
+  <Text style={{ fontSize: 20 }}>🗂️</Text>
+</TouchableOpacity>
+
+</View>
+
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
