@@ -4,12 +4,14 @@ import { Audio } from "expo-av";
 import { router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { LinearGradient } from "expo-linear-gradient";
+import { Platform } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function SplashScreenPage() {
-  const fullText = "Bienvenue à l'ESISA";
-  const [displayedText, setDisplayedText] = useState("");
+  // Définition des caractères à afficher un par un
+  const textParts = ["B", "i", "e", "n", "v", "e", "n", "u", "e", " ", "à", " ", "l", "'", "E", "S", "I", "S", "A"];
+  const [displayIndex, setDisplayIndex] = useState(0);
   const logoAnim = useRef(new Animated.Value(0)).current;
 
   // Animation logo
@@ -21,18 +23,15 @@ export default function SplashScreenPage() {
     }).start();
   }, []);
 
-  // Texte lettre par lettre
+  // Animation texte lettre par lettre
   useEffect(() => {
-    let i = 0;
-    const animateText = () => {
-      if (i < fullText.length) {
-        setDisplayedText((prev) => prev + fullText.charAt(i));
-        i++;
-        setTimeout(animateText, 90);
-      }
-    };
-    animateText();
-  }, []);
+    if (displayIndex < textParts.length) {
+      const timeout = setTimeout(() => {
+        setDisplayIndex(displayIndex + 1);
+      }, 90);
+      return () => clearTimeout(timeout);
+    }
+  }, [displayIndex]);
 
   // Audio + redirection
   useEffect(() => {
@@ -75,7 +74,9 @@ export default function SplashScreenPage() {
         ]}
         resizeMode="contain"
       />
-      <Text style={styles.text}>{displayedText}</Text>
+      <Text style={styles.text}>
+        {textParts.slice(0, displayIndex).join('')}
+      </Text>
       <Text style={styles.footer}>Powered by : Learnify</Text>
     </LinearGradient>
   );
@@ -97,6 +98,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: "#FFD700",
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
   },
   footer: {
     position: "absolute",
