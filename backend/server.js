@@ -343,6 +343,11 @@ const emailRoutes = require("./routes/emailRoute");
 // 🔽 Utiliser la route (chemin complet sera /api/send-email)
 app.use("/api", emailRoutes);
 
+const profRoutes = require("./routes/addProf");
+app.use("/api/addProf", profRoutes);
+
+
+
 // Lancer le serveur
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Serveur lancé sur le port ${PORT}`));

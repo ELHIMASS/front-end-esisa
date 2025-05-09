@@ -32,6 +32,8 @@ export default function AdminScreen() {
     const [isAddModalVisible, setAddModalVisible] = useState(false);
     const [isEditModalVisible, setEditModalVisible] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
+   
+          
     const [newStudent, setNewStudent] = useState({
         id: "",
         name: "",
@@ -44,7 +46,7 @@ export default function AdminScreen() {
         sex: "",
         tel: "",
         role: "student",
-        password: "password_par_defaut"
+        password: "1234"
     } as student);
 
     interface student {
@@ -104,6 +106,9 @@ export default function AdminScreen() {
             } finally {
                 setLoading(false);
             }
+
+            
+
         };
 
         checkSession();
@@ -140,6 +145,8 @@ export default function AdminScreen() {
             // En cas d'échec, on garde les données d'AsyncStorage
         }
     };
+
+    
 
     const toggleMenu = async () => {
         await playSound(require("../../assets/audio/tap.mp3")); 
@@ -219,6 +226,8 @@ export default function AdminScreen() {
             Alert.alert("Erreur", error.message || "Erreur lors de l'ajout de l'étudiant");
         }
     };
+
+    
 
     const handleEditStudent = async () => {
         if (!selectedStudent || !selectedStudent.name || !selectedStudent.email) {
@@ -431,6 +440,9 @@ export default function AdminScreen() {
         </View>
     );
 
+
+    
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
             {/* Header avec titre et menu */}
@@ -482,32 +494,43 @@ export default function AdminScreen() {
                             { label: "🏠 Accueil", section: "home", icon: "home" },
                             { label: "👥 Liste des étudiants", section: "students", icon: "people" },
                             { label: "➕ Ajouter un étudiant", section: "add", icon: "person-add" },
-                        ].map((item, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={[
-                                    styles.menuItem,
-                                    selectedSection === item.section && styles.selectedMenuItem
-                                ]}
-                                onPress={() => {
-                                    setSelectedSection(item.section);
-                                    if (item.section === "add") {
-                                        setAddModalVisible(true);
-                                    }
-                                    toggleMenu();
-                                }}
-                            >
-                                <Icon name={item.icon} size={22} color={selectedSection === item.section ? "#FFD700" : "#6D8EB4"} />
-                                <Text
-                                    style={[
-                                        styles.menuText,
-                                        selectedSection === item.section && styles.selectedMenuText
-                                    ]}
-                                >
-                                    {item.label}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
+                            { label: "👨‍🏫 Liste des professeurs", section: "profs", icon: "school" },
+                            { label: "➕ Ajouter un professeur", section: "addprof", icon: "person" } // AJOUTE CETTE LIGNE
+                            ].map((item, index) => (
+                        <TouchableOpacity
+                        key={index}
+                        style={[
+                        styles.menuItem,
+                        selectedSection === item.section && styles.selectedMenuItem
+                        ]}
+                        onPress={() => {
+                        setSelectedSection(item.section);
+                         if (item.section === "add") {
+                        setAddModalVisible(true);
+                    }
+                    if (item.section === "addprof") {
+                    router.push("/admin/addProf"); // Navigue vers addprof.js
+                }
+                toggleMenu();
+                        }}
+                >
+                <Icon
+                name={item.icon}
+                size={22}
+                color={selectedSection === item.section ? "#FFD700" : "#6D8EB4"}
+                />
+                <Text
+                style={[
+                styles.menuText,
+                selectedSection === item.section && styles.selectedMenuText
+                ]}
+                >
+                {item.label}
+                </Text>
+                </TouchableOpacity>
+                    ))}                         
+
+                
 
                         <View style={styles.menuDivider} />
 
@@ -578,139 +601,131 @@ export default function AdminScreen() {
             </Modal>
 
             {/* Main Content */}
-            <ScrollView
-                contentContainerStyle={styles.scroll}
-                showsVerticalScrollIndicator={false}
-            >
-                {selectedSection === "home" && (
-                    <View style={styles.homeContainer}>
-                        <View style={styles.avatarContainer}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
-                                    {admin.name && admin.name.charAt(0).toUpperCase()}
-                                </Text>
-                            </View>
-                            <View style={styles.glowEffect} />
-                        </View>
-                        <Text style={styles.welcomeTitle}>BIENVENUE ADMIN</Text>
-                        <Text style={styles.adminInfoText}>{admin.email}</Text>
-                        <Text style={styles.subtitle}>PANNEAU D'ADMINISTRATION</Text>
+            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+  {selectedSection === "home" && (
+    <View style={styles.homeContainer}>
+      <View style={styles.avatarContainer}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
+            {admin.name && admin.name.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+        <View style={styles.glowEffect} />
+      </View>
+      <Text style={styles.welcomeTitle}>BIENVENUE ADMIN</Text>
+      <Text style={styles.adminInfoText}>{admin.email}</Text>
+      <Text style={styles.subtitle}>PANNEAU D'ADMINISTRATION</Text>
 
-                        <View style={styles.statsContainer}>
-                            <View style={styles.statCard}>
-                                <Icon name="people" size={30} color="#FFD700" />
-                                <Text style={styles.statNumber}>{students.length}</Text>
-                                <Text style={styles.statLabel}>ÉTUDIANTS</Text>
-                            </View>
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Icon name="people" size={30} color="#FFD700" />
+          <Text style={styles.statNumber}>{students.length}</Text>
+          <Text style={styles.statLabel}>ÉTUDIANTS</Text>
+        </View>
 
-                            <TouchableOpacity
-                                style={styles.addButton}
-                                onPress={() => setAddModalVisible(true)}
-                            >
-                                <Icon name="person-add" size={30} color="#FFF" />
-                                <Text style={styles.addButtonText}>AJOUTER</Text>
-                            </TouchableOpacity>
-                        </View>
+        <TouchableOpacity style={styles.addButton} onPress={() => setAddModalVisible(true)}>
+          <Icon name="person-add" size={30} color="#FFF" />
+          <Text style={styles.addButtonText}>AJOUTER</Text>
+        </TouchableOpacity>
+      </View>
 
-                        <View style={styles.quickActionsContainer}>
-                            <Text style={styles.quickActionsTitle}>ACTIONS RAPIDES</Text>
-                            <View style={styles.actionButtonsRow}>
-                                <TouchableOpacity
-                                    style={styles.actionButton}
-                                    onPress={() => setSelectedSection("students")}
-                                >
-                                    <Icon name="list" size={25} color="#FFD700" />
-                                    <Text style={styles.actionButtonText}>VOIR LA LISTE</Text>
-                                </TouchableOpacity>
+      <View style={styles.quickActionsContainer}>
+        <Text style={styles.quickActionsTitle}>ACTIONS RAPIDES</Text>
+        <View style={styles.actionButtonsRow}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setSelectedSection("students")}
+          >
+            <Icon name="list" size={25} color="#FFD700" />
+            <Text style={styles.actionButtonText}>VOIR LA LISTE</Text>
+          </TouchableOpacity>
 
-                                <TouchableOpacity
-                                    style={styles.actionButton}
-                                    onPress={() => setAddModalVisible(true)}
-                                >
-                                    <Icon name="add-circle" size={25} color="#FFD700" />
-                                    <Text style={styles.actionButtonText}>NOUVEL ÉTUDIANT</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                )}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setAddModalVisible(true)}
+          >
+            <Icon name="add-circle" size={25} color="#FFD700" />
+            <Text style={styles.actionButtonText}>NOUVEL ÉTUDIANT</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  )}
 
-                {selectedSection === "students" && (
-                    <View style={styles.studentsContainer}>
-                        <Text style={styles.sectionTitle}>LISTE DES ÉTUDIANTS</Text>
-                        <Text style={styles.subtitle}>GESTION DES ÉTUDIANTS</Text>
+  {selectedSection === "students" && (
+    <View style={styles.studentsContainer}>
+      <Text style={styles.sectionTitle}>LISTE DES ÉTUDIANTS</Text>
+      <Text style={styles.subtitle}>GESTION DES ÉTUDIANTS</Text>
 
-                        <TouchableOpacity
-                            style={styles.floatingAddButton}
-                            onPress={() => setAddModalVisible(true)}
-                        >
-                            <Icon name="add" size={30} color="#FFF" />
-                        </TouchableOpacity>
+      <TouchableOpacity style={styles.floatingAddButton} onPress={() => setAddModalVisible(true)}>
+        <Icon name="add" size={30} color="#FFF" />
+      </TouchableOpacity>
 
-                        {students.length === 0 ? (
-                            <View style={styles.emptyContainer}>
-                                <Icon name="people" size={40} color="#6D8EB4" />
-                                <Text style={styles.emptyText}>Aucun étudiant trouvé</Text>
-                                <TouchableOpacity
-                                    style={styles.addEmptyButton}
-                                    onPress={() => setAddModalVisible(true)}
-                                >
-                                    <Text style={styles.addEmptyButtonText}>AJOUTER UN ÉTUDIANT</Text>
-                                </TouchableOpacity>
-                            </View>
-                        ) : (
-                            <FlatList
-                                data={students}
-                                keyExtractor={(item) => item.id || item._id || String(Math.random())}
-                                renderItem={({ item }) => (
-                                    <View style={styles.studentCard}>
-                                        <View style={styles.studentInfo}>
-                                            <Text style={styles.studentName}>{item.name}</Text>
-                                            <Text style={styles.studentEmail}>{item.email}</Text>
-                                            <View style={styles.studentDetails}>
-                                                <Text style={styles.detailItem}>
-                                                    <Text style={styles.detailLabel}>Filière:</Text> {item.major || "Non spécifié"}
-                                                </Text>
-                                                <Text style={styles.detailItem}>
-                                                    <Text style={styles.detailLabel}>Groupe:</Text> {item.group || "Non spécifié"}
-                                                </Text>
-                                            </View>
-                                        </View>
-                                        <View style={styles.actionButtons}>
-                                            <TouchableOpacity
-                                                style={styles.editButton}
-                                                onPress={() => openEditModal(item)}
-                                            >
-                                                <Icon name="edit" size={20} color="#FFD700" />
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={styles.deleteButton}
-                                                onPress={() => {
-                                                    Alert.alert(
-                                                        "Confirmation",
-                                                        `Voulez-vous vraiment supprimer ${item.name} ?`,
-                                                        [
-                                                            { text: "Annuler", style: "cancel" },
-                                                            {
-                                                                text: "Confirmer",
-                                                                onPress: () => handleDeleteStudent(item.id || item._id),
-                                                                style: "destructive"
-                                                            }
-                                                        ]
-                                                    );
-                                                }}
-                                            >
-                                                <Icon name="delete" size={20} color="#FF5555" />
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                )}
-                                style={styles.studentsList}
-                            />
-                        )}
-                    </View>
-                )}
-            </ScrollView>
+      {students.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Icon name="people" size={40} color="#6D8EB4" />
+          <Text style={styles.emptyText}>Aucun étudiant trouvé</Text>
+          <TouchableOpacity style={styles.addEmptyButton} onPress={() => setAddModalVisible(true)}>
+            <Text style={styles.addEmptyButtonText}>AJOUTER UN ÉTUDIANT</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={students}
+          keyExtractor={(item) => item.id || item._id || String(Math.random())}
+          renderItem={({ item }) => (
+            <View style={styles.studentCard}>
+              <View style={styles.studentInfo}>
+                <Text style={styles.studentName}>{item.name}</Text>
+                <Text style={styles.studentEmail}>{item.email}</Text>
+                <View style={styles.studentDetails}>
+                  <Text style={styles.detailItem}>
+                    <Text style={styles.detailLabel}>Filière:</Text> {item.major || "Non spécifié"}
+                  </Text>
+                  <Text style={styles.detailItem}>
+                    <Text style={styles.detailLabel}>Groupe:</Text> {item.group || "Non spécifié"}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => openEditModal(item)}
+                >
+                  <Icon name="edit" size={20} color="#FFD700" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => {
+                    Alert.alert(
+                      "Confirmation",
+                      `Voulez-vous vraiment supprimer ${item.name} ?`,
+                      [
+                        { text: "Annuler", style: "cancel" },
+                        {
+                          text: "Confirmer",
+                          onPress: () => handleDeleteStudent(item.id || item._id),
+                          style: "destructive"
+                        }
+                      ]
+                    );
+                  }}
+                >
+                  <Icon name="delete" size={20} color="#FF5555" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+          style={styles.studentsList}
+        />
+      )}
+    </View>
+  )}
+
+ 
+
+</ScrollView>
+
         </SafeAreaView>
     );
 }
