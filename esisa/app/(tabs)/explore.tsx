@@ -80,6 +80,7 @@ export default function ProfilScreen() {
       { label: "🏠 Accueil", route: "/(tabs)" as const },
       { label: "👤 Profil", route: "/explore" as const },
       { label: "🎓 Formations", route: "/other/formation" as const },
+      { label: "💬 Messagerie", route: "/chat/choose"},
       { label: "👨‍🏫 Corps enseignant", route: "#" },
       { label: "📚 Programmes", route: "#" },
       { label: "🔬 Laboratoires", route: "#" },
