@@ -20,7 +20,7 @@ export default function CalendrierScreen() {
 
   const goBack = () => {
     // Navigate back using Expo Router
-    router.back();
+    router.replace("/(tabs)");
   };
 
   const renderSchedule = () => {
