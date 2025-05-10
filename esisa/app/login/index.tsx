@@ -107,7 +107,7 @@ const LoginScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.replace("/(tabs)")}>
         <Icon name="arrow-back" size={28} color="#FFD700" />
       </TouchableOpacity>
 
