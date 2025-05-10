@@ -6,7 +6,7 @@ export default function Layout() {
     return (
         <Stack
             screenOptions={{
-                headerShown: false, // ✅ supprime la barre pour toutes les pages login/*
+                headerShown: false, // ✅ supprime la barre pour toutes les pages login/
             }}
         />
     );

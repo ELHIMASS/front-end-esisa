@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +20,7 @@ export default function ChatScreen() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     AsyncStorage.getItem('user')
@@ -28,11 +38,14 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!channelId) return;
+
     socket.connect();
     socket.emit('joinChannel', { channelId });
+
     socket.on('receiveMessage', (msg: any) => {
       setMessages(prev => [...prev, msg]);
     });
+
     return () => {
       socket.off('receiveMessage');
       socket.disconnect();
@@ -46,8 +59,9 @@ export default function ChatScreen() {
         content: message,
         timestamp: new Date().toISOString()
       };
+
+      // On envoie uniquement, on n'ajoute pas localement
       socket.emit('sendMessage', { channelId, message: fullMessage });
-      setMessages(prev => [...prev, fullMessage]);
       setMessage('');
     }
   };
@@ -55,41 +69,59 @@ export default function ChatScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.push('/chat/choose')}>
             <Ionicons name="arrow-back" size={24} color="#FFD700" />
           </TouchableOpacity>
           <Text style={styles.title}>
             {channelId?.includes('group') ? 'Canal : Groupe → ' : 'Canal : Année → '}
-            <Text style={{ color: '#FFD700' }}>{(channelId as string)?.split(':')[1]}</Text>
+            <Text style={{ color: '#FFD700' }}>
+              {(channelId as string)?.split(':')[1]}
+            </Text>
           </Text>
         </View>
 
         <FlatList
+          ref={flatListRef}
           data={messages.filter((m) => typeof m === 'object' && m.content)}
-         renderItem={({ item }) => (
-           <View style={[styles.messageBubble, item.user === user?.name ? styles.mine : styles.theirs]}>
-            <Text style={styles.user}>{item.user}</Text>
-             <Text style={styles.messageText}>{item.content}</Text>
-           </View>
-            )}     
-             keyExtractor={(_, i) => i.toString()}
-             style={styles.list}
+          renderItem={({ item }) => (
+            <View
+              style={[
+                styles.messageBubble,
+                item.user === user?.name ? styles.mine : styles.theirs
+              ]}
+            >
+              <Text style={styles.user}>{item.user}</Text>
+              <Text style={styles.messageText}>{item.content}</Text>
+            </View>
+          )}
+          keyExtractor={(_, i) => i.toString()}
+          style={styles.list}
+          onContentSizeChange={() =>
+            flatListRef.current?.scrollToEnd({ animated: true })
+          }
+          onLayout={() =>
+            flatListRef.current?.scrollToEnd({ animated: true })
+          }
         />
 
-
-<View style={styles.inputWrapper}>
-  <TextInput
-    value={message}
-    onChangeText={setMessage}
-    placeholder="Écrire un message..."
-    style={styles.input}
-    placeholderTextColor="#999"
-  />
-  <Text style={styles.sendIcon} onPress={sendMessage}>📤</Text>
-</View>
-
+        <View style={styles.inputWrapper}>
+          <TextInput
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Écrire un message..."
+            style={styles.input}
+            placeholderTextColor="#999"
+          />
+          <Text style={styles.sendIcon} onPress={sendMessage}>
+            📤
+          </Text>
+        </View>
       </KeyboardAvoidingView>
     </>
   );
@@ -106,6 +138,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
     gap: 10,
+    marginTop: Platform.OS === 'ios' ? 40 : 0, // marge pour iOS notch
   },
   title: {
     color: '#FFD700',
@@ -158,5 +191,4 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     color: '#1A3F6F',
   },
-  
 });
