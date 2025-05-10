@@ -1,8 +1,25 @@
 {
   "devDependencies": {
+    "@react-native-community/cli": "^18.0.0",
     "expo": "^53.0.8"
   },
   "dependencies": {
-    "expo-document-picker": "~13.1.5"
+    "cors": "^2.8.5",
+    "expo": "~53.0.9",
+    "expo-document-picker": "~13.1.5",
+    "express": "^5.1.0",
+    "mongoose": "^8.14.2",
+    "react": "19.0.0",
+    "react-native": "0.79.2",
+    "react-native-incall-manager": "^4.2.1",
+    "react-native-webrtc": "^124.0.5",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "name": "front-end-esisa",
+  "version": "1.0.0",
+  "scripts": {
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   }
 }

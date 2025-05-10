@@ -35,6 +35,7 @@ export default function RootLayout() {
         <Stack.Screen name="prof" options={{ headerShown: false }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
         <Stack.Screen name="other" options={{ headerShown: false }} />
+        <Stack.Screen name="chat" options={{ headerShown: false }} />
 
         <Stack.Screen
         name="index"

@@ -76,20 +76,21 @@ export default function ProfilScreen() {
     };
 
     const menuItems = isLoggedIn
-            ? [
-                  { label: "🏠 Accueil", route: "/(tabs)" as const },
-                  { label: "👤 Profil", route: "/explore" as const },
-                  { label: "🎓 Formations", route: "/other/formation" as const },
-                  { label: "👨‍🏫 Corps enseignant", route: "#" },
-                  { label: "📚 Programmes", route: "#" },
-                  { label: "🔬 Laboratoires", route: "#" },
-                  { label: "🌐 International", route: "/other/international" as const },
-                  { label: "📅 Calendrier", route: "/other/calendrier" as const },
-                  { label: "🏢 Campus", route: "#" },
-                  { label: "📞 Contact", route: "#" },
-                  { label: "🔓 Déconnexion", route: "/" as const, onPress: handleLogout },
-              ]
-            : [];
+  ? [
+      { label: "🏠 Accueil", route: "/(tabs)" as const },
+      { label: "👤 Profil", route: "/explore" as const },
+      { label: "🎓 Formations", route: "/other/formation" as const },
+      { label: "👨‍🏫 Corps enseignant", route: "#" },
+      { label: "📚 Programmes", route: "#" },
+      { label: "🔬 Laboratoires", route: "#" },
+      { label: "🌐 International", route: "/other/international" as const },
+      { label: "📅 Calendrier", route: "/other/calendrier" as const },
+      { label: "🏢 Campus", route: "#" },
+      { label: "📞 Contact", route: "#" },
+      { label: "🔓 Déconnexion", route: "/" as const, onPress: handleLogout },
+    ]
+  : [];
+
 
     if (loading) {
         return (

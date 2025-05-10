@@ -192,6 +192,7 @@ export default function ESISAHomePage() {
         { label: "🏠 Accueil", route: "/" },
         { label: "👤 Profil", route: "/explore" },
         { label: "🎓 Formations", route: "/other/formation" },
+        { label: "💬 Messagerie", route: "/chat/choose"},
         { label: "👨‍🏫 Corps enseignant", route: "#" },
         { label: "📚 Programmes", route: "#" },
         { label: "🔬 Laboratoires", route: "#" },
