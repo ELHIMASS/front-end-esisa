@@ -21,7 +21,9 @@
     "react-native-incall-manager": "^4.2.1",
     "react-native-webrtc": "^124.0.5",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "expo-device": "~7.1.4",
+    "expo-notifications": "~0.31.1"
   },
   "type": "commonjs"
 }

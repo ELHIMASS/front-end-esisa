@@ -11,18 +11,22 @@ const fs = require("fs");
 require("dotenv").config();
 const app = express();
 const server = http.createServer(app);
+const { router: notificationRoutes, userTokens } = require("./routes/notifications");
 const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
   }
 });
+const { sendPushNotification } = require("../esisa/services/notificationService");
+
 
 
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
 
 
 // Multer config
@@ -68,6 +72,9 @@ app.use("/api", require("./routes/emailRoute"));
 app.use("/api/addProf", require("./routes/addProf"));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/channels', require('./routes/channels'));
+app.use("/api/notifications", require("./routes/notifications"));
+
+
 
 // Email (formulaire simple)
 app.post('/send-email', async (req, res) => {
@@ -182,24 +189,32 @@ io.on("connection", (socket) => {
     socket.join(channelId);
   });
 
-  socket.on("sendMessage", async ({ channelId, message }) => {
-    try {
-      if (!message || typeof message !== 'object' || !message.content || !message.user) {
-        console.warn("Message invalide non enregistré :", message);
-        return;
-      }
-  
-      await Channel.findOneAndUpdate(
-        { name: channelId },
-        { $push: { messages: message } },
-        { new: true, upsert: true }
-      );
-  
-      io.to(channelId).emit("receiveMessage", message);
-    } catch (error) {
-      console.error("Erreur lors de l'enregistrement du message :", error);
+
+socket.on("sendMessage", async ({ channelId, message }) => {
+  try {
+    if (!message || typeof message !== 'object' || !message.content || !message.user) {
+      console.warn("Message invalide non enregistré :", message);
+      return;
     }
-  });
+
+    await Channel.findOneAndUpdate(
+      { name: channelId },
+      { $push: { messages: message } },
+      { new: true, upsert: true }
+    );
+
+    io.to(channelId).emit("receiveMessage", message);
+
+    // 🔔 Notification push à tous les utilisateurs (exemple simplifié)
+    const tokens = Object.values(userTokens); // ou filtrer ceux du canal
+    const notifMessage = `${message.user} dans ${channelId} : ${message.content}`;
+    await sendPushNotification(tokens, notifMessage);
+
+  } catch (error) {
+    console.error("Erreur lors de l'enregistrement du message :", error);
+  }
+});
+
   
   
 

@@ -21,6 +21,11 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+    "notification": {
+      "vapidPublicKey": "BEeNPCJOTKlRjIIiN9t1_c0O_lb8uTvwcdH2F6FOxGruu6Q-MVS9sCQtgyFYWXmc_GN-1fZ2Dfg23PIXCoOaSuU",
+      "serviceWorkerPath": "firebase-messaging-sw.js"
+
+    },
     "plugins": [
       "expo-router",
       [
