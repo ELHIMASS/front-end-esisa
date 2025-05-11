@@ -1,16 +1,40 @@
-import React, { useState } from 'react';
-import { View, TextInput, Button, FlatList, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  StyleSheet,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  SafeAreaView
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 export default function ChatBotScreen() {
   const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
   const [input, setInput] = useState('');
+  const [username, setUsername] = useState('Guest');
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const stored = await AsyncStorage.getItem('user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setUsername(parsed?.name || 'User');
+      }
+    };
+    loadUser();
+  }, []);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    // Ajouter le message de l'utilisateur
-    const newMessages = [...messages, { from: 'user', text: input }];
-    setMessages(newMessages);
+    setMessages(prev => [...prev, { from: username, text: input }]);
     setInput('');
 
     try {
@@ -21,82 +45,162 @@ export default function ChatBotScreen() {
       });
 
       const data = await response.json();
-      console.log("🧠 Réponse de Ollama :", data);
-
-      const botResponse = data.response || 'Erreur de réponse d’Ollama.';
-      setMessages((prev) => [...prev, { from: 'gpt', text: botResponse }]);
+      const botResponse = data?.response || "Erreur de réponse d'Einstein.";
+      setMessages(prev => [...prev, { from: 'Einstein', text: botResponse }]);
     } catch (error) {
       console.error('❌ Erreur fetch:', error);
-      setMessages((prev) => [...prev, { from: 'gpt', text: 'Erreur de connexion.' }]);
+      setMessages(prev => [...prev, { from: 'Einstein', text: 'Erreur de connexion à Einstein.' }]);
     }
   };
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={80}
-    >
-      <FlatList
-        data={messages}
-        keyExtractor={(_, index) => index.toString()}
-        renderItem={({ item }) => (
-          <Text style={[styles.message, item.from === 'user' ? styles.user : styles.gpt]}>
-            {item.from === 'user' ? 'Tu : ' : 'GPT : '}
-            {item.text}
-          </Text>
-        )}
-        style={styles.chat}
-      />
-      <View style={styles.inputContainer}>
-        <TextInput
-          placeholder="Pose ta question..."
-          value={input}
-          onChangeText={setInput}
-          style={styles.input}
-          placeholderTextColor="#ccc"
-        />
-        <Button title="Envoyer" onPress={sendMessage} />
+  const renderItem = ({ item }: { item: { from: string; text: string } }) => {
+    const isUser = item.from === username;
+    const avatar = isUser
+      ? require('../../assets/images/user.png')
+      : require('../../assets/images/einstein.png');
+
+    return (
+      <View style={[styles.messageRow, isUser ? styles.right : styles.left]}>
+        {!isUser && <Image source={avatar} style={styles.avatar} />}
+        <View style={[styles.bubble, isUser ? styles.userBubble : styles.botBubble]}>
+          <Text style={[styles.name, isUser ? styles.nameUser : styles.nameBot]}>{item.from}</Text>
+          <Text style={[styles.text, isUser ? styles.textUser : styles.textBot]}>{item.text}</Text>
+        </View>
+        {isUser && <Image source={avatar} style={styles.avatar} />}
       </View>
-    </KeyboardAvoidingView>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={80}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.replace('/(tabs)')}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        <FlatList
+          data={messages}
+          keyExtractor={(_, i) => i.toString()}
+          renderItem={renderItem}
+          style={styles.chat}
+          contentContainerStyle={{ paddingVertical: 20 }}
+        />
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            placeholder="Pose ta question à Einstein..."
+            placeholderTextColor="#ccc"
+            value={input}
+            onChangeText={setInput}
+            style={styles.input}
+          />
+          <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+            <Text style={styles.sendText}>Envoyer</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  chat: { padding: 15 },
-  message: {
-    fontSize: 16,
-    marginVertical: 6,
+  safe: {
+    flex: 1,
+    backgroundColor: '#0A1F3A',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#0A1F3A',
+  },
+  header: {
+    padding: 10,
+    marginTop: 5,
+  },
+  chat: {
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginVertical: 8,
+  },
+  left: {
+    justifyContent: 'flex-start',
+  },
+  right: {
+    justifyContent: 'flex-end',
+    flexDirection: 'row-reverse',
+  },
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    marginHorizontal: 5,
+  },
+  bubble: {
+    maxWidth: '75%',
+    borderRadius: 18,
+    padding: 12,
+  },
+  userBubble: {
+    backgroundColor: '#1A3F6F',
+  },
+  botBubble: {
+    backgroundColor: '#FFD700',
+  },
+  name: {
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  nameUser: {
     color: '#fff',
   },
-  user: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#1a1a1a',
-    padding: 10,
-    borderRadius: 10,
+  nameBot: {
+    color: '#0A1F3A',
   },
-  gpt: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 10,
+  text: {
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  textUser: {
+    color: '#fff',
+  },
+  textBot: {
+    color: '#0A1F3A',
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: 10,
-    backgroundColor: '#111',
-    borderTopColor: '#333',
+    padding: 12,
+    backgroundColor: '#0A1F3A',
+    borderTopColor: '#FFD700',
     borderTopWidth: 1,
-    alignItems: 'center',
   },
   input: {
     flex: 1,
+    backgroundColor: '#1A3F6F',
     color: '#fff',
-    padding: 10,
-    borderColor: '#333',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 15,
     borderWidth: 1,
-    borderRadius: 8,
-    marginRight: 10,
+    borderColor: '#FFD700',
+  },
+  sendButton: {
+    marginLeft: 10,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  sendText: {
+    fontWeight: 'bold',
+    color: '#0A1F3A',
   },
 });

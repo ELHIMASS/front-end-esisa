@@ -87,7 +87,7 @@ export default function ProfilScreen() {
       { label: "🌐 International", route: "/other/international" as const },
       { label: "📅 Calendrier", route: "/other/calendrier" as const },
       { label: "🏢 Campus", route: "#" },
-      { label: "📞 Contact", route: "#" },
+      { label: "👴 Einstein", route: "/chat/chatgpt" },
       { label: "🔓 Déconnexion", route: "/" as const, onPress: handleLogout },
     ]
   : [];
