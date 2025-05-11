@@ -199,7 +199,7 @@ export default function ESISAHomePage() {
         { label: "🌐 International", route: "/other/international" },
         { label: "📅 Calendrier", route: "/other/calendrier" },
         { label: "🏢 Campus", route: "#" },
-        { label: "📞 Contact", route: "#" },
+        { label: "📞 Chatgpt", route: "/chat/chatgpt" },
         { label: "🔓 Déconnexion", route: "/", onPress: handleLogout },
       ]
     : [
@@ -207,7 +207,7 @@ export default function ESISAHomePage() {
         { label: "🎓 Formations", route: "/other/formation" },
         { label: "🌐 International", route: "/other/international" },
         { label: "📅 Calendrier", route: "/other/calendrier" },
-        { label: "📞 Contact", route: "#" },
+        { label: "📞 Chatgpt", route: "/chat/chatgpt" },
         { label: "🔑 Espace étudiant", route: "/login" },
       ];
 

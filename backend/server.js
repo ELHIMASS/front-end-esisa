@@ -19,6 +19,7 @@ const io = new Server(server, {
   }
 });
 const { sendPushNotification } = require("../esisa/services/notificationService");
+const chatGptRoute = require('./routes/chatgpt');
 
 
 
@@ -73,6 +74,10 @@ app.use("/api/addProf", require("./routes/addProf"));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/channels', require('./routes/channels'));
 app.use("/api/notifications", require("./routes/notifications"));
+app.use('/api/chat', chatGptRoute);
+app.use('/api', require('./routes/chatgpt'));
+
+
 
 
 
@@ -222,6 +227,7 @@ socket.on("sendMessage", async ({ channelId, message }) => {
     console.log("Utilisateur déconnecté");
   });
 });
+
 
 
 console.log("SMTP_USER:", process.env.SMTP_USER);
