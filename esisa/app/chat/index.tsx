@@ -13,8 +13,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import socket from '../utils/socket';
-import { getPushToken } from '../../services/getPushToken';
-
 export default function ChatScreen() {
   const params = useLocalSearchParams();
   const channelId = params.channelId;
@@ -28,13 +26,9 @@ export default function ChatScreen() {
       .then(data => {
         const parsed = JSON.parse(data || '{}');
         setUser(parsed);
-        if (parsed?._id) {
-          getPushToken(parsed._id); // envoie token push avec user ID
-        }
       })
       .catch(() => {});
   }, []);
-  
 
   useEffect(() => {
     if (!channelId) return;
@@ -60,18 +54,7 @@ export default function ChatScreen() {
     };
   }, [channelId]);
 
-  useEffect(() => {
-    getPushToken().then((token) => {
-      if (token) {
-        // Envoie ce token à ton backend pour l’enregistrer
-        fetch('http://192.168.100.219:5000/api/save-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token }),
-        });
-      }
-    });
-  }, []);
+  
   
 
   const sendMessage = () => {
