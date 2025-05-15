@@ -62,7 +62,7 @@ const LoginScreen: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`http://192.168.100.219:5000/api/login?email=${email}&password=${password}`);
+      const response = await fetch(`http://192.168.1.14:5000/api/login?email=${email}&password=${password}`);
       const userData = await response.json();
 
       if (!response.ok || !userData.role) {
@@ -95,6 +95,10 @@ const LoginScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const navigateToForgotPassword = () => {
+    router.push("/forgotpassword");
   };
 
   if (loading) {
@@ -142,6 +146,13 @@ const LoginScreen: React.FC = () => {
               onChangeText={setPassword}
             />
           </View>
+
+          <TouchableOpacity
+            style={styles.forgotPasswordLink}
+            onPress={navigateToForgotPassword}
+          >
+            <Text style={styles.forgotPasswordText}>Mot de passe oublié ?</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.loginButton}
@@ -225,6 +236,14 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 16,
   },
+  forgotPasswordLink: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+  },
+  forgotPasswordText: {
+    color: "#FFD700",
+    fontSize: 14,
+  },
   loginButton: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -232,7 +251,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#4B72FF",
     paddingVertical: 15,
     borderRadius: 25,
-    marginTop: 20,
     shadowColor: "#FFD700",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,

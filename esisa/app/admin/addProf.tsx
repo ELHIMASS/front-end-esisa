@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 
 // Configuration API
-const SERVER_IP = "192.168.100.219"; // Remplacez par votre adresse IP réelle
+const SERVER_IP = "192.168.1.14"; // Remplacez par votre adresse IP réelle
 const API_URL = `http://${SERVER_IP}:5000`;
 
 

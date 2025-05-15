@@ -7,8 +7,10 @@ const multer = require("multer");
 const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io"); 
+const forgotpassword = require('./routes/forgotpassword');
 const fs = require("fs");
 require("dotenv").config();
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -73,6 +75,7 @@ app.use('/api/messages', require('./routes/messages'));
 app.use('/api/channels', require('./routes/channels'));
 app.use('/api/chat', chatGptRoute);
 app.use('/api', require('./routes/chatgpt'));
+app.use('/api/forgotpassword', require('./routes/forgotpassword'));
 
 
 

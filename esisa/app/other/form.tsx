@@ -203,7 +203,7 @@ export default function ApplicationFormScreen() {
       }
   
       // Use your actual server address here
-      const serverUrl = 'http://192.168.100.219:5000/send-email-with-attachments';
+      const serverUrl = 'http://192.168.1.14:5000/send-email-with-attachments';
       const response = await fetch(serverUrl, {
         method: 'POST',
         body: formDataObj,

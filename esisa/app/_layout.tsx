@@ -36,6 +36,13 @@ export default function RootLayout() {
         <Stack.Screen name="admin" options={{ headerShown: false }} />
         <Stack.Screen name="other" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />
+        <Stack.Screen name="resetpassword" options={{ headerShown: false }} />
+        <Stack.Screen name="forgotpassword" options={{ headerShown: false }} />
+
+        
+
+
+
 
         <Stack.Screen
         name="index"

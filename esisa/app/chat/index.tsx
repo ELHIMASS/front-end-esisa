@@ -32,7 +32,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!channelId) return;
-    fetch(`http://192.168.100.219:5000/api/channels/${channelId}/messages`)
+    fetch(`http://192.168.1.14:5000/api/channels/${channelId}/messages`)
       .then(res => res.json())
       .then(setMessages)
       .catch(err => console.error("Erreur chargement messages :", err));

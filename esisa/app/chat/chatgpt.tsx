@@ -38,7 +38,7 @@ export default function ChatBotScreen() {
     setInput('');
 
     try {
-      const response = await fetch('http://192.168.100.219:5000/api/chatgpt', {
+      const response = await fetch('http://192.168.1.14:5000/api/chatgpt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: input }),

@@ -4,6 +4,7 @@
     "slug": "",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "esisa", 
     "icon": "./assets/icons/icon.png",
     "newArchEnabled": true,
     "ios": {
