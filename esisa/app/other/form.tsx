@@ -19,8 +19,9 @@ import {
 import { Icon } from "react-native-elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Picker } from "@react-native-picker/picker";
 import * as DocumentPicker from "expo-document-picker";
+import RNPickerSelect from 'react-native-picker-select'; // en haut du fichier
+
 
 export default function ApplicationFormScreen() {
   const insets = useSafeAreaInsets();
@@ -370,27 +371,48 @@ export default function ApplicationFormScreen() {
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Informations Académiques</Text>
 
-            <View style={styles.inputGroup}>
+           <View style={styles.inputGroup}>
               <Text style={styles.labelText}>Niveau d'entrée souhaité *</Text>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={formData.niveau}
-                  style={styles.picker}
-                  dropdownIconColor="#FFD700"
-                  onValueChange={(itemValue) =>
-                    handleInputChange("niveau", itemValue)
-                  }
-                >
-                  <Picker.Item label="1ère année" value="premiere-annee" />
-                  <Picker.Item label="2ème année" value="deuxieme-annee" />
-                  <Picker.Item label="3ème année" value="troisieme-annee" />
-                  <Picker.Item label="Master 1 (M1)" value="m1" />
-                  <Picker.Item label="Master 2 (M2)" value="m2" />
-                </Picker>
+              <RNPickerSelect
+              onValueChange={(value) => handleInputChange("niveau", value)}
+              value={formData.niveau}
+              placeholder={{ label: "Sélectionnez un niveau...", value: null }}
+              items={[
+              { label: "1ère année", value: "premiere-annee" },
+              { label: "2ème année", value: "deuxieme-annee" },
+              { label: "3ème année", value: "troisieme-annee" },
+              { label: "Master 1 (M1)", value: "m1" },
+              { label: "Master 2 (M2)", value: "m2" },
+              ]}
+              useNativeAndroidPickerStyle={false}
+              style={{
+              inputIOS: {
+              backgroundColor: "#1A3F6F",
+              borderRadius: 5,
+              padding: 12,
+              color: "#FFF",
+              borderWidth: 1,
+              borderColor: "#36D7B7",
+              marginBottom: 10,
+              },
+              inputAndroid: {
+              backgroundColor: "#1A3F6F",
+              borderRadius: 5,
+              padding: 12,
+              color: "#FFF",
+              borderWidth: 1,
+              borderColor: "#36D7B7",
+              marginBottom: 10,
+              },
+              placeholder: {
+              color: "#999",
+              },
+              }}
+              Icon={() => {
+              return <Icon name="arrow-drop-down" color="#FFD700" size={24} />;
+              }}
+              />
               </View>
-            </View>
-
-            <View style={styles.inputGroup}>
               <Text style={styles.labelText}>Filière (si applicable)</Text>
               <TextInput
                 style={styles.input}
@@ -444,7 +466,7 @@ export default function ApplicationFormScreen() {
                 }
               />
             </View>
-          </View>
+          
 
           {/* Section Documents */}
           <View style={styles.sectionContainer}>

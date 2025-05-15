@@ -21,7 +21,7 @@ import { Picker } from '@react-native-picker/picker';
 import { Audio } from "expo-av";
 import * as DocumentPicker from 'expo-document-picker';
 
-const IP = "192.168.100.219";
+const IP = "192.168.1.14";
 const API_URL = `http://${IP}:5000/api`;
 
 type Evaluation = {
