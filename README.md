@@ -1,20 +1,33 @@
-# front-end-esisa
-les utilisateur pour se connecter : 
-    // etudiant :        
-        email    : "ahmed@"
-        password :"1234"
-        -------------------
-        email    : "i.elhimass@esisa.ac.ma"
-        password :"1234"
-    // prof :  
-        email    : "prof@"
-        password :"1234"
-    // admin :
-        email    : "admin@esisa.ma"
-        password :"admin123"
+# 🎓 front-end-esisa
 
+Application mobile (React Native) pour la gestion scolaire à l'ESISA : accès étudiants, professeurs et administrateurs.
 
-        >> Dependance : 
+---
+
+## 📱 Fonctionnalités principales
+
+- ✅ Authentification par rôle (Étudiant, Professeur, Admin)
+- 📋 Visualisation des notes, absences, groupes et matières
+- 📧 Envoi d'e-mails depuis l'application
+- 🔐 Réinitialisation sécurisée des mots de passe
+- 💬 Messagerie avec canaux (Socket.IO)
+- 🧾 Candidature ESISA avec formulaire et pièces jointes (PDF, photo...)
+
+---
+
+## 👤 Accès aux comptes de test
+
+| Rôle        | Email                            | Mot de passe |
+|-------------|----------------------------------|--------------|
+| Étudiant    | `ahmed@` ou `i.elhimass@esisa.ac.ma` | `1234`       |
+| Professeur  | `prof@`                          | `1234`       |
+| Administrateur | `admin@esisa.ma`               | `admin123`   |
+
+---
+
+## ⚙️ Dépendances à installer
+
+   >> Dependance : 
     > npm install react-native-elements react-native-vector-icons
     > yarn add react-native-elements react-native-vector-icons
     ---
@@ -23,3 +36,4 @@ les utilisateur pour se connecter :
     ---
     > npm install @react-native-picker/picker
     > yarn add @react-native-picker/picker
+
