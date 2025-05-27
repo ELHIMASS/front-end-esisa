@@ -10,64 +10,24 @@ import {
     Modal,
     Pressable,
     Animated,
-    TextInput,
-    FlatList,
+    Image,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Icon } from "react-native-elements";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Audio } from "expo-av";
 
 // Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
-const SERVER_IP = "192.168.1.14"; // Remplacez par votre adresse IP réelle
+const SERVER_IP = "192.168.1.146"; // Remplacez par votre adresse IP réelle
 const API_URL = `http://${SERVER_IP}:5000`;
 
-export default function AdminScreen() {
+export default function AdminHomePage() {
     const [admin, setAdmin] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isMenuVisible, setMenuVisible] = useState(false);
     const [selectedSection, setSelectedSection] = useState("home");
-    const [students, setStudents] = useState([]);
-    const [isAddModalVisible, setAddModalVisible] = useState(false);
-    const [isEditModalVisible, setEditModalVisible] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState(null);
-   
-          
-    const [newStudent, setNewStudent] = useState({
-        id: "",
-        name: "",
-        email: "",
-        age: "",
-        major: "",
-        anne_scolaire: "",
-        date: "",
-        group: "",
-        sex: "",
-        tel: "",
-        role: "student",
-        password: "1234"
-    } as student);
-
-    interface student {
-        _id?: string;
-        id?: string;
-        name: string;
-        email: string;
-        age: string;
-        major: string;
-        anne_scolaire: string;
-        date: string;
-        group: string;
-        sex: string;
-        tel: string;
-        role: string;
-        password: string;
-        absences?: Array<any>;
-        grades?: Array<any>;
-    }
     const router = useRouter();
-    const insets = useSafeAreaInsets();
     const slideAnim = useState(new Animated.Value(300))[0];
 
     useEffect(() => {
@@ -90,15 +50,6 @@ export default function AdminScreen() {
                 }
 
                 setAdmin(parsed);
-
-                // Charger les étudiants depuis AsyncStorage d'abord
-                const storedStudents = await AsyncStorage.getItem("students");
-                if (storedStudents) {
-                    setStudents(JSON.parse(storedStudents));
-                }
-
-                // Puis essayer de charger depuis le serveur
-                await loadStudentsFromServer();
             } catch (error) {
                 console.error("Erreur lors de la vérification de session :", error);
                 Alert.alert("Erreur", "Impossible de charger les données");
@@ -106,9 +57,6 @@ export default function AdminScreen() {
             } finally {
                 setLoading(false);
             }
-
-            
-
         };
 
         checkSession();
@@ -116,197 +64,47 @@ export default function AdminScreen() {
 
     const playSound = async (file) => {
         try {
-          const { sound } = await Audio.Sound.createAsync(file);
-          await sound.playAsync();
+            const { sound } = await Audio.Sound.createAsync(file);
+            await sound.playAsync();
         } catch (error) {
-          console.error("Erreur de lecture audio :", error);
-        }
-      };
-      
-
-    const loadStudentsFromServer = async () => {
-        try {
-            const response = await fetch(`${API_URL}/api/students`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error("Erreur lors du chargement des étudiants");
-            }
-
-            const data = await response.json();
-            setStudents(data);
-            await AsyncStorage.setItem("students", JSON.stringify(data));
-        } catch (error) {
-            console.error("Erreur lors du chargement depuis le serveur:", error);
-            // En cas d'échec, on garde les données d'AsyncStorage
+            console.error("Erreur de lecture audio :", error);
         }
     };
 
-    
-
     const toggleMenu = async () => {
-        await playSound(require("../../assets/audio/tap.mp3")); 
-      
+        await playSound(require("../../assets/audio/tap.mp3"));
+
         if (isMenuVisible) {
-          Animated.timing(slideAnim, {
-            toValue: 300,
-            duration: 300,
-            useNativeDriver: true,
-          }).start(() => setMenuVisible(false));
+            Animated.timing(slideAnim, {
+                toValue: 300,
+                duration: 300,
+                useNativeDriver: true,
+            }).start(() => setMenuVisible(false));
         } else {
-          setMenuVisible(true);
-          Animated.timing(slideAnim, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true,
-          }).start();
+            setMenuVisible(true);
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
         }
-      };
-      
-      const handleLogout = async () => {
-        await playSound(require("../../assets/audio/done.mp3")); // 🔊 remplace par le bon chemin si besoin
+    };
+
+    const handleLogout = async () => {
+        await playSound(require("../../assets/audio/done.mp3"));
         await AsyncStorage.clear();
         setAdmin(null);
         router.replace("/(tabs)");
-      };
-      
-
-    const handleAddStudent = async () => {
-        if (!newStudent.name || !newStudent.email) {
-            Alert.alert("Erreur", "Le nom et l'email sont obligatoires");
-            return;
-        }
-
-        try {
-            // Appel API vers le backend Node.js en utilisant la variable API_URL
-            const response = await fetch(`${API_URL}/api/add`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(newStudent)
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || "Erreur lors de l'ajout");
-            }
-
-            // Mise à jour locale si l'ajout est réussi
-            const updatedStudents: student[] = [...students, result.student];
-            setStudents(updatedStudents);
-            await AsyncStorage.setItem("students", JSON.stringify(updatedStudents));
-
-            setAddModalVisible(false);
-            Alert.alert("Succès", "Étudiant ajouté avec succès");
-
-            // Réinitialise le formulaire
-            setNewStudent({
-                id: "",
-                name: "",
-                email: "",
-                age: "",
-                major: "",
-                anne_scolaire: "",
-                date: "",
-                group: "",
-                sex: "",
-                tel: "",
-                role: "student",
-                password: "1234"
-            });
-            router.replace("/admin"); 
-        } catch (error) {
-            console.error("Erreur lors de l'ajout:", error);
-            Alert.alert("Erreur", error.message || "Erreur lors de l'ajout de l'étudiant");
-        }
     };
 
-    
-
-    const handleEditStudent = async () => {
-        if (!selectedStudent || !selectedStudent.name || !selectedStudent.email) {
-            Alert.alert("Erreur", "Le nom et l'email sont obligatoires");
-            return;
-        }
-    
-        try {
-            // Appel API pour la modification
-            const response = await fetch(`${API_URL}/api/update`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    email: selectedStudent.email, // L'email original pour identifier l'étudiant
-                    ...selectedStudent // Les nouvelles données
-                })
-            });
-    
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Erreur lors de la modification");
-            }
-    
-            // Mise à jour locale si la modification est réussie
-            const updatedStudents = students.map(student =>
-                student.id === selectedStudent.id || student._id === selectedStudent._id || student.email === selectedStudent.email 
-                    ? selectedStudent 
-                    : student
-            );
-            
-            setStudents(updatedStudents);
-            await AsyncStorage.setItem("students", JSON.stringify(updatedStudents));
-    
-            setEditModalVisible(false);
-            setSelectedStudent(null);
-            Alert.alert("Succès", "Étudiant modifié avec succès");
-    
-        } catch (error) {
-            console.error("Erreur lors de la modification:", error);
-            Alert.alert("Erreur", error.message || "Erreur lors de la modification de l'étudiant");
-        }
+    const navigateToGestionProf = () => {
+        playSound(require("../../assets/audio/tap.mp3"));
+        router.push("/admin/GestionProf");
     };
 
-    const handleDeleteStudent = async (id) => {
-        try {
-            // Suppression locale
-            const updatedStudents = students.filter(student => {
-                return student.id !== id && student._id !== id;
-            });
-            setStudents(updatedStudents);
-            await AsyncStorage.setItem("students", JSON.stringify(updatedStudents));
-
-            // Appel API
-            const response = await fetch(`${API_URL}/api/students/${id}`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Erreur lors de la suppression");
-            }
-
-            Alert.alert("Succès", "Étudiant supprimé avec succès");
-            await playSound(require("../../assets/audio/supprimer.mp3")); 
-
-        } catch (error) {
-            console.error("Erreur lors de la suppression :", error);
-            Alert.alert("Erreur", error.message || "Impossible de supprimer l'étudiant");
-        }
-    };
-
-    const openEditModal = (student) => {
-        setSelectedStudent({...student});
-        setEditModalVisible(true);
+    const navigateToGestionEtudiant = () => {
+        playSound(require("../../assets/audio/tap.mp3"));
+        router.push("/admin/gestionEtudiant");
     };
 
     if (loading) {
@@ -324,124 +122,6 @@ export default function AdminScreen() {
             </View>
         );
     }
-
-    const renderStudentForm = (data, setData, isEdit = false) => (
-        <View style={styles.formContainer}>
-            <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Nom complet :</Text>
-                <TextInput
-                    style={styles.input}
-                    value={data.name}
-                    onChangeText={(text) => setData({ ...data, name: text })}
-                    placeholder="Nom complet"
-                    placeholderTextColor="#6D8EB4"
-                />
-            </View>
-
-            <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email :</Text>
-                <TextInput
-                    style={styles.input}
-                    value={data.email}
-                    onChangeText={(text) => setData({ ...data, email: text })}
-                    placeholder="Email"
-                    placeholderTextColor="#6D8EB4"
-                    keyboardType="email-address"
-                />
-            </View>
-
-            <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Âge :</Text>
-                <TextInput
-                    style={styles.input}
-                    value={data.age}
-                    onChangeText={(text) => setData({ ...data, age: text })}
-                    placeholder="Âge"
-                    placeholderTextColor="#6D8EB4"
-                    keyboardType="numeric"
-                />
-            </View>
-
-            <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Filière :</Text>
-                <TextInput
-                    style={styles.input}
-                    value={data.major}
-                    onChangeText={(text) => setData({ ...data, major: text })}
-                    placeholder="Filière"
-                    placeholderTextColor="#6D8EB4"
-                />
-            </View>
-
-            <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Année scolaire :</Text>
-                <TextInput
-                    style={styles.input}
-                    value={data.anne_scolaire}
-                    onChangeText={(text) => setData({ ...data, anne_scolaire: text })}
-                    placeholder="Année scolaire"
-                    placeholderTextColor="#6D8EB4"
-                />
-            </View>
-
-            <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Date de naissance :</Text>
-                <TextInput
-                    style={styles.input}
-                    value={data.date}
-                    onChangeText={(text) => setData({ ...data, date: text })}
-                    placeholder="JJ/MM/AAAA"
-                    placeholderTextColor="#6D8EB4"
-                />
-            </View>
-
-            <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Groupe :</Text>
-                <TextInput
-                    style={styles.input}
-                    value={data.group}
-                    onChangeText={(text) => setData({ ...data, group: text })}
-                    placeholder="Groupe"
-                    placeholderTextColor="#6D8EB4"
-                />
-            </View>
-
-            <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Sexe :</Text>
-                <TextInput
-                    style={styles.input}
-                    value={data.sex}
-                    onChangeText={(text) => setData({ ...data, sex: text })}
-                    placeholder="Sexe"
-                    placeholderTextColor="#6D8EB4"
-                />
-            </View>
-
-            <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Téléphone :</Text>
-                <TextInput
-                    style={styles.input}
-                    value={data.tel}
-                    onChangeText={(text) => setData({ ...data, tel: text })}
-                    placeholder="Téléphone"
-                    placeholderTextColor="#6D8EB4"
-                    keyboardType="phone-pad"
-                />
-            </View>
-
-            <TouchableOpacity
-                style={styles.submitButton}
-                onPress={isEdit ? handleEditStudent : handleAddStudent}
-            >
-                <Text style={styles.submitButtonText}>
-                    {isEdit ? "MODIFIER" : "AJOUTER"}
-                </Text>
-            </TouchableOpacity>
-        </View>
-    );
-
-
-    
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
@@ -491,46 +171,38 @@ export default function AdminScreen() {
                         <View style={styles.menuDivider} />
 
                         {[
-                            { label: "🏠 Accueil", section: "home", icon: "home" },
-                            { label: "👥 Liste des étudiants", section: "students", icon: "people" },
-                            { label: "➕ Ajouter un étudiant", section: "add", icon: "person-add" },
-                            { label: "👨‍🏫 Liste des professeurs", section: "profs", icon: "school" },
-                            { label: "➕ Ajouter un professeur", section: "addprof", icon: "person" } // AJOUTE CETTE LIGNE
-                            ].map((item, index) => (
-                        <TouchableOpacity
-                        key={index}
-                        style={[
-                        styles.menuItem,
-                        selectedSection === item.section && styles.selectedMenuItem
-                        ]}
-                        onPress={() => {
-                        setSelectedSection(item.section);
-                         if (item.section === "add") {
-                        setAddModalVisible(true);
-                    }
-                    if (item.section === "addprof") {
-                    router.push("/admin/addProf"); // Navigue vers addprof.js
-                }
-                toggleMenu();
-                        }}
-                >
-                <Icon
-                name={item.icon}
-                size={22}
-                color={selectedSection === item.section ? "#FFD700" : "#6D8EB4"}
-                />
-                <Text
-                style={[
-                styles.menuText,
-                selectedSection === item.section && styles.selectedMenuText
-                ]}
-                >
-                {item.label}
-                </Text>
-                </TouchableOpacity>
-                    ))}                         
-
-                
+                            { label: "🏠 Accueil", section: "home", icon: "home", route: "/admin" },
+                            { label: "👥 Gestion des étudiants", section: "students", icon: "people", route: "/admin/gestionEtudiant" },
+                            { label: "👨‍🏫 Gestion des professeurs", section: "profs", icon: "school", route: "/admin/gestionProf" },
+                        ].map((item, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={[
+                                    styles.menuItem,
+                                    selectedSection === item.section && styles.selectedMenuItem
+                                ]}
+                                onPress={async () => {
+                                    await playSound(require("../../assets/audio/tap.mp3"));
+                                    setSelectedSection(item.section);
+                                    toggleMenu();
+                                    router.push(item.route);
+                                }}
+                            >
+                                <Icon
+                                    name={item.icon}
+                                    size={22}
+                                    color={selectedSection === item.section ? "#FFD700" : "#6D8EB4"}
+                                />
+                                <Text
+                                    style={[
+                                        styles.menuText,
+                                        selectedSection === item.section && styles.selectedMenuText
+                                    ]}
+                                >
+                                    {item.label}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
 
                         <View style={styles.menuDivider} />
 
@@ -549,188 +221,78 @@ export default function AdminScreen() {
                 </Pressable>
             </Modal>
 
-            {/* Add Student Modal */}
-            <Modal
-                visible={isAddModalVisible}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setAddModalVisible(false)}
-            >
-                <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>AJOUTER UN ÉTUDIANT</Text>
-                            <TouchableOpacity
-                    onPress={async () => {
-                    await playSound(require("../../assets/audio/error.mp3"));
-                    setAddModalVisible(false);
-                    router.replace("/admin"); 
-                     }}
-                    >
-                        <Icon name="close" size={24} color="#FF5555" />
-                    </TouchableOpacity>
-
-                        </View>
-                        <ScrollView>
-                            {renderStudentForm(newStudent, setNewStudent)}
-                        </ScrollView>
-                    </View>
-                </View>
-            </Modal>
-
-            {/* Edit Student Modal */}
-            <Modal
-                visible={isEditModalVisible}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setEditModalVisible(false)}
-            >
-                <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>MODIFIER UN ÉTUDIANT</Text>
-                            <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-                                <Icon name="close" size={24} color="#FF5555" />
-                            </TouchableOpacity>
-                        </View>
-                        <ScrollView>
-                            {selectedStudent && renderStudentForm(selectedStudent, setSelectedStudent, true)}
-                        </ScrollView>
-                    </View>
-                </View>
-            </Modal>
-
             {/* Main Content */}
             <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-  {selectedSection === "home" && (
-    <View style={styles.homeContainer}>
-      <View style={styles.avatarContainer}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {admin.name && admin.name.charAt(0).toUpperCase()}
-          </Text>
-        </View>
-        <View style={styles.glowEffect} />
-      </View>
-      <Text style={styles.welcomeTitle}>BIENVENUE ADMIN</Text>
-      <Text style={styles.adminInfoText}>{admin.email}</Text>
-      <Text style={styles.subtitle}>PANNEAU D'ADMINISTRATION</Text>
+                <View style={styles.homeContainer}>
+                    <View style={styles.avatarContainer}>
+                        <View style={styles.avatar}>
+                            <Text style={styles.avatarText}>
+                                {admin.name && admin.name.charAt(0).toUpperCase()}
+                            </Text>
+                        </View>
+                        <View style={styles.glowEffect} />
+                    </View>
+                    <Text style={styles.welcomeTitle}>BIENVENUE ADMIN</Text>
+                    <Text style={styles.adminInfoText}>{admin.email}</Text>
+                    <Text style={styles.subtitle}>PANNEAU D'ADMINISTRATION</Text>
 
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Icon name="people" size={30} color="#FFD700" />
-          <Text style={styles.statNumber}>{students.length}</Text>
-          <Text style={styles.statLabel}>ÉTUDIANTS</Text>
-        </View>
+                    <View style={styles.featuresContainer}>
+                        <View style={styles.featureCard}>
+                            <Icon name="people" size={40} color="#FFD700" />
+                            <Text style={styles.featureTitle}>GESTION DES ÉTUDIANTS</Text>
+                            <Text style={styles.featureDescription}>
+                                Ajoutez, modifiez ou supprimez des profils d'étudiants. Suivez les inscriptions et gérez les groupes.
+                            </Text>
+                        </View>
 
-        <TouchableOpacity style={styles.addButton} onPress={() => setAddModalVisible(true)}>
-          <Icon name="person-add" size={30} color="#FFF" />
-          <Text style={styles.addButtonText}>AJOUTER</Text>
-        </TouchableOpacity>
-      </View>
+                        <View style={styles.featureCard}>
+                            <Icon name="school" size={40} color="#FFD700" />
+                            <Text style={styles.featureTitle}>GESTION DES PROFESSEURS</Text>
+                            <Text style={styles.featureDescription}>
+                                Administrez les comptes enseignants, assignez des cours et gérez les disponibilités.
+                            </Text>
+                        </View>
 
-      <View style={styles.quickActionsContainer}>
-        <Text style={styles.quickActionsTitle}>ACTIONS RAPIDES</Text>
-        <View style={styles.actionButtonsRow}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => setSelectedSection("students")}
-          >
-            <Icon name="list" size={25} color="#FFD700" />
-            <Text style={styles.actionButtonText}>VOIR LA LISTE</Text>
-          </TouchableOpacity>
+                        <View style={styles.featureCard}>
+                            <Icon name="date-range" size={40} color="#FFD700" />
+                            <Text style={styles.featureTitle}>CALENDRIER ACADÉMIQUE</Text>
+                            <Text style={styles.featureDescription}>
+                                Planifiez les événements importants, examens et périodes de vacances.
+                            </Text>
+                        </View>
 
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => setAddModalVisible(true)}
-          >
-            <Icon name="add-circle" size={25} color="#FFD700" />
-            <Text style={styles.actionButtonText}>NOUVEL ÉTUDIANT</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  )}
-
-  {selectedSection === "students" && (
-    <View style={styles.studentsContainer}>
-      <Text style={styles.sectionTitle}>LISTE DES ÉTUDIANTS</Text>
-      <Text style={styles.subtitle}>GESTION DES ÉTUDIANTS</Text>
-
-      <TouchableOpacity style={styles.floatingAddButton} onPress={() => setAddModalVisible(true)}>
-        <Icon name="add" size={30} color="#FFF" />
-      </TouchableOpacity>
-
-      {students.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Icon name="people" size={40} color="#6D8EB4" />
-          <Text style={styles.emptyText}>Aucun étudiant trouvé</Text>
-          <TouchableOpacity style={styles.addEmptyButton} onPress={() => setAddModalVisible(true)}>
-            <Text style={styles.addEmptyButtonText}>AJOUTER UN ÉTUDIANT</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <FlatList
-          data={students}
-          keyExtractor={(item) => item.id || item._id || String(Math.random())}
-          renderItem={({ item }) => (
-            <View style={styles.studentCard}>
-              <View style={styles.studentInfo}>
-                <Text style={styles.studentName}>{item.name}</Text>
-                <Text style={styles.studentEmail}>{item.email}</Text>
-                <View style={styles.studentDetails}>
-                  <Text style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Filière:</Text> {item.major || "Non spécifié"}
-                  </Text>
-                  <Text style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Groupe:</Text> {item.group || "Non spécifié"}
-                  </Text>
+                        <View style={styles.featureCard}>
+                            <Icon name="bar-chart" size={40} color="#FFD700" />
+                            <Text style={styles.featureTitle}>STATISTIQUES</Text>
+                            <Text style={styles.featureDescription}>
+                                Consultez les données analytiques sur les performances et la fréquentation.
+                            </Text>
+                        </View>
+                    </View>
                 </View>
-              </View>
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={() => openEditModal(item)}
+            </ScrollView>
+
+            {/* Bottom Navigation Buttons */}
+            <View style={styles.bottomNavigation}>
+                <TouchableOpacity 
+                    style={styles.navButton}
+                    onPress={navigateToGestionProf}
                 >
-                  <Icon name="edit" size={20} color="#FFD700" />
+                    <Icon name="school" size={24} color="#FFF" />
+                    <Text style={styles.navButtonText}>GESTION PROFS</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => {
-                    Alert.alert(
-                      "Confirmation",
-                      `Voulez-vous vraiment supprimer ${item.name} ?`,
-                      [
-                        { text: "Annuler", style: "cancel" },
-                        {
-                          text: "Confirmer",
-                          onPress: () => handleDeleteStudent(item.id || item._id),
-                          style: "destructive"
-                        }
-                      ]
-                    );
-                  }}
+
+                <TouchableOpacity 
+                    style={styles.navButton}
+                    onPress={navigateToGestionEtudiant}
                 >
-                  <Icon name="delete" size={20} color="#FF5555" />
+                    <Icon name="people" size={24} color="#FFF" />
+                    <Text style={styles.navButtonText}>GESTION ÉTUDIANTS</Text>
                 </TouchableOpacity>
-              </View>
             </View>
-          )}
-          style={styles.studentsList}
-        />
-      )}
-    </View>
-  )}
-
- 
-
-</ScrollView>
-
         </SafeAreaView>
     );
 }
-
-
 
 const styles = StyleSheet.create({
     center: {
@@ -775,6 +337,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         paddingTop: 20,
+        paddingBottom: 100, // Pour laisser de la place aux boutons de navigation en bas
     },
     avatarContainer: {
         position: 'relative',
@@ -828,84 +391,34 @@ const styles = StyleSheet.create({
         color: "#6D8EB4",
         letterSpacing: 1,
     },
-    statsContainer: {
-        flexDirection: "row",
-        justifyContent: "space-around",
+    featuresContainer: {
         width: "100%",
-        marginBottom: 30,
     },
-    statCard: {
+    featureCard: {
         backgroundColor: "#1A3F6F",
         borderRadius: 15,
-        padding: 20,
-        width: "45%",
+        padding: 25,
+        width: "100%",
         alignItems: "center",
+        marginBottom: 20,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 3,
         elevation: 5,
     },
-    statNumber: {
-        fontSize: 32,
+    featureTitle: {
+        fontSize: 18,
         fontWeight: "bold",
         color: "#FFD700",
-        marginVertical: 10,
+        marginVertical: 12,
+        textAlign: "center",
     },
-    statLabel: {
-        color: "#6D8EB4",
+    featureDescription: {
         fontSize: 14,
-        fontWeight: "bold",
-    },
-    addButton: {
-        backgroundColor: "#2E7D32",
-        borderRadius: 15,
-        padding: 20,
-        width: "45%",
-        alignItems: "center",
-        justifyContent: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-        elevation: 5,
-    },
-    addButtonText: {
         color: "#FFF",
-        fontWeight: "bold",
-        marginTop: 10,
-    },
-    quickActionsContainer: {
-        width: "100%",
-        marginTop: 20,
-    },
-    quickActionsTitle: {
-        fontSize: 16,
-        color: "#6D8EB4",
-        marginBottom: 15,
-        fontWeight: "bold",
-    },
-    actionButtonsRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-    },
-    actionButton: {
-        backgroundColor: "#1A3F6F",
-        borderRadius: 15,
-        padding: 15,
-        width: "48%",
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-        elevation: 3,
-    },
-    actionButtonText: {
-        color: "#FFF",
-        fontWeight: "bold",
-        marginTop: 10,
-        fontSize: 12,
+        textAlign: "center",
+        lineHeight: 20,
     },
     modalBackgroundRight: {
         flex: 1,
@@ -1015,179 +528,35 @@ const styles = StyleSheet.create({
         marginTop: 10,
         marginBottom: 5,
     },
-    studentsContainer: {
-        width: "100%",
-    },
-    sectionTitle: {
-        fontSize: 24,
-        fontWeight: "bold",
-        color: "#FFD700",
-        marginBottom: 5,
-        textAlign: "center",
-    },
-    floatingAddButton: {
+    bottomNavigation: {
         position: "absolute",
-        right: 10,
-        bottom: 20,
-        backgroundColor: "#2E7D32",
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        justifyContent: "center",
-        alignItems: "center",
-        elevation: 6,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.5,
-        shadowRadius: 5,
-        zIndex: 10,
-    },
-    emptyContainer: {
-        alignItems: "center",
-        justifyContent: "center",
-        marginTop: 50,
-        padding: 20,
-    },
-    emptyText: {
-        fontSize: 16,
-        color: "#6D8EB4",
-        marginTop: 10,
-        marginBottom: 20,
-    },
-    addEmptyButton: {
-        backgroundColor: "#2E7D32",
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 10,
-        marginTop: 10,
-    },
-    addEmptyButtonText: {
-        color: "#FFF",
-        fontWeight: "bold",
-    },
-    studentsList: {
-        marginTop: 20,
-    },
-    studentCard: {
-        backgroundColor: "#1A3F6F",
-        borderRadius: 12,
-        marginBottom: 15,
-        padding: 15,
+        bottom: 0,
+        left: 0,
+        right: 0,
         flexDirection: "row",
-        justifyContent: "space-between",
+        backgroundColor: "#0A1F3A",
+        borderTopWidth: 1,
+        borderTopColor: "#1A3F6F",
+        height: 80,
+        paddingVertical: 10,
+    },
+    navButton: {
+        flex: 1,
+        backgroundColor: "#1A3F6F",
+        margin: 8,
+        borderRadius: 12,
+        justifyContent: "center",
+        alignItems: "center",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.3,
         shadowRadius: 3,
-        elevation: 3,
+        elevation: 5,
     },
-    studentInfo: {
-        flex: 1,
-    },
-    studentName: {
-        fontSize: 18,
-        fontWeight: "bold",
+    navButtonText: {
         color: "#FFF",
-        marginBottom: 5,
-    },
-    studentEmail: {
-        fontSize: 14,
-        color: "#6D8EB4",
-        marginBottom: 10,
-    },
-    studentDetails: {
+        fontWeight: "bold",
+        fontSize: 12,
         marginTop: 5,
-    },
-    detailItem: {
-        fontSize: 14,
-        color: "#FFF",
-        marginBottom: 2,
-    },
-    detailLabel: {
-        color: "#FFD700",
-        fontWeight: "bold",
-    },
-    actionButtons: {
-        justifyContent: "space-around",
-    },
-    editButton: {
-        backgroundColor: "#1A3F6F",
-        borderWidth: 1,
-        borderColor: "#FFD700",
-        borderRadius: 20,
-        width: 40,
-        height: 40,
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 10,
-    },
-    deleteButton: {
-        backgroundColor: "#1A3F6F",
-        borderWidth: 1,
-        borderColor: "#FF5555",
-        borderRadius: 20,
-        width: 40,
-        height: 40,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    modalBackground: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.7)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    modalContainer: {
-        backgroundColor: "#0A1F3A",
-        borderRadius: 15,
-        width: "90%",
-        maxHeight: "85%",
-        borderWidth: 2,
-        borderColor: "#1A3F6F",
-    },
-    modalHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: "#1A3F6F",
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#FFD700",
-    },
-    formContainer: {
-        padding: 15,
-    },
-    inputGroup: {
-        marginBottom: 15,
-    },
-    inputLabel: {
-        fontSize: 14,
-        color: "#FFD700",
-        marginBottom: 5,
-    },
-    input: {
-        backgroundColor: "#1A3F6F",
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        paddingVertical: 12,
-        color: "#FFF",
-        borderWidth: 1,
-        borderColor: "#2A4F7F",
-    },
-    submitButton: {
-        backgroundColor: "#2E7D32",
-        borderRadius: 10,
-        paddingVertical: 15,
-        alignItems: "center",
-        marginTop: 10,
-    },
-    submitButtonText: {
-        color: "#FFF",
-        fontWeight: "bold",
-        fontSize: 16,
     },
 });

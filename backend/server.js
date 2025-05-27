@@ -76,7 +76,7 @@ app.use('/api/channels', require('./routes/channels'));
 app.use('/api/chat', chatGptRoute);
 app.use('/api', require('./routes/chatgpt'));
 app.use('/api/forgotpassword', require('./routes/forgotpassword'));
-
+app.use('/api/prof', require('./routes/profRoute'));
 
 
 
