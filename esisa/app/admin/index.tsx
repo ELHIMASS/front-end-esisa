@@ -18,9 +18,11 @@ import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Audio } from "expo-av";
 
+
+
 // Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
-const SERVER_IP = "192.168.1.146"; // Remplacez par votre adresse IP réelle
-const API_URL = `http://${SERVER_IP}:5000`;
+
+
 
 export default function AdminHomePage() {
     const [admin, setAdmin] = useState(null);
@@ -99,12 +101,12 @@ export default function AdminHomePage() {
 
     const navigateToGestionProf = () => {
         playSound(require("../../assets/audio/tap.mp3"));
-        router.push("/admin/GestionProf");
+        router.push("/admin/gestionProf");
     };
 
     const navigateToGestionEtudiant = () => {
         playSound(require("../../assets/audio/tap.mp3"));
-        router.push("/admin/gestionEtudiant");
+        router.push("/admin/gestonEtudiant");
     };
 
     if (loading) {

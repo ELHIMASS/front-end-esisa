@@ -19,9 +19,13 @@ import { Icon } from "react-native-elements";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Audio } from "expo-av";
 import { Ionicons } from '@expo/vector-icons';
+import config from '../../config';
 
-const SERVER_IP = "192.168.1.146";
-const API_URL = `http://${SERVER_IP}:5000`;
+
+
+// Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
+
+
 
 export default function ProfScreen() {
     const [admin, setAdmin] = useState(null);
@@ -95,7 +99,7 @@ export default function ProfScreen() {
       
     const loadProfessorsFromServer = async () => {
         try {
-            const response = await fetch(`${API_URL}/api/prof`, {
+            const response = await fetch(`${config.API_URL}/api/prof`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -182,7 +186,7 @@ export default function ProfScreen() {
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/addProf`, {
+            const response = await fetch(`${config.API_URL}/api/addProf`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -233,7 +237,7 @@ export default function ProfScreen() {
         }
     
         try {
-            const response = await fetch(`${API_URL}/api/updateProf`, {
+            const response = await fetch(`${config.API_URL}/api/updateProf`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -279,7 +283,7 @@ export default function ProfScreen() {
             setProfessors(updatedProfessors);
             await AsyncStorage.setItem("professors", JSON.stringify(updatedProfessors));
 
-            const response = await fetch(`${API_URL}/api/prof/${id}`, {
+            const response = await fetch(`${config.API_URL}/api/prof/${id}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json"

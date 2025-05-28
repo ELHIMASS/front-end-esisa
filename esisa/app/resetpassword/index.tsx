@@ -12,6 +12,8 @@ import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Audio } from "expo-av";
+import config from '../../config';
+
 
 const ResetPasswordScreen: React.FC = () => {
   const [password, setPassword] = useState('');
@@ -43,7 +45,7 @@ const ResetPasswordScreen: React.FC = () => {
       }
       
       try {
-      const response = await fetch(`http://192.168.1.14:5000/api/forgotpassword/verify?token=${token}`);
+        const response = await fetch(`${config.API_IP}/api/forgotpassword/verify?token=${token}`);
         
         if (!response.ok) {
           await playSound(require('../../assets/audio/error.mp3'));
@@ -87,13 +89,12 @@ const ResetPasswordScreen: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await fetch('http://192.168.1.14:5000/api/forgotpassword/reset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ token, newPassword: password })
-      });
+      const response = await fetch(`${config.API_IP}/api/forgotpassword/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword: password }),
+    });
+
 
       const data = await response.json();
 

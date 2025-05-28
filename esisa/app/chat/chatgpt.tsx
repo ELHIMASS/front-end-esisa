@@ -14,6 +14,13 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import config from '../../config';
+
+
+
+// Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
+
+
 
 export default function ChatBotScreen() {
   const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
@@ -38,11 +45,12 @@ export default function ChatBotScreen() {
     setInput('');
 
     try {
-      const response = await fetch('http://192.168.1.14:5000/api/chatgpt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: input }),
-      });
+      const response = await fetch(`${config.API_URL}/api/chatgpt`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ prompt: input }),
+});
+
 
       const data = await response.json();
       const botResponse = data?.response || "Erreur de réponse d'Einstein.";

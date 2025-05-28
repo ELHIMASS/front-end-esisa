@@ -21,6 +21,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import RNPickerSelect from 'react-native-picker-select'; // en haut du fichier
+import config from '../../config';
+
 
 
 export default function ApplicationFormScreen() {
@@ -204,7 +206,7 @@ export default function ApplicationFormScreen() {
       }
   
       // Use your actual server address here
-      const serverUrl = 'http://192.168.1.14:5000/send-email-with-attachments';
+      const serverUrl = `${config.API_IP}/send-email-with-attachments`;
       const response = await fetch(serverUrl, {
         method: 'POST',
         body: formDataObj,

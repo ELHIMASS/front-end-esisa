@@ -19,9 +19,12 @@ import { Icon } from "react-native-elements";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Audio } from "expo-av";
 import { Ionicons } from '@expo/vector-icons';
+import config from '../../config';
 
-const SERVER_IP = "192.168.1.146";
-const API_URL = `http://${SERVER_IP}:5000`;
+
+
+// Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
+
 
 interface Student {
     _id?: string;
@@ -118,7 +121,7 @@ export default function GestionEtudiant() {
       
     const loadStudentsFromServer = async () => {
         try {
-            const response = await fetch(`${API_URL}/api/students`, {
+            const response = await fetch(`${config.API_URL}/api/students`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -182,7 +185,7 @@ export default function GestionEtudiant() {
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/add`, {
+            const response = await fetch(`${config.API_URL}/api/add`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -237,7 +240,7 @@ export default function GestionEtudiant() {
         }
     
         try {
-            const response = await fetch(`${API_URL}/api/update`, {
+            const response = await fetch(`${config.API_URL}/api/update`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -282,7 +285,7 @@ export default function GestionEtudiant() {
             setStudents(updatedStudents);
             await AsyncStorage.setItem("students", JSON.stringify(updatedStudents));
 
-            const response = await fetch(`${API_URL}/api/students/${id}`, {
+            const response = await fetch(`${config.API_URL}/api/students/${id}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json"

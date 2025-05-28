@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import socket from '../utils/socket';
+import config from '../../config';
+
 export default function ChatScreen() {
   const params = useLocalSearchParams();
   const channelId = params.channelId;
@@ -30,13 +32,15 @@ export default function ChatScreen() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!channelId) return;
-    fetch(`http://192.168.1.14:5000/api/channels/${channelId}/messages`)
-      .then(res => res.json())
-      .then(setMessages)
-      .catch(err => console.error("Erreur chargement messages :", err));
-  }, [channelId]);
+
+useEffect(() => {
+  if (!channelId) return;
+  fetch(`${config.API_URL}/api/channels/${channelId}/messages`)
+    .then(res => res.json())
+    .then(setMessages)
+    .catch(err => console.error("Erreur chargement messages :", err));
+}, [channelId]);
+
 
   useEffect(() => {
     if (!channelId) return;

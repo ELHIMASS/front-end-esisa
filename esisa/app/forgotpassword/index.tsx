@@ -12,6 +12,7 @@ import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Audio } from "expo-av";
+import config from '../../config';
 
 const ForgotPasswordScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -41,13 +42,14 @@ const ForgotPasswordScreen: React.FC = () => {
 
     try {
       setLoading(true);
-        const response = await fetch('http://192.168.1.14:5000/api/forgotpassword', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email })
-      });
+        const response = await fetch(`${config.API_IP}/api/forgotpassword`, {
+         method: 'POST',
+         headers: {
+         'Content-Type': 'application/json'
+           },
+         body: JSON.stringify({ email })
+      }); 
+
 
       const data = await response.json();
 

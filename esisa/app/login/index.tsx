@@ -14,6 +14,8 @@ import { useRouter } from "expo-router";
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Audio } from "expo-av";
+import config from '../../config';
+
 
 
 const { width } = Dimensions.get('window');
@@ -62,7 +64,7 @@ const LoginScreen: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`http://192.168.1.14:5000/api/login?email=${email}&password=${password}`);
+      const response = await fetch(`${config.API_URL}/api/login?email=${email}&password=${password}`);
       const userData = await response.json();
 
       if (!response.ok || !userData.role) {

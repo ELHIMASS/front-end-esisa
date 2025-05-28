@@ -20,9 +20,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Picker } from '@react-native-picker/picker';
 import { Audio } from "expo-av";
 import * as DocumentPicker from 'expo-document-picker';
+import config from '../../config';
 
-const IP = "192.168.1.14";
-const API_URL = `http://${IP}:5000/api`;
 
 type Evaluation = {
   type: string;
@@ -111,7 +110,7 @@ export default function ProfessorDashboard() {
         const parsedUser = JSON.parse(profData);
         setUser(parsedUser);
 
-        const response = await fetch(`${API_URL}/students`);
+        const response = await fetch(`${config.API_URL}/students`);
         const data = await response.json();
         setStudents(data);
         setFilteredStudents(data);
@@ -213,7 +212,7 @@ export default function ProfessorDashboard() {
         } as any);
       }
 
-      const response = await fetch(`${API_URL}/send-email`, {
+      const response = await fetch(`${config.API_URL}/send-email`, {
         method: "POST",
         body: formData
       });
@@ -257,7 +256,7 @@ export default function ProfessorDashboard() {
 
   const updateStudent = async (email: string, updateData: Partial<Student>) => {
     try {
-      const response = await fetch(`${API_URL}/update`, {
+      const response = await fetch(`${config.API_URL}/update`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, ...updateData })
