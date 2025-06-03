@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   View,
   Text,
@@ -13,18 +13,35 @@ import { Icon } from "react-native-elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
+import { DarkModeContext } from "../context/DarkModeContext";
+import { LanguageContext } from "../context/LanguageContext";
+import { translations } from "../utils/transactions";
+
 export default function AdmissionScreen() {
   const insets = useSafeAreaInsets();
+  const { darkMode } = useContext(DarkModeContext);
+  const { language } = useContext(LanguageContext);
+
+  const t = translations[language];
 
   const goBack = () => {
-    router.back();
+    router.replace("/(tabs)");
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A1F3A" />
+    <SafeAreaView
+      style={[
+        styles.container,
+        darkMode ? styles.darkContainer : styles.lightContainer,
+        { paddingTop: insets.top },
+      ]}
+    >
+      <StatusBar
+        barStyle={darkMode ? "light-content" : "dark-content"}
+        backgroundColor={darkMode ? "#0A1F3A" : "#FFF"}
+      />
 
-      {/* Back Button */}
+      {/* Bouton retour */}
       <TouchableOpacity
         onPress={goBack}
         style={{
@@ -32,254 +49,143 @@ export default function AdmissionScreen() {
           top: insets.top + 10,
           left: 20,
           zIndex: 10,
-          backgroundColor: "#1A3F6F",
+          backgroundColor: darkMode ? "#1A3F6F" : "#ddd",
           borderRadius: 20,
           padding: 10,
         }}
       >
-        <Icon name="arrow-back" size={24} color="#FFD700" />
+        <Icon name="arrow-back" size={24} color={darkMode ? "#FFD700" : "#000"} />
       </TouchableOpacity>
 
-      
-      
-
-      {/* Content */}
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
       >
         <View style={styles.logoContainer}>
-        <Image
-          source={require('../../assets/icons/icon.png')}
-          style={styles.logoImageTop}
-          resizeMode="contain"
-        />
-      </View>
-        <View style={styles.headerContainer}>
-          <Icon name="school" size={28} color="#FFD700" />
-          <Text style={styles.pageTitle}>PARCOURS ET PROCÉDURE D'ADMISSION</Text>
+          <Image
+            source={require("../../assets/icons/icon.png")}
+            style={styles.logoImageTop}
+            resizeMode="contain"
+          />
         </View>
 
-        <Text style={styles.introText}>
-          L'ESISA sélectionne les meilleurs talents pour former l'élite en ingénierie informatique.
+        <View style={styles.headerContainer}>
+          <Icon name="school" size={28} color={darkMode ? "#FFD700" : "#000"} />
+          <Text
+            style={[
+              styles.pageTitle,
+              { color: darkMode ? "#FFD700" : "#000" },
+            ]}
+          >
+            {t.admissionTitle}
+          </Text>
+        </View>
+
+        <Text
+          style={[styles.introText, { color: darkMode ? "#DDD" : "#444" }]}
+        >
+          {t.admissionIntro}
         </Text>
-        <Text style={styles.sectionDescription}>
-          À l'ESISA, nous croyons que <Text style={styles.highlightText}>la motivation</Text> et <Text style={styles.highlightText}>la passion pour le numérique</Text> sont les moteurs de l'excellence. 
-          Nous recherchons des étudiants déterminés, prêts à façonner le monde de demain grâce aux technologies 
-          innovantes. Chaque candidature est évaluée avec soin en tenant compte de :
+
+        <Text style={[styles.sectionDescription, { color: darkMode ? "#DDD" : "#444" }]}>
+          {t.admissionDescription1}
+          <Text style={styles.highlightText}>{t.highlightMotivation}</Text> {t.and} <Text style={styles.highlightText}>{t.highlightPassion}</Text> {t.admissionDescription2}
         </Text>
 
         {/* Critères d'admission */}
-        <View style={styles.criteriaContainer}>
-          <View style={styles.criteriaItem}>
-            <Icon name="star" size={20} color="#FF4444" />
-            <Text style={styles.criteriaText}>
-              <Text style={styles.criteriaTitle}>Motivation et Ambition : </Text>
-              Votre détermination à réussir et à innover est essentielle.
-            </Text>
-          </View>
-
-          <View style={styles.criteriaItem}>
-            <Icon name="star" size={20} color="#FF4444" />
-            <Text style={styles.criteriaText}>
-              <Text style={styles.criteriaTitle}>Note en Mathématiques et Français au Bac : </Text>
-              Indicateurs clés de réussite.
-            </Text>
-          </View>
-
-          <View style={styles.criteriaItem}>
-            <Icon name="star" size={20} color="#FF4444" />
-            <Text style={styles.criteriaText}>
-              <Text style={styles.criteriaTitle}>Si les notes sont insuffisantes : </Text>
-              Un test de Mathématiques est requis.
-            </Text>
-          </View>
-
-          <View style={styles.criteriaItem}>
-            <Icon name="star" size={20} color="#FF4444" />
-            <Text style={styles.criteriaText}>
-              <Text style={styles.criteriaTitle}>Entretien de motivation : </Text>
-              Pour évaluer votre passion, vos objectifs et votre vision.
-            </Text>
-          </View>
+        <View style={[styles.criteriaContainer, { borderColor: darkMode ? "#36D7B7" : "#36D7B7" }]}>
+          {t.criteria.map(({ title, description }, i) => (
+            <View key={i} style={styles.criteriaItem}>
+              <Icon name="star" size={20} color="#FF4444" />
+              <Text style={styles.criteriaText}>
+                <Text style={styles.criteriaTitle}>{title} : </Text>
+                {description}
+              </Text>
+            </View>
+          ))}
         </View>
 
-        <Text style={styles.sectionDescription}>
-          Nous privilégions les profils <Text style={styles.highlightText}>engagés</Text> et <Text style={styles.highlightText}>motivés</Text>, capables de relever les défis technologiques de demain.
+        <Text style={[styles.sectionDescription, { color: darkMode ? "#DDD" : "#444" }]}>
+          {t.admissionConclusion}
         </Text>
 
-        {/* Processus d'admission */}
-        <View style={styles.processContainer}>
-          <Text style={styles.sectionTitle}>Étapes du processus d'admission</Text>
-
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>1</Text>
+        {/* Étapes du processus */}
+        <View style={[styles.processContainer, { borderColor: darkMode ? "#36D7B7" : "#36D7B7" }]}>
+          <Text style={[styles.sectionTitle, { color: darkMode ? "#FFD700" : "#000" }]}>{t.processTitle}</Text>
+          {t.processSteps.map(({ title, description }, i) => (
+            <View key={i} style={styles.stepItem}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>{i + 1}</Text>
+              </View>
+              <View style={styles.stepContent}>
+                <Text style={styles.stepTitle}>{title}</Text>
+                <Text style={[styles.stepDescription, { color: darkMode ? "#DDD" : "#444" }]}>{description}</Text>
+              </View>
             </View>
-            <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Soumission du dossier</Text>
-              <Text style={styles.stepDescription}>
-                Formulaire d'inscription complété, copie de la CIN, relevés de notes du Bac, photo d'identité récente
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>2</Text>
-            </View>
-            <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Étude du dossier académique</Text>
-              <Text style={styles.stepDescription}>
-                Analyse des notes en mathématiques et français, vérification du profil académique
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>3</Text>
-            </View>
-            <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Test d'aptitude (si nécessaire)</Text>
-              <Text style={styles.stepDescription}>
-                Test de mathématiques pour les candidats dont les notes au Bac sont insuffisantes
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>4</Text>
-            </View>
-            <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Entretien de motivation</Text>
-              <Text style={styles.stepDescription}>
-                Discussion approfondie sur vos objectifs, votre passion pour l'informatique et votre vision du futur numérique
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>5</Text>
-            </View>
-            <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Décision d'admission</Text>
-              <Text style={styles.stepDescription}>
-                Notification par email et courrier dans un délai de 7 jours après l'entretien
-              </Text>
-            </View>
-          </View>
+          ))}
         </View>
 
         {/* Profils admissibles */}
-        <View style={styles.profilesContainer}>
-          <Text style={styles.sectionTitle}>Profils admissibles</Text>
-          
-          <View style={styles.profileItem}>
-            <Icon name="check-circle" size={24} color="#36D7B7" />
-            <Text style={styles.profileText}>
-              <Text style={styles.profileTitle}>Accès en 1ère année : </Text>
-              Bac Scientifique, Économique et Technique
-            </Text>
-          </View>
-
-          <View style={styles.profileItem}>
-            <Icon name="check-circle" size={24} color="#36D7B7" />
-            <Text style={styles.profileText}>
-              <Text style={styles.profileTitle}>Accès en 2ème année : </Text>
-              CPGE, Math Spé, EST, BTS, DUT ou Diplôme Équivalent
-            </Text>
-          </View>
-
-          <View style={styles.profileItem}>
-            <Icon name="check-circle" size={24} color="#36D7B7" />
-            <Text style={styles.profileText}>
-              <Text style={styles.profileTitle}>Accès en M1 : </Text>
-              Licence en Informatique ou Diplôme Équivalent
-            </Text>
-          </View>
+        <View style={[styles.profilesContainer, { borderColor: darkMode ? "#36D7B7" : "#36D7B7" }]}>
+          <Text style={[styles.sectionTitle, { color: darkMode ? "#FFD700" : "#000" }]}>{t.profilesTitle}</Text>
+          {t.profiles.map(({ title, description }, i) => (
+            <View key={i} style={styles.profileItem}>
+              <Icon name="check-circle" size={24} color="#36D7B7" />
+              <Text style={styles.profileText}>
+                <Text style={styles.profileTitle}>{title} : </Text>
+                {description}
+              </Text>
+            </View>
+          ))}
         </View>
 
         {/* Dates importantes */}
-        <View style={styles.datesContainer}>
-          <Text style={styles.sectionTitle}>Dates importantes</Text>
-          
-          <View style={styles.dateItem}>
-            <Icon name="event" size={24} color="#FFD700" />
-            <View style={styles.dateContent}>
-              <Text style={styles.dateTitle}>1er Décembre - 30 Avril</Text>
-              <Text style={styles.dateDescription}>Période de dépôt des candidatures pour l'année académique suivante</Text>
+        <View style={[styles.datesContainer, { borderColor: darkMode ? "#36D7B7" : "#36D7B7" }]}>
+          <Text style={[styles.sectionTitle, { color: darkMode ? "#FFD700" : "#000" }]}>{t.datesTitle}</Text>
+          {t.dates.map(({ date, description }, i) => (
+            <View key={i} style={styles.dateItem}>
+              <Icon name="event" size={24} color="#FFD700" />
+              <View style={styles.dateContent}>
+                <Text style={styles.dateTitle}>{date}</Text>
+                <Text style={[styles.dateDescription, { color: darkMode ? "#DDD" : "#444" }]}>{description}</Text>
+              </View>
             </View>
-          </View>
-
-          <View style={styles.dateItem}>
-            <Icon name="event" size={24} color="#FFD700" />
-            <View style={styles.dateContent}>
-              <Text style={styles.dateTitle}>Mai - Juin</Text>
-              <Text style={styles.dateDescription}>Sessions d'entretiens et tests d'admission</Text>
-            </View>
-          </View>
-
-          <View style={styles.dateItem}>
-            <Icon name="event" size={24} color="#FFD700" />
-            <View style={styles.dateContent}>
-              <Text style={styles.dateTitle}>15 Juillet</Text>
-              <Text style={styles.dateDescription}>Date limite de confirmation d'inscription pour les candidats admis</Text>
-            </View>
-          </View>
-
-          <View style={styles.dateItem}>
-            <Icon name="event" size={24} color="#FFD700" />
-            <View style={styles.dateContent}>
-              <Text style={styles.dateTitle}>Septembre</Text>
-              <Text style={styles.dateDescription}>Rentrée académique et semaine d'intégration</Text>
-            </View>
-          </View>
+          ))}
         </View>
 
-{/* Contact */}
-<View style={styles.contactContainer}>
-  <Text style={styles.sectionTitle}>Besoin d'informations supplémentaires ?</Text>
-  
-  <View style={styles.contactItem}>
-    <Icon name="mail" size={24} color="#FFD700" />
-    <Text style={styles.contactText}>admission@esisa.ma</Text>
-  </View>
+        {/* Contact */}
+        <View style={[styles.contactContainer, { borderColor: darkMode ? "#36D7B7" : "#36D7B7" }]}>
+          <Text style={[styles.sectionTitle, { color: darkMode ? "#FFD700" : "#000" }]}>{t.contactTitle}</Text>
+          {t.contacts.map(({ icon, text }, i) => (
+            <View key={i} style={styles.contactItem}>
+              <Icon name={icon} size={24} color="#FFD700" />
+              <Text style={[styles.contactText, { color: darkMode ? "#DDD" : "#444" }]}>{text}</Text>
+            </View>
+          ))}
+        </View>
 
-  <View style={styles.contactItem}>
-    <Icon name="phone" size={24} color="#FFD700" />
-    <Text style={styles.contactText}>+212 5 22 27 22 42</Text>
-  </View>
-
-  <View style={styles.contactItem}>
-    <Icon name="location-on" size={24} color="#FFD700" />
-    <Text style={styles.contactText}>282, Boulevard Zerktouni, Casablanca, Maroc</Text>
-  </View>
-</View>
-
-<TouchableOpacity 
-  style={styles.actionButton}
-  onPress={() => router.push('/other/form')}
->
-  <Text style={styles.buttonText}>POSTULER MAINTENANT</Text>
-</TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: darkMode ? "#1A3F6F" : "#36D7B7" }]}
+          onPress={() => router.push("/other/form")}
+        >
+          <Text style={styles.buttonText}>{t.applyNow}</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
+  darkContainer: { backgroundColor: "#0A1F3A" },
+  lightContainer: { backgroundColor: "#FFF" },
   logoImageTop: {
     width: 80,
     height: 80,
     borderRadius: 40,
     marginTop: -20,
   },
-  scrollView: {
-    flex: 1,
-  },
+  scrollView: { flex: 1 },
   contentContainer: {
     paddingHorizontal: 20,
     paddingBottom: 50,
@@ -293,30 +199,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 5,
   },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#1A3F6F",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#FFD700",
-  },
-  logoText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFD700",
-  },
-  glowEffect: {
-    position: "absolute",
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#FFD700",
-    opacity: 0.3,
-    top: -10,
-  },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -326,20 +208,16 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#FFD700",
-    textAlign: "center",
     marginLeft: 10,
   },
   introText: {
     fontSize: 16,
     fontStyle: "italic",
-    color: "#DDD",
     marginBottom: 20,
     textAlign: "center",
   },
   sectionDescription: {
     fontSize: 16,
-    color: "#DDD",
     marginBottom: 20,
     lineHeight: 22,
   },
@@ -353,7 +231,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#36D7B7",
   },
   criteriaItem: {
     flexDirection: "row",
@@ -375,7 +252,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#FFD700",
     marginBottom: 15,
   },
   processContainer: {
@@ -384,7 +260,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginVertical: 20,
     borderWidth: 1,
-    borderColor: "#36D7B7",
   },
   stepItem: {
     flexDirection: "row",
@@ -416,7 +291,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   stepDescription: {
-    color: "#DDD",
     fontSize: 14,
     lineHeight: 20,
   },
@@ -426,7 +300,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#36D7B7",
   },
   profileItem: {
     flexDirection: "row",
@@ -434,14 +307,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   profileText: {
-    color: "#DDD",
     marginLeft: 10,
     flex: 1,
     fontSize: 15,
   },
   profileTitle: {
     fontWeight: "bold",
-    color: "#36D7B7",
   },
   datesContainer: {
     backgroundColor: "rgba(26, 63, 111, 0.3)",
@@ -449,7 +320,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#36D7B7",
   },
   dateItem: {
     flexDirection: "row",
@@ -461,14 +331,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dateTitle: {
-    color: "#FFD700",
     fontWeight: "bold",
     fontSize: 16,
     marginBottom: 5,
   },
   dateDescription: {
-    color: "#DDD",
     fontSize: 14,
+    lineHeight: 20,
   },
   contactContainer: {
     backgroundColor: "rgba(26, 63, 111, 0.3)",
@@ -476,7 +345,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#36D7B7",
   },
   contactItem: {
     flexDirection: "row",
@@ -484,17 +352,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   contactText: {
-    color: "#DDD",
     marginLeft: 10,
     fontSize: 15,
   },
   actionButton: {
-    backgroundColor: "#1A3F6F",
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#36D7B7",
     alignItems: "center",
     marginVertical: 20,
   },

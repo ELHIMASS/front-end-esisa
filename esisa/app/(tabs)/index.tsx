@@ -17,7 +17,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Audio } from "expo-av"; // ✅ IMPORT AUDIO
 import { red } from "react-native-reanimated/lib/typescript/Colors";
-
+import { DarkModeProvider } from '../context/DarkModeContext'; // chemin relatif selon ta structure
+import Settings from "../Settings/settings";
 export default function ESISAHomePage() {
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -25,6 +26,8 @@ export default function ESISAHomePage() {
   const slideAnim = useRef(new Animated.Value(300)).current;
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+
+ 
 
   // ✅ Audio : fonction pour jouer le son de clic
   const playClickSound = async () => {
@@ -200,6 +203,9 @@ export default function ESISAHomePage() {
         { label: "📅 Calendrier", route: "/other/calendrier" },
         { label: "🏢 Campus", route: "#" },
         { label: "👴 Einstein", route: "/chat/chatgpt" },
+        { label: "🏠 Settings", route: "/Settings" },
+
+
         { label: "🔓 Déconnexion", route: "/", onPress: handleLogout },
       ]
     : [
@@ -208,7 +214,11 @@ export default function ESISAHomePage() {
         { label: "🌐 International", route: "/other/international" },
         { label: "📅 Calendrier", route: "/other/calendrier" },
         { label: "👴 Einstein", route: "/chat/chatgpt" },
+
+        
         { label: "🔑 Espace étudiant", route: "/login" },
+
+
       ];
 
   return (
@@ -317,7 +327,15 @@ export default function ESISAHomePage() {
       </Modal>
     </SafeAreaView>
   );
+   return (
+    <DarkModeProvider>
+      <Settings />
+    </DarkModeProvider>
+  );
+  
 }
+
+
 
 const styles = StyleSheet.create({
   logoImage: { marginTop: 40, width: 170, height: 170 },

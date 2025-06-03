@@ -110,7 +110,11 @@ export default function ProfessorDashboard() {
         const parsedUser = JSON.parse(profData);
         setUser(parsedUser);
 
-        const response = await fetch(`${config.API_URL}/students`);
+      
+
+
+        const response = await fetch(`${config.API_URL}/api/students`);
+
         const data = await response.json();
         setStudents(data);
         setFilteredStudents(data);
@@ -182,59 +186,73 @@ export default function ProfessorDashboard() {
     }
   };
 
-  const sendEmailToGroupOrYear = async () => {
-    if (!emailSubject.trim() || !emailMessage.trim()) {
-      Alert.alert("Données manquantes", "Veuillez saisir un sujet et un message.");
+  
+const sendEmailToGroupOrYear = async () => {
+  if (!emailSubject.trim() || !emailMessage.trim()) {
+    Alert.alert("Données manquantes", "Veuillez saisir un sujet et un message.");
+    return;
+  }
+
+  if (filteredStudents.length === 0) {
+    Alert.alert("Aucun destinataire", "Aucun étudiant trouvé pour ce filtre.");
+    return;
+  }
+
+  // Add safety check for user object
+  if (!user || !user.matiere || !Array.isArray(user.matiere)) {
+    Alert.alert("Erreur", "Données professeur non disponibles. Veuillez vous reconnecter.");
+    return;
+  }
+
+  try {
+    setSendingEmail(true);
+    await playSound(require("../../assets/audio/done.mp3"));
+
+    const recipients = filteredStudents.map((s) => s.email).filter(email => email); // Filter out undefined emails
+    
+    if (recipients.length === 0) {
+      Alert.alert("Erreur", "Aucune adresse email valide trouvée.");
       return;
     }
 
-    if (filteredStudents.length === 0) {
-      Alert.alert("Aucun destinataire", "Aucun étudiant trouvé pour ce filtre.");
-      return;
+    const formData = new FormData();
+    formData.append("subject", emailSubject);
+    formData.append("message", emailMessage);
+    formData.append("recipients", JSON.stringify(recipients));
+
+    for (let i = 0; i < attachments.length; i++) {
+      const file = attachments[i];
+      formData.append("attachments", {
+        uri: file.uri,
+        name: file.name,
+        type: file.mimeType
+      } as any);
     }
 
-    try {
-      setSendingEmail(true);
-      await playSound(require("../../assets/audio/done.mp3"));
+    const response = await fetch(`${config.API_URL}/send-email`, {
+      method: "POST",
+      body: formData
+    });
 
-      const recipients = filteredStudents.map((s) => s.email);
-      const formData = new FormData();
-      formData.append("subject", emailSubject);
-      formData.append("message", emailMessage);
-      formData.append("recipients", JSON.stringify(recipients));
-
-      for (let i = 0; i < attachments.length; i++) {
-        const file = attachments[i];
-        formData.append("attachments", {
-          uri: file.uri,
-          name: file.name,
-          type: file.mimeType
-        } as any);
-      }
-
-      const response = await fetch(`${config.API_URL}/send-email`, {
-        method: "POST",
-        body: formData
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "Erreur lors de l'envoi");
-      }
-
-      await playSound(require("../../assets/audio/done.mp3"));
-      Alert.alert("Succès", `Email envoyé à ${recipients.length} étudiant(s)`);
-
-      setShowEmailModal(false);
-      setEmailSubject('');
-      setEmailMessage('');
-      setAttachments([]);
-    } catch (err) {
-      Alert.alert("Erreur", err.message || "Échec de l'envoi");
-    } finally {
-      setSendingEmail(false);
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Erreur lors de l'envoi");
     }
-  };
+
+    await playSound(require("../../assets/audio/done.mp3"));
+    Alert.alert("Succès", `Email envoyé à ${recipients.length} étudiant(s)`);
+
+    setShowEmailModal(false);
+    setEmailSubject('');
+    setEmailMessage('');
+    setAttachments([]);
+  } catch (err) {
+    Alert.alert("Erreur", err.message || "Échec de l'envoi");
+  } finally {
+    setSendingEmail(false);
+  }
+};
+    
 
   const pickDocument = async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -278,10 +296,12 @@ export default function ProfessorDashboard() {
   };
 
   const handleAddGrade = (student: Student) => {
-    setCurrentStudent(student);
-    setSelectedSubject(user?.matiere[0] || '');
-    setShowGradeModal(true);
-  };
+  setCurrentStudent(student);
+  // Add safety check here too
+  const defaultSubject = user?.matiere && user.matiere.length > 0 ? user.matiere[0] : '';
+  setSelectedSubject(defaultSubject);
+  setShowGradeModal(true);
+};
 
   const saveGrade = async () => {
     if (!currentStudent || !selectedSubject) return;
@@ -318,10 +338,12 @@ export default function ProfessorDashboard() {
   };
 
   const handleAddAbsence = (student: Student) => {
-    setCurrentStudent(student);
-    setSelectedSubject(user?.matiere[0] || '');
-    setShowAbsenceModal(true);
-  };
+  setCurrentStudent(student);
+  // Add safety check here too
+  const defaultSubject = user?.matiere && user.matiere.length > 0 ? user.matiere[0] : '';
+  setSelectedSubject(defaultSubject);
+  setShowAbsenceModal(true);
+};
 
   const saveAbsence = async () => {
     if (!currentStudent || !selectedSubject) return;
@@ -398,10 +420,7 @@ const renderPickers = () => {
   <Text style={styles.iosPickerText}>
     {selectedYear !== '' ? selectedYear : "Toutes années"}
   </Text>
-
-  <View>
-    <Icon name="arrow-drop-down" size={20} color="#FFD700" />
-  </View>
+  <Icon name="arrow-drop-down" size={20} color="#FFD700" />
 </TouchableOpacity>
 
         </View>
@@ -474,6 +493,7 @@ shadowRadius: 3,
           { label: "🏠 Accueil", route: "/(tabs)/index" },
           { label: "📊 Tableau de bord", route: "#" },
           { label: "📝 Mon profil", route: "#" },
+          { label: "⚙️ Settings", route: "/Settings" },
         ].map((item, index) => (
           <TouchableOpacity
             key={index}
@@ -522,9 +542,8 @@ shadowRadius: 3,
       {user?.matiere?.join(' • ') || "Aucune matière assignée"}
     </Text>
 
-    <View>
-  {renderPickers()}
-</View>
+    {renderPickers()}
+
       <View style={styles.searchContainer}>
         <Icon name="search" size={20} color="#FFD700" style={styles.searchIcon} />
         <TextInput
@@ -538,14 +557,15 @@ shadowRadius: 3,
       
       {/* Email Button */}
       <TouchableOpacity 
-        style={styles.emailButton}
-        onPress={() => setShowEmailModal(true)}
-      >
-        <Icon name="email" size={18} color="#FFD700" style={styles.emailIcon} />
-        <Text style={styles.emailButtonText}>
-          Envoyer un email aux étudiants filtrés
-        </Text>
-      </TouchableOpacity>
+  style={styles.emailButton}
+  onPress={() => setShowEmailModal(true)}
+>
+  <Icon name="email" size={18} color="#FFD700" style={styles.emailIcon} />
+  <Text style={styles.emailButtonText}>
+    Envoyer un email aux étudiants filtrés
+  </Text>
+</TouchableOpacity>
+
     </View>
 
     {/* Tab Navigation */}
@@ -589,31 +609,32 @@ shadowRadius: 3,
         </View>
         
         {filteredStudents.map((student) => (
-          <View key={student._id} style={styles.studentCard}>
-            <View style={styles.studentHeader}>
-              <Text style={styles.studentName}>{student.name}</Text>
-              <Text style={styles.studentInfo}>
-                {student.anne_scolaire} - Groupe {student.group}
-              </Text>
-            </View>
+  <View key={student._id} style={styles.studentRow}>
+    <View style={{ flex: 1 }}>
+      <Text style={styles.studentRowName}>{student.name}</Text>
+      <Text style={styles.studentRowInfo}>
+        {student.anne_scolaire} - Groupe {student.group}
+      </Text>
+    </View>
 
-            {currentTab === 'notes' ? (
-              <TouchableOpacity 
-                style={styles.addButton}
-                onPress={() => handleAddGrade(student)}
-              >
-                <Text style={styles.addButtonText}>+ Ajouter notes</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity 
-                style={styles.addButton}
-                onPress={() => handleAddAbsence(student)}
-              >
-                <Text style={styles.addButtonText}>+ Ajouter absence</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        ))}
+    <TouchableOpacity
+      onPress={() =>
+        currentTab === 'notes'
+          ? handleAddGrade(student)
+          : handleAddAbsence(student)
+      }
+      style={styles.iconActionButton}
+    >
+      <Icon
+        name={currentTab === 'notes' ? 'edit' : 'event-busy'}
+        type="material"
+        color="#FFD700"
+        size={26}
+      />
+    </TouchableOpacity>
+  </View>
+))}
+
       </>
     )}
   </ScrollView>
@@ -636,18 +657,22 @@ shadowRadius: 3,
         </Text>
 
         <Text style={styles.modalLabel}>Matière:</Text>
-        <View style={styles.absencePickerContainer}>
-          <Picker
-            selectedValue={selectedSubject}
-            style={styles.absencePicker}
-            dropdownIconColor="#FFD700"
-            onValueChange={setSelectedSubject}
-          >
-            {user?.matiere?.map((subject, index) => (
-              <Picker.Item key={index} label={subject} value={subject} color="#FFF" />
-            ))}
-          </Picker>
-        </View>
+<View style={styles.absencePickerContainer}>
+  <Picker
+    selectedValue={selectedSubject}
+    style={styles.absencePicker}
+    dropdownIconColor="#FFD700"
+    onValueChange={setSelectedSubject}
+  >
+    {user?.matiere && Array.isArray(user.matiere) ? (
+      user.matiere.map((subject, index) => (
+        <Picker.Item key={index} label={subject} value={subject} color="#FFF" />
+      ))
+    ) : (
+      <Picker.Item label="Aucune matière disponible" value="" color="#FFF" />
+    )}
+  </Picker>
+</View>
 
         <View style={styles.gradeInputContainer}>
           <Text style={styles.gradeLabel}>Contrôle Continu:</Text>
@@ -722,19 +747,22 @@ shadowRadius: 3,
         </Text>
 
         <Text style={styles.modalLabel}>Matière:</Text>
-        <View style={styles.absencePickerContainer}>
-          <Picker
-            selectedValue={selectedSubject}
-            style={styles.absencePicker}
-            dropdownIconColor="#FFD700"
-            onValueChange={setSelectedSubject}
-          >
-            {user?.matiere?.map((subject, index) => (
-              <Picker.Item key={index} label={subject} value={subject} color="#FFF" />
-            ))}
-          </Picker>
-        </View>
-
+<View style={styles.absencePickerContainer}>
+  <Picker
+    selectedValue={selectedSubject}
+    style={styles.absencePicker}
+    dropdownIconColor="#FFD700"
+    onValueChange={setSelectedSubject}
+  >
+    {user?.matiere && Array.isArray(user.matiere) ? (
+      user.matiere.map((subject, index) => (
+        <Picker.Item key={index} label={subject} value={subject} color="#FFF" />
+      ))
+    ) : (
+      <Picker.Item label="Aucune matière disponible" value="" color="#FFF" />
+    )}
+  </Picker>
+</View>
         <Text style={styles.modalLabel}>Date (AAAA-MM-JJ):</Text>
         <TextInput
           style={styles.dateInput}
@@ -822,37 +850,40 @@ shadowRadius: 3,
           editable={!sendingEmail}
         />
         <TouchableOpacity
-          onPress={pickDocument}
-          style={{
-            position: "absolute",
-            right: 10,
-            bottom: 30,
-            backgroundColor: "blue",
-            borderRadius: 20,
-            width: 36,
-            height: 27,
-            justifyContent: "center",
-            alignItems: "center",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 3,
-            elevation: 5,
-          }}
-        >
-          <Text style={{ fontSize: 20 }}>🗂️</Text> 
-        </TouchableOpacity>
+  onPress={pickDocument}
+  style={{
+    position: "absolute",
+    right: 10,
+    bottom: 30,
+    backgroundColor: "blue",
+    borderRadius: 20,
+    width: 36,
+    height: 27,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  }}
+>
+  <Text style={{ fontSize: 18 }}>📁</Text>
+</TouchableOpacity>
+
       </View>
 
       {/* 📎 Affichage des pièces jointes */}
       <Text style={styles.modalLabel}>Pièces jointes :</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
-        {attachments.map((file, index) => (
-          <Text key={file.uri || index} style={{ fontSize: 28, marginRight: 5, marginBottom: 5 }}>
-            📎
-          </Text>
-        ))}
-      </View>
+<View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
+  {attachments.map((file, index) => (
+    <View key={file.uri || index} style={{ marginRight: 8 }}>
+      <Text style={{ fontSize: 24 }}>📎 {file.name}</Text>
+    </View>
+  ))}
+</View>
+
+
 
       <View style={styles.modalButtons}>
         <TouchableOpacity
@@ -1006,6 +1037,39 @@ color: "#6D8EB4",
 textAlign: "center",
 marginTop: 5,
 },
+
+studentRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  backgroundColor: '#1A3F6F',
+  padding: 15,
+  borderRadius: 10,
+  marginBottom: 12,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.2,
+  shadowRadius: 4,
+  elevation: 3,
+},
+studentRowName: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: '#FFFFFF',
+},
+studentRowInfo: {
+  fontSize: 13,
+  color: '#6D8EB4',
+  marginTop: 4,
+},
+iconActionButton: {
+  padding: 8,
+  backgroundColor: '#0A1F3A',
+  borderRadius: 20,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
 
 
   filterRow: {

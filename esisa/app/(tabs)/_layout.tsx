@@ -1,7 +1,9 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { DarkModeProvider } from '../context/DarkModeContext'; // chemin à adapter
 
-export default function TabLayout() {
+
+export default function TabLayout({ children }: { children: React.ReactNode }) {
   return (
     <Tabs
       screenOptions={{
@@ -15,4 +17,6 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{ href: null }} />
     </Tabs>
   );
+
+  return <DarkModeProvider>{children}</DarkModeProvider>;
 }

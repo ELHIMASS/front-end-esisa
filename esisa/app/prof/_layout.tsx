@@ -1,13 +1,14 @@
-// app/login/_layout.tsx
-
 import { Stack } from "expo-router";
 
-export default function Layout() {
-    return (
-        <Stack
-            screenOptions={{
-                headerShown: false, // ✅ supprime la barre pour toutes les pages login/*
-            }}
-        />
-    );
+export default function SettingsStackLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false, // désactive le header natif ici aussi
+      }}
+    >
+      <Stack.Screen name="Settings" />
+      {/* autres écrans éventuels */}
+    </Stack>
+  );
 }

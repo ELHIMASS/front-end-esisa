@@ -88,6 +88,8 @@ export default function ProfilScreen() {
       { label: "📅 Calendrier", route: "/other/calendrier" as const },
       { label: "🏢 Campus", route: "#" },
       { label: "👴 Einstein", route: "/chat/chatgpt" },
+      { label: "⚙️ Settings", route: "/Settings" },
+
       { label: "🔓 Déconnexion", route: "/" as const, onPress: handleLogout },
     ]
   : [];

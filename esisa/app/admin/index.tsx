@@ -176,6 +176,7 @@ export default function AdminHomePage() {
                             { label: "🏠 Accueil", section: "home", icon: "home", route: "/admin" },
                             { label: "👥 Gestion des étudiants", section: "students", icon: "people", route: "/admin/gestionEtudiant" },
                             { label: "👨‍🏫 Gestion des professeurs", section: "profs", icon: "school", route: "/admin/gestionProf" },
+                            { label: "⚙️ Settings", route: "/Settings" },
                         ].map((item, index) => (
                             <TouchableOpacity
                                 key={index}

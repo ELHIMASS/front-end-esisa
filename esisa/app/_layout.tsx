@@ -1,20 +1,42 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+// index.tsx
+import React, { useEffect, useContext } from "react";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { DarkModeProvider, DarkModeContext } from "@/app/context/DarkModeContext";
+import { LanguageProvider } from "@/app/context/LanguageContext";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+// Empêche le splash screen de disparaitre automatiquement avant le chargement des assets
 SplashScreen.preventAutoHideAsync();
 
+function NavigationWithTheme() {
+  const { darkMode } = useContext(DarkModeContext);
+
+  return (
+    
+    <ThemeProvider value={darkMode ? DarkTheme : DefaultTheme}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="prof" options={{ headerShown: false }} />
+        <Stack.Screen name="admin" options={{ headerShown: false }} />
+        <Stack.Screen name="other" options={{ headerShown: false }} />
+        <Stack.Screen name="chat" options={{ headerShown: false }} />
+        <Stack.Screen name="resetpassword" options={{ headerShown: false }} />
+        <Stack.Screen name="forgotpassword" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+      </Stack>
+      <StatusBar style={darkMode ? "light" : "dark"} />
+    </ThemeProvider>
+  );
+}
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
   useEffect(() => {
@@ -28,8 +50,10 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+
+    <DarkModeProvider>
+      <LanguageProvider>
+        <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="prof" options={{ headerShown: false }} />
@@ -38,19 +62,14 @@ export default function RootLayout() {
         <Stack.Screen name="chat" options={{ headerShown: false }} />
         <Stack.Screen name="resetpassword" options={{ headerShown: false }} />
         <Stack.Screen name="forgotpassword" options={{ headerShown: false }} />
-
-        
-
-
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="Settings" options={{ headerShown: false }} />
 
 
-        <Stack.Screen
-        name="index"
-        options={{ headerShown: false }} // 👈 ici on masque le header pour la page Splash
-      />
-  
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+      
+      </LanguageProvider>
+    </DarkModeProvider>
   );
+  
 }
