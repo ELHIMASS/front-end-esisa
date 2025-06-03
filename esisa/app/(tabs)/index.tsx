@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
 import {
   View,
   Text,
@@ -11,15 +11,61 @@ import {
   SafeAreaView,
   useWindowDimensions,
   Image,
+  StatusBar,
 } from "react-native";
 import { Icon } from "react-native-elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Audio } from "expo-av"; // ✅ IMPORT AUDIO
-import { red } from "react-native-reanimated/lib/typescript/Colors";
-import { DarkModeProvider } from '../context/DarkModeContext'; // chemin relatif selon ta structure
-import Settings from "../Settings/settings";
-export default function ESISAHomePage() {
+import { Audio } from "expo-av";
+
+import { DarkModeContext, DarkModeProvider } from "../context/DarkModeContext";
+import { LanguageContext } from "../context/LanguageContext";
+
+// Traductions à compléter selon besoins
+const translations = {
+  fr: {
+    accueil: "🏠 Accueil",
+    profil: "👤 Profil",
+    formations: "🎓 Formations",
+    messagerie: "💬 Messagerie",
+    corpsEnseignant: "👨‍🏫 Corps enseignant",
+    programmes: "📚 Programmes",
+    laboratoires: "🔬 Laboratoires",
+    international: "🌐 International",
+    calendrier: "📅 Calendrier",
+    campus: "🏢 Campus",
+    einstein: "👴 Einstein",
+    settings: "⚙️ Réglages",
+    deconnexion: "🔓 Déconnexion",
+    espaceEtudiant: "🔑 Espace étudiant",
+    welcomeTitle: "École Supérieure d'Ingénierie en Sciences Appliquées",
+    welcomeSubtitle: "Formation d'excellence en développement et sciences informatiques",
+    formationsBtn: "FORMATIONS",
+    admissionBtn: "ADMISSION",
+  },
+  en: {
+    accueil: "🏠 Home",
+    profil: "👤 Profile",
+    formations: "🎓 Courses",
+    messagerie: "💬 Messaging",
+    corpsEnseignant: "👨‍🏫 Faculty",
+    programmes: "📚 Programs",
+    laboratoires: "🔬 Labs",
+    international: "🌐 International",
+    calendrier: "📅 Calendar",
+    campus: "🏢 Campus",
+    einstein: "👴 Einstein",
+    settings: "⚙️ Settings",
+    deconnexion: "🔓 Logout",
+    espaceEtudiant: "🔑 Student Area",
+    welcomeTitle: "Higher School of Applied Science Engineering",
+    welcomeSubtitle: "Excellence in development and computer science training",
+    formationsBtn: "COURSES",
+    admissionBtn: "ADMISSION",
+  },
+};
+
+function ESISAHomePageInner() {
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState<{ name: string } | null>(null);
@@ -27,9 +73,12 @@ export default function ESISAHomePage() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
 
- 
+  const { darkMode } = useContext(DarkModeContext);
+  const { language } = useContext(LanguageContext);
 
-  // ✅ Audio : fonction pour jouer le son de clic
+  const t = translations[language] || translations.fr;
+
+  // Audio click sound
   const playClickSound = async () => {
     try {
       const { sound } = await Audio.Sound.createAsync(
@@ -41,7 +90,7 @@ export default function ESISAHomePage() {
     }
   };
 
-  // ✅ Effacer la session uniquement au tout premier lancement
+  // Session reset on first launch
   useEffect(() => {
     const resetSessionOnFirstLaunch = async () => {
       const firstLaunch = await AsyncStorage.getItem("firstLaunchDone");
@@ -133,12 +182,12 @@ export default function ESISAHomePage() {
   const toggleMenu = async () => {
     const sound = new Audio.Sound();
     try {
-      await sound.loadAsync(require("../../assets/audio/tap.mp3")); // adapte le chemin si besoin
+      await sound.loadAsync(require("../../assets/audio/tap.mp3"));
       await sound.playAsync();
     } catch (e) {
       console.warn("Erreur lecture son :", e);
     }
-  
+
     if (isMenuVisible) {
       Animated.timing(slideAnim, {
         toValue: width * 0.75,
@@ -154,14 +203,13 @@ export default function ESISAHomePage() {
       }).start();
     }
   };
-  
 
   useEffect(() => {
     const checkLoginStatus = async () => {
       if (await AsyncStorage.getItem("prof")) {
         router.replace("/prof");
         return;
-      }else if (await AsyncStorage.getItem("admin")) {
+      } else if (await AsyncStorage.getItem("admin")) {
         router.replace("/admin");
         return;
       }
@@ -169,7 +217,6 @@ export default function ESISAHomePage() {
 
       let user = null;
       if (student) user = JSON.parse(student);
-      
 
       if (user) {
         setIsLoggedIn(true);
@@ -192,37 +239,36 @@ export default function ESISAHomePage() {
 
   const menuItems = isLoggedIn
     ? [
-        { label: "🏠 Accueil", route: "/" },
-        { label: "👤 Profil", route: "/explore" },
-        { label: "🎓 Formations", route: "/other/formation" },
-        { label: "💬 Messagerie", route: "/chat/choose"},
-        { label: "👨‍🏫 Corps enseignant", route: "#" },
-        { label: "📚 Programmes", route: "#" },
-        { label: "🔬 Laboratoires", route: "#" },
-        { label: "🌐 International", route: "/other/international" },
-        { label: "📅 Calendrier", route: "/other/calendrier" },
-        { label: "🏢 Campus", route: "#" },
-        { label: "👴 Einstein", route: "/chat/chatgpt" },
-        { label: "🏠 Settings", route: "/Settings" },
-
-
-        { label: "🔓 Déconnexion", route: "/", onPress: handleLogout },
+        { label: t.accueil, route: "/" },
+        { label: t.profil, route: "/explore" },
+        { label: t.formations, route: "/other/formation" },
+        { label: t.messagerie, route: "/chat/choose" },
+        { label: t.corpsEnseignant, route: "#" },
+        { label: t.programmes, route: "#" },
+        { label: t.laboratoires, route: "#" },
+        { label: t.international, route: "/other/international" },
+        { label: t.calendrier, route: "/other/calendrier" },
+        { label: t.campus, route: "#" },
+        { label: t.einstein, route: "/chat/chatgpt" },
+        { label: t.settings, route: "/Settings" },
+        { label: t.deconnexion, route: "/", onPress: handleLogout },
       ]
     : [
-        { label: "🏠 Accueil", route: "/" },
-        { label: "🎓 Formations", route: "/other/formation" },
-        { label: "🌐 International", route: "/other/international" },
-        { label: "📅 Calendrier", route: "/other/calendrier" },
-        { label: "👴 Einstein", route: "/chat/chatgpt" },
-
-        
-        { label: "🔑 Espace étudiant", route: "/login" },
-
-
+        { label: t.accueil, route: "/" },
+        { label: t.formations, route: "/other/formation" },
+        { label: t.international, route: "/other/international" },
+        { label: t.calendrier, route: "/other/calendrier" },
+        { label: t.einstein, route: "/chat/chatgpt" },
+        { label: t.settings, route: "/Settings/settings" },
+        { label: t.espaceEtudiant, route: "/login" },
       ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: darkMode ? "#0A1F3A" : "#FFFFFF" }]}
+    >
+      <StatusBar barStyle={darkMode ? "light-content" : "dark-content"} backgroundColor={darkMode ? "#0A1F3A" : "#FFF"} />
+
       {codeTrailPosition.map((segment, index) => (
         <View
           key={index}
@@ -237,10 +283,13 @@ export default function ESISAHomePage() {
             },
           ]}
         >
-          <Text style={styles.codeSymbol}>{segmentSymbols[index]}</Text>
+          <Text style={[styles.codeSymbol, { color: darkMode ? "#36D7B7" : "#1A3F6F" }]}>
+            {segmentSymbols[index]}
+          </Text>
         </View>
       ))}
 
+      {/* Bouton menu */}
       <TouchableOpacity
         onPress={toggleMenu}
         style={{
@@ -248,7 +297,7 @@ export default function ESISAHomePage() {
           top: insets.top + 10,
           right: 20,
           zIndex: 10,
-          backgroundColor: "#1A3F6F",
+          backgroundColor: darkMode ? "#1A3F6F" : "#1A3F6F",
           borderRadius: 20,
           padding: 10,
         }}
@@ -256,6 +305,7 @@ export default function ESISAHomePage() {
         <Icon name="menu" size={30} color="#FFD700" />
       </TouchableOpacity>
 
+      {/* Logo */}
       <View style={styles.logoContainer}>
         <Image
           source={require("../../assets/icons/icon.png")}
@@ -264,62 +314,88 @@ export default function ESISAHomePage() {
         />
       </View>
 
+      {/* Contenu principal */}
       <View style={styles.mainContent}>
-        <Text style={styles.welcomeText}>École Supérieure d'Ingénierie en Sciences Appliquées</Text>
-        <Text style={styles.subText}>Formation d'excellence en développement et sciences informatiques</Text>
+        <Text style={[styles.welcomeText, { color: darkMode ? "#FFD700" : "#1A3F6F" }]}>
+          {t.welcomeTitle}
+        </Text>
+        <Text style={[styles.subText, { color: darkMode ? "#BBB" : "#444" }]}>
+          {t.welcomeSubtitle}
+        </Text>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: darkMode ? "#1A3F6F" : "#0056b3" }]}
             onPress={async () => {
               await playClickSound();
               router.push("/other/formation");
             }}
           >
-            <Text style={styles.buttonText}>FORMATIONS</Text>
+            <Text style={styles.buttonText}>{t.formationsBtn}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: darkMode ? "#1A3F6F" : "#0056b3" }]}
             onPress={async () => {
               await playClickSound();
               router.push("/other/admission");
             }}
           >
-            <Text style={styles.buttonText}>ADMISSION</Text>
+            <Text style={styles.buttonText}>{t.admissionBtn}</Text>
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* Menu latéral */}
       <Modal visible={isMenuVisible} transparent animationType="none" onRequestClose={toggleMenu}>
         <Pressable style={styles.modalBackgroundRight} onPress={toggleMenu}>
-          <Animated.View style={[styles.menuDrawerRight, { transform: [{ translateX: slideAnim }] }]}>
+          <Animated.View
+            style={[
+              styles.menuDrawerRight,
+              { transform: [{ translateX: slideAnim }] },
+              { backgroundColor: darkMode ? "#0A1F3A" : "#FFF" },
+            ]}
+          >
             <View style={styles.menuHeader}>
-              <Text style={styles.menuHeaderText}>ESISA</Text>
-              {userInfo && <Text style={styles.userNameText}>{userInfo.name}</Text>}
+              <Text style={[styles.menuHeaderText, { color: darkMode ? "#FFD700" : "#0056b3" }]}>ESISA</Text>
+              {userInfo && (
+                <Text style={[styles.userNameText, { color: darkMode ? "#6D8EB4" : "#0056b3" }]}>
+                  {userInfo.name}
+                </Text>
+              )}
             </View>
 
             {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.menuItem}
+                style={[
+                  styles.menuItem,
+                  { borderBottomColor: darkMode ? "#1A3F6F" : "#0056b3" },
+                ]}
                 onPress={async () => {
-                  await playClickSound(); // 🔊 jouer le son avant
+                  await playClickSound();
                   toggleMenu();
                   if (item.onPress) item.onPress();
                   else router.push(item.route as any);
                 }}
-                
               >
                 <Text
                   style={[
                     styles.menuText,
-                    item.label.includes("🔑") ? { color: "#4CAF50" } :
-                    item.label.includes("🔓") ? { color: "#FF5252" } : {},
+                    {
+                      color:
+                        item.label.includes("🔑")
+                          ? "#4CAF50"
+                          : item.label.includes("🔓")
+                          ? "#FF5252"
+                          : darkMode
+                          ? "#FFF"
+                          : "#000",
+                    },
                   ]}
                 >
                   {item.label}
                 </Text>
-                <Icon name="chevron-right" size={20} color="#FFD700" />
+                <Icon name="chevron-right" size={20} color={darkMode ? "#FFD700" : "#000"} />
               </TouchableOpacity>
             ))}
           </Animated.View>
@@ -327,17 +403,20 @@ export default function ESISAHomePage() {
       </Modal>
     </SafeAreaView>
   );
-   return (
-    <DarkModeProvider>
-      <Settings />
-    </DarkModeProvider>
-  );
-  
 }
 
-
+export default function ESISAHomePage() {
+  return (
+    <DarkModeProvider>
+      <LanguageContext.Consumer>
+        {() => <ESISAHomePageInner />}
+      </LanguageContext.Consumer>
+    </DarkModeProvider>
+  );
+}
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
   logoImage: { marginTop: 40, width: 170, height: 170 },
   codeSegment: {
     position: "absolute",
@@ -353,7 +432,6 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   codeSymbol: {
-    color: "#36D7B7",
     fontSize: 8,
     fontWeight: "bold",
   },
@@ -375,13 +453,11 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#FFF",
     textAlign: "center",
     marginBottom: 10,
   },
   subText: {
     fontSize: 16,
-    color: "#BBB",
     marginBottom: 40,
     textAlign: "center",
   },
@@ -390,20 +466,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     width: "100%",
     marginTop: 20,
+    
   },
   actionButton: {
-    backgroundColor: "#1A3F6F",
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#36D7B7",
     minWidth: 150,
     alignItems: "center",
+    borderColor: "#36D7B7",
   },
   buttonText: {
     color: "#FFF",
     fontWeight: "bold",
+
   },
   modalBackgroundRight: {
     flex: 1,
@@ -414,7 +491,6 @@ const styles = StyleSheet.create({
   menuDrawerRight: {
     width: "75%",
     height: "100%",
-    backgroundColor: "#0A1F3A",
     padding: 20,
     borderTopLeftRadius: 20,
     borderBottomLeftRadius: 20,
@@ -424,11 +500,9 @@ const styles = StyleSheet.create({
   menuHeader: {
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#1A3F6F",
     marginBottom: 10,
   },
   menuHeaderText: {
-    color: "#FFD700",
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
@@ -437,7 +511,6 @@ const styles = StyleSheet.create({
   userNameText: {
     marginTop: 5,
     fontSize: 14,
-    color: "#6D8EB4",
     textAlign: "center",
   },
   menuItem: {
@@ -446,10 +519,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderColor: "#1A3F6F",
   },
   menuText: {
     fontSize: 16,
-    color: "#FFF",
   },
 });
