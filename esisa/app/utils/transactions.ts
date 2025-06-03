@@ -68,6 +68,45 @@ export const translations = {
     internationalPhone: "+212 (0)6 61 45 35 09",
     internationalEmailLabel: "EMAIL",
     internationalEmail: "info@esisa.ac.ma",
+
+     coursesTitle: "Nos Formations",
+    coursesIntro: "L'enseignement à l'école ESISA est fondé sur un fonctionnement par semestre, basé sur le système modulaire. À l'école ESISA, l'enseignement est dispensé en 2 cycles étalés sur 5 années d'études.",
+    firstCycleTitle: "1er Cycle (Bac +3 ans)",
+    years12Title: "1ère et 2ème années",
+    years12Description: "L'objectif est d'initier l'étudiant aux domaines de l'informatique avec ses différentes disciplines, et de développer ses compétences en développement informatique à travers une formation centrée sur:",
+    years12Subjects: [
+      "Programmation",
+      "Structures de données",
+      "Langages de programmation",
+      "Bases de données",
+      "Systèmes d'information",
+      "Réseaux informatiques"
+    ],
+    year3Title: "3ème année",
+    year3Description: "L'objectif est de former des assistants débutants à la maîtrise d'œuvre (MOE) et à la maîtrise d'ouvrage (MO), dans les domaines de la conception et de l'administration des systèmes d'information:",
+    year3Subjects: [
+      "Bases de données",
+      "Réseaux",
+      "Architecture technique",
+      "Développement d'applications",
+      "Déploiement logiciel",
+      "Intégration d'exploitation",
+      "Analyse et traitements statistiques"
+    ],
+    secondCycleTitle: "2ème Cycle (2 ans après Bac +3)",
+    years45Title: "4ème et 5ème années",
+    years45Description1: "Ce cycle comprend 2 années d'études. Il a pour objectif principal de faire évoluer les compétences de l'étudiant vers la maîtrise des grands systèmes et leurs architectures, avec une grande expérience théorique et technique dans le domaine du développement basé sur les nouvelles technologies informatiques.",
+    years45Description2: "Il se clôt par la réalisation d'un projet de fin d'études dans le secteur industriel, mené principalement au sein des entreprises actives dans le développement informatique à l'échelle internationale et dans le domaine du développement offshore.",
+    years45Description3: "Options disponibles:",
+    years45Options: [
+      "M1 et M2 à l'ESISA",
+      "M2 dans des universités étatiques en France suite au M1 à l'ESISA",
+      "Diplôme d'Ingénieur d'état en France (2 ans)"
+    ],
+    languageSectionTitle: "Importance des langues",
+    languageSectionDesc1: "L'école ESISA met l'accent sur l'importance de la communication en français et en anglais dans les métiers de l'ingénierie. Tout au long des années d'études, les étudiants sont préparés à une meilleure adaptation linguistique pour faciliter leur intégration dans les cursus finaux à l'étranger et ouvrir les portes des métiers de l'avenir.",
+    languageSectionDesc2: "En outre, les entretiens de sélection pour les différentes écoles et universités partenaires se passent en français et en anglais. Les étudiants de l'ESISA sont appelés à atteindre le niveau de TOEIC (Test Of English for International Communication) en fin de 4ème année."
+  
   },
   en: {
     settings: "Settings",
@@ -139,6 +178,45 @@ export const translations = {
     internationalPhone: "+212 (0)6 61 45 35 09",
     internationalEmailLabel: "EMAIL",
     internationalEmail: "info@esisa.ac.ma",
+
+
+     coursesTitle: "Our Courses",
+    coursesIntro: "The teaching at ESISA is based on a semester system and modular courses. ESISA provides education in 2 cycles spread over 5 years.",
+    firstCycleTitle: "First Cycle (Bac +3 years)",
+    years12Title: "1st and 2nd Years",
+    years12Description: "The goal is to introduce students to different fields of computer science and develop their skills in software development with training focused on:",
+    years12Subjects: [
+      "Programming",
+      "Data Structures",
+      "Programming Languages",
+      "Databases",
+      "Information Systems",
+      "Computer Networks"
+    ],
+    year3Title: "3rd Year",
+    year3Description: "The goal is to train beginner assistants in project management (MOE) and project ownership (MO) in the fields of design and administration of information systems:",
+    year3Subjects: [
+      "Databases",
+      "Networks",
+      "Technical Architecture",
+      "Application Development",
+      "Software Deployment",
+      "Operation Integration",
+      "Statistical Analysis and Processing"
+    ],
+    secondCycleTitle: "Second Cycle (2 years after Bac +3)",
+    years45Title: "4th and 5th Years",
+    years45Description1: "This cycle consists of 2 years of studies. Its main goal is to develop the student's skills towards mastering large systems and their architectures, with extensive theoretical and technical experience in development based on new IT technologies.",
+    years45Description2: "It concludes with a final project mainly carried out within companies active in international software development and offshore development.",
+    years45Description3: "Available options:",
+    years45Options: [
+      "M1 and M2 at ESISA",
+      "M2 in state universities in France after M1 at ESISA",
+      "State Engineering Degree in France (2 years)"
+    ],
+    languageSectionTitle: "Importance of Languages",
+    languageSectionDesc1: "ESISA emphasizes the importance of communication in French and English in engineering professions. Throughout the years of study, students are prepared for better linguistic adaptation to facilitate integration in final courses abroad and open the doors to future professions.",
+    languageSectionDesc2: "Additionally, the selection interviews for different partner schools and universities are conducted in French and English. ESISA students are expected to reach TOEIC (Test Of English for International Communication) level by the end of the 4th year."
+  
   }
 };
-
