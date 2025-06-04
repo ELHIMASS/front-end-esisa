@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -9,36 +9,40 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  SafeAreaView
+  SafeAreaView,
+  ListRenderItemInfo,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import config from '../../config';
+import { DarkModeContext } from '../context/DarkModeContext';
+import { useTranslation } from 'react-i18next';
 
+interface Message {
+  from: string;
+  text: string;
+}
 
-
-// Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
-
-
-
-export default function ChatBotScreen() {
-  const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
-  const [input, setInput] = useState('');
-  const [username, setUsername] = useState('Guest');
+export default function ChatBotScreen(): JSX.Element {
+  const { darkMode } = useContext(DarkModeContext);
+  const { t } = useTranslation();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState<string>('');
+  const [username, setUsername] = useState<string>('Guest');
 
   useEffect(() => {
-    const loadUser = async () => {
+    const loadUser = async (): Promise<void> => {
       const stored = await AsyncStorage.getItem('user');
       if (stored) {
         const parsed = JSON.parse(stored);
-        setUsername(parsed?.name || 'User');
+        setUsername(parsed?.name ?? 'User');
       }
     };
     loadUser();
   }, []);
 
-  const sendMessage = async () => {
+  const sendMessage = async (): Promise<void> => {
     if (!input.trim()) return;
 
     setMessages(prev => [...prev, { from: username, text: input }]);
@@ -46,22 +50,21 @@ export default function ChatBotScreen() {
 
     try {
       const response = await fetch(`${config.API_URL}/api/chat/chatgpt`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ prompt: input }),
-});
-
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: input }),
+      });
 
       const data = await response.json();
-      const botResponse = data?.response || "Erreur de réponse d'Einstein.";
-      setMessages(prev => [...prev, { from: 'Einstein', text: botResponse }]);
+      const botResponse: string = data?.response ?? t('einstein_response_error');
+      setMessages(prev => [...prev, { from: t('einstein'), text: botResponse }]);
     } catch (error) {
       console.error('❌ Erreur fetch:', error);
-      setMessages(prev => [...prev, { from: 'Einstein', text: 'Erreur de connexion à Einstein.' }]);
+      setMessages(prev => [...prev, { from: t('einstein'), text: t('einstein_connection_error') }]);
     }
   };
 
-  const renderItem = ({ item }: { item: { from: string; text: string } }) => {
+  const renderItem = ({ item }: ListRenderItemInfo<Message>): JSX.Element => {
     const isUser = item.from === username;
     const avatar = isUser
       ? require('../../assets/images/user.png')
@@ -80,7 +83,7 @@ export default function ChatBotScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: darkMode ? '#0A1F3A' : '#FFF' }]}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -88,8 +91,19 @@ export default function ChatBotScreen() {
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.replace('/(tabs)')}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color={darkMode ? '#FFD700' : '#007AFF'} />
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.topContainer}>
+          <Image
+            source={require('../../assets/images/einstein.png')}
+            style={styles.topImage}
+            resizeMode="contain"
+          />
+          <Text style={[styles.topTitle, { color: darkMode ? '#FFD700' : '#007AFF' }]}>
+            {t('how can we help')}
+          </Text>
         </View>
 
         <FlatList
@@ -100,16 +114,28 @@ export default function ChatBotScreen() {
           contentContainerStyle={{ paddingVertical: 20 }}
         />
 
-        <View style={styles.inputContainer}>
+        <View
+          style={[
+            styles.inputContainer,
+            { backgroundColor: darkMode ? '#0A1F3A' : '#EEE', borderTopColor: darkMode ? '#FFD700' : '#007AFF' },
+          ]}
+        >
           <TextInput
-            placeholder="Pose ta question à Einstein..."
-            placeholderTextColor="#ccc"
+            placeholder={t('ask einstein')}
+            placeholderTextColor={darkMode ? '#999' : '#666'}
             value={input}
             onChangeText={setInput}
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                color: darkMode ? '#FFF' : '#000',
+                backgroundColor: darkMode ? '#1A3F6F' : '#FFF',
+                borderColor: darkMode ? '#FFD700' : '#007AFF',
+              },
+            ]}
           />
-          <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-            <Text style={styles.sendText}>Envoyer</Text>
+          <TouchableOpacity onPress={sendMessage} style={[styles.sendButton, { backgroundColor: darkMode ? '#FFD700' : '#007AFF' }]}>
+            <Text style={[styles.sendText, { color: darkMode ? '#0A1F3A' : '#FFF' }]}>{t('send')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -120,15 +146,27 @@ export default function ChatBotScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#0A1F3A',
   },
   container: {
     flex: 1,
-    backgroundColor: '#0A1F3A',
   },
   header: {
     padding: 10,
     marginTop: 5,
+  },
+  topContainer: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  topImage: {
+    width: 100,
+    height: 100,
+    marginBottom: 10,
+    borderRadius: 50,
+  },
+  topTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   chat: {
     flex: 1,
@@ -186,29 +224,23 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: '#0A1F3A',
-    borderTopColor: '#FFD700',
     borderTopWidth: 1,
   },
   input: {
     flex: 1,
-    backgroundColor: '#1A3F6F',
-    color: '#fff',
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: '#FFD700',
   },
   sendButton: {
     marginLeft: 10,
-    backgroundColor: '#FFD700',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
+    justifyContent: 'center',
   },
   sendText: {
     fontWeight: 'bold',
-    color: '#0A1F3A',
   },
 });

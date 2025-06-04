@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -6,19 +6,23 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert
+  Alert,
 } from 'react-native';
 import { Icon } from "react-native-elements";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Audio } from "expo-av";
 import config from '../../config';
+import { DarkModeContext } from '../context/DarkModeContext';
+import { useTranslation } from 'react-i18next';
 
 const ForgotPasswordScreen: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
+  const { darkMode } = useContext(DarkModeContext);
+  const { t } = useTranslation();
+  const [email, setEmail] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [message, setMessage] = useState<string>('');
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const router = useRouter();
 
   const playSound = async (file: any) => {
@@ -26,7 +30,7 @@ const ForgotPasswordScreen: React.FC = () => {
       const { sound } = await Audio.Sound.createAsync(file);
       await sound.playAsync();
     } catch (error) {
-      console.warn("Erreur audio :", error);
+      console.warn(t('audio_error'), error);
     }
   };
 
@@ -35,36 +39,35 @@ const ForgotPasswordScreen: React.FC = () => {
     
     if (!email) {
       await playSound(require('../../assets/audio/error.mp3'));
-      setMessage("Veuillez entrer votre adresse email.");
+      setMessage(t('enter_email'));
       setIsSuccess(false);
       return;
     }
 
     try {
       setLoading(true);
-        const response = await fetch(`${config.API_IP}/api/forgotpassword`, {
+      const response = await fetch(`${config.API_IP}/api/forgotpassword`, {
          method: 'POST',
          headers: {
-         'Content-Type': 'application/json'
-           },
+           'Content-Type': 'application/json'
+         },
          body: JSON.stringify({ email })
       }); 
-
 
       const data = await response.json();
 
       if (response.ok) {
         await playSound(require('../../assets/audio/done.mp3'));
-        setMessage("Un email de récupération a été envoyé à votre adresse.");
+        setMessage(t('reset_email_sent'));
         setIsSuccess(true);
       } else {
         await playSound(require('../../assets/audio/error.mp3'));
-        setMessage(data.message || "Aucun compte n'est associé à cette adresse.");
+        setMessage(data.message || t('no_account_found'));
         setIsSuccess(false);
       }
     } catch (err) {
-      console.error("Erreur de récupération :", err);
-      setMessage("Erreur serveur. Veuillez réessayer.");
+      console.error(t('reset_error'), err);
+      setMessage(t('server_error_retry'));
       setIsSuccess(false);
       await playSound(require('../../assets/audio/error.mp3'));
     } finally {
@@ -74,46 +77,48 @@ const ForgotPasswordScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFD700" />
+      <View style={[styles.loadingContainer, { backgroundColor: darkMode ? "#0A1F3A" : "#FFF" }]}>
+        <ActivityIndicator size="large" color={darkMode ? "#FFD700" : "#4B72FF"} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: darkMode ? "#0A1F3A" : "#FFF" }]}>
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Icon name="arrow-back" size={28} color="#FFD700" />
+        <Icon name="arrow-back" size={28} color={darkMode ? "#FFD700" : "#007AFF"} />
       </TouchableOpacity>
 
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>MOT DE PASSE OUBLIÉ</Text>
-          <Text style={styles.subtitle}>
-            Entrez votre adresse email pour recevoir un lien de récupération
+          <Text style={[styles.title, { color: darkMode ? "#FFD700" : "#000" }]}>{t('forgot password')}</Text>
+          <Text style={[styles.subtitle, { color: darkMode ? "#6D8EB4" : "#555" }]}>
+            {t('forgot password')}
           </Text>
         </View>
 
         <View style={styles.formContainer}>
-          <View style={styles.inputContainer}>
-            <Icon name="email" size={20} color="#FFD700" style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { backgroundColor: darkMode ? "#1A3F6F" : "#E0E0E0", borderLeftColor: darkMode ? "#FFD700" : "#007AFF" }]}>
+            <Icon name="email" size={20} color={darkMode ? "#FFD700" : "#007AFF"} style={styles.inputIcon} />
             <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#6D8EB4"
+              style={[styles.input, { color: darkMode ? "#FFF" : "#222" }]}
+              placeholder={t('email')}
+              placeholderTextColor={darkMode ? "#999" : "#666"}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
+              returnKeyType="done"
+              onSubmitEditing={handleSubmit}
             />
           </View>
 
           <TouchableOpacity
-            style={styles.submitButton}
+            style={[styles.submitButton, { backgroundColor: darkMode ? "#4B72FF" : "#007AFF" }]}
             onPress={handleSubmit}
             disabled={loading}
           >
-            <Text style={styles.submitButtonText}>ENVOYER</Text>
+            <Text style={styles.submitButtonText}>{t('send')}</Text>
             <Icon name="send" size={18} color="#FFF" />
           </TouchableOpacity>
 
@@ -130,7 +135,7 @@ const ForgotPasswordScreen: React.FC = () => {
             style={styles.loginLink}
             onPress={() => router.replace("/login")}
           >
-            <Text style={styles.loginLinkText}>Retour à la connexion</Text>
+            <Text style={[styles.loginLinkText, { color: darkMode ? "#FFD700" : "#007AFF" }]}>{t('back to login')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -141,13 +146,11 @@ const ForgotPasswordScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#0A1F3A",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#0A1F3A",
   },
   container: {
     flex: 1,
@@ -167,13 +170,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: "#FFD700",
     letterSpacing: 1,
     marginBottom: 15,
   },
   subtitle: {
     fontSize: 16,
-    color: "#6D8EB4",
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -183,12 +184,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: "#1A3F6F",
     borderRadius: 12,
     paddingHorizontal: 15,
     marginBottom: 20,
     borderLeftWidth: 4,
-    borderLeftColor: "#FFD700",
   },
   inputIcon: {
     marginRight: 10,
@@ -196,14 +195,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 50,
-    color: "#FFF",
     fontSize: 16,
   },
   submitButton: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: "#4B72FF",
     paddingVertical: 15,
     borderRadius: 25,
     marginTop: 10,
@@ -240,7 +237,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   loginLinkText: {
-    color: "#FFD700",
     fontSize: 16,
   },
 });
