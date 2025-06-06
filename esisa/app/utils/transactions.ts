@@ -249,6 +249,38 @@ export const translations = {
 
     virtualExperience: "Expérience virtuelle à 360°",
 
+     back: "Retour",
+    chooseChannel: "Choisissez votre canal de discussion",
+    userNotConnected: "Utilisateur non connecté",
+    userLoadFail: "Impossible de charger l'utilisateur",
+    channelGroup: "Canal : Groupe",
+    channelYear: "Canal : Année",
+    writeMessage: "Écrire un message...",
+
+
+    labTitle: "ESISA ANALYTICA",
+    labDescription: "Bienvenue dans notre laboratoire, où l'innovation et la recherche sont au cœur de nos activités.",
+    researchTitle: "Nos Recherches",
+    researchDescription: "Découvrez nos projets et collaborations à travers des vidéos immersives.",
+    researchAreas: [
+      { title: "Intelligence Artificielle", description: "Développement d'algorithmes avancés" },
+      { title: "Analyse de Données", description: "Traitement et visualisation de données complexes" },
+      { title: "Systèmes Embarqués", description: "Conception de solutions IoT innovantes" }
+    ],
+    videoTitle: "Vidéo de Présentation",
+    equipmentTitle: "Nos Équipements",
+    equipment: [
+      { name: "Serveurs haute performance", description: "Pour le calcul intensif" },
+      { name: "Stations de développement", description: "Environnements de développement avancés" },
+      { name: "Laboratoire IoT", description: "Espace dédié aux objets connectés" }
+    ],
+    labContactTitle: "Contact Laboratoire",
+    labContacts: [
+      { icon: "email", text: "info@esisa.ac.ma" },
+      { icon: "phone", text: "+212 5 35 65 70 95" },
+      { icon: "location-on", text: "29 bis avenue Ibn Khatib, route D'imouzzer, Fès 30050" }
+    ]
+
     
 
    
@@ -498,6 +530,39 @@ error: "Error",
     enter_field: "Enter the field",
     virtualExperience: "Virtual experience at 360°",
 
+    back: "Back",
+    chooseChannel: "Choose your chat channel",
+    group: "Group",
+    schoolYear: "School Year",
+    userNotConnected: "User not connected",
+    userLoadFail: "Failed to load user",
+
+     channelGroup: "Channel: Group",
+    channelYear: "Channel: Year",
+    writeMessage: "Write a message...",
+
+      labTitle: "ESISA ANALYTICA",
+    labDescription: "Welcome to our lab, where innovation and research are at the heart of our activities.",
+    researchTitle: "Our Research",
+    researchDescription: "Explore our projects and collaborations through immersive videos.",
+    researchAreas: [
+      { title: "Artificial Intelligence", description: "Development of advanced algorithms" },
+      { title: "Data Analysis", description: "Processing and visualizing complex data" },
+      { title: "Embedded Systems", description: "Designing innovative IoT solutions" }
+    ],
+    videoTitle: "Presentation Video",
+    equipmentTitle: "Our Equipment",
+    equipment: [
+      { name: "High-performance servers", description: "For intensive computation" },
+      { name: "Development workstations", description: "Advanced development environments" },
+      { name: "IoT Lab", description: "Dedicated space for connected objects" }
+    ],
+    labContactTitle: "Lab Contact",
+    labContacts: [
+      { icon: "email", text: "info@esisa.ac.ma" },
+      { icon: "phone", text: "+212 5 35 65 70 95" },
+      { icon: "location-on", text: "29 bis avenue Ibn Khatib, route D'imouzzer, Fès 30050" }
+    ]
   
   },
 
@@ -695,7 +760,41 @@ error: "Error",
     french_note: "درجة الفرنسية",
     average_note: "المعدل العام",
     enter_field: "أدخل الحقل",
-        virtualExperience: "تجربة افتراضية بزاوية 360°",
+    virtualExperience: "تجربة افتراضية بزاوية 360°",
+
+        back: "رجوع",
+    chooseChannel: "اختر قناة المحادثة",
+    userNotConnected: "المستخدم غير متصل",
+    userLoadFail: "تعذر تحميل المستخدم",
+
+    channelGroup: "القناة: المجموعة",
+    channelYear: "القناة: السنة",
+    writeMessage: "اكتب رسالة...",
+
+    
+     labTitle: "إيسيسا أناليتيكا",
+    labDescription: "مرحبًا بكم في مختبرنا، حيث الابتكار والبحث في صميم أنشطتنا.",
+    researchTitle: "أبحاثنا",
+    researchDescription: "اكتشف مشاريعنا وتعاوناتنا من خلال مقاطع فيديو غامرة.",
+    researchAreas: [
+      { title: "الذكاء الاصطناعي", description: "تطوير خوارزميات متقدمة" },
+      { title: "تحليل البيانات", description: "معالجة وعرض البيانات المعقدة" },
+      { title: "الأنظمة المدمجة", description: "تصميم حلول إنترنت الأشياء المبتكرة" }
+    ],
+    videoTitle: "فيديو تقديمي",
+    equipmentTitle: "معداتنا",
+    equipment: [
+      { name: "خوادم عالية الأداء", description: "للحوسبة المكثفة" },
+      { name: "محطات تطوير", description: "بيئات تطوير متقدمة" },
+      { name: "مختبر إنترنت الأشياء", description: "مساحة مخصصة للأشياء المتصلة" }
+    ],
+    labContactTitle: "اتصال المختبر",
+    labContacts: [
+      { icon: "email", text: "info@esisa.ac.ma" },
+      { icon: "phone", text: "+212 5 35 65 70 95" },
+      { icon: "location-on", text: "29 شارع ابن خطيب، طريق إموزار، فاس 30050" }
+    ],
+
 
   
   },
@@ -885,6 +984,38 @@ error: "Error",
     average_note: "Promedio general",
     enter_field: "Introduce el campo",
     virtualExperience: "Experiencia virtual a 360°",
+     back: "Volver",
+    chooseChannel: "Elige tu canal de conversación",
+    userNotConnected: "Usuario no conectado",
+    userLoadFail: "No se pudo cargar el usuario",
+    channelGroup: "Canal: Grupo",
+    channelYear: "Canal: Año",
+    writeMessage: "Escribe un mensaje...",
+
+
+
+      labTitle: "ESISA ANALYTICA",
+    labDescription: "Bienvenido a nuestro laboratorio, donde la innovación y la investigación están en el centro de nuestras actividades.",
+    researchTitle: "Nuestras Investigaciones",
+    researchDescription: "Descubre nuestros proyectos y colaboraciones a través de vídeos inmersivos.",
+    researchAreas: [
+      { title: "Inteligencia Artificial", description: "Desarrollo de algoritmos avanzados" },
+      { title: "Análisis de Datos", description: "Procesamiento y visualización de datos complejos" },
+      { title: "Sistemas Embebidos", description: "Diseño de soluciones innovadoras de IoT" }
+    ],
+    videoTitle: "Vídeo de Presentación",
+    equipmentTitle: "Nuestros Equipos",
+    equipment: [
+      { name: "Servidores de alto rendimiento", description: "Para cálculos intensivos" },
+      { name: "Estaciones de desarrollo", description: "Entornos de desarrollo avanzados" },
+      { name: "Laboratorio IoT", description: "Espacio dedicado a objetos conectados" }
+    ],
+    labContactTitle: "Contacto del Laboratorio",
+    labContacts: [
+      { icon: "email", text: "info@esisa.ac.ma" },
+      { icon: "phone", text: "+212 5 35 65 70 95" },
+      { icon: "location-on", text: "29 bis avenue Ibn Khatib, route D'imouzzer, Fès 30050" }
+    ],
 
   },
   
