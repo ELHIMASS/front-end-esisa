@@ -28,12 +28,9 @@ const translations = {
     profil: "👤 Profil",
     formations: "🎓 Formations",
     messagerie: "💬 Messagerie",
-    corpsEnseignant: "👨‍🏫 Corps enseignant",
-    programmes: "📚 Programmes",
     laboratoires: "🔬 Laboratoires",
     international: "🌐 International",
     calendrier: "📅 Calendrier",
-    campus: "🏢 Campus",
     einstein: "👴 Einstein",
     settings: "⚙️ Réglages",
     deconnexion: "🔓 Déconnexion",
@@ -42,6 +39,7 @@ const translations = {
     welcomeSubtitle: "Formation d'excellence en développement et sciences informatiques",
     formationsBtn: "FORMATIONS",
     admissionBtn: "ADMISSION",
+    virtualExperience: "🎥 Expérience virtuelle à 360°",
   },
   en: {
     accueil: "🏠 Home",
@@ -62,6 +60,44 @@ const translations = {
     welcomeSubtitle: "Excellence in development and computer science training",
     formationsBtn: "COURSES",
     admissionBtn: "ADMISSION",
+    virtualExperience: "🎥 Virtual experience at 360°",
+
+  },
+  ar: {
+    accueil: "🏠 الرئيسية",
+    profil: "👤 الملف الشخصي",
+    formations: "🎓 الدورات",
+    messagerie: "💬 الرسائل",
+    laboratoires: "🔬 المختبرات",
+    international: "🌐 دولي",
+    calendrier: "📅 التقويم",
+    einstein: "👴 أينشتاين",
+    settings: "⚙️ الإعدادات",
+    deconnexion: "🔓 تسجيل الخروج",
+    espaceEtudiant: "🔑 منطقة الطالب",
+    welcomeTitle: "المدرسة العليا للهندسة في العلوم التطبيقية",
+    welcomeSubtitle: "تدريب متميز في تطوير البرمجيات وعلوم الكمبيوتر",
+    formationsBtn: "الدورات",
+    admissionBtn: "القبول",
+    virtualExperience: "🎥 تجربة افتراضية بزاوية 360°",
+  },
+  es: {
+    accueil: "🏠 Inicio",
+    profil: "👤 Perfil",
+    formations: "🎓 Cursos",
+    messagerie: "💬 Mensajes",
+    laboratoires: "🔬 Laboratorios",
+    international: "🌐 Internacional",
+    calendrier: "📅 Calendario",
+    einstein: "👴 Einstein",
+    settings: "⚙️ Configuración",
+    deconnexion: "🔓 Cerrar sesión",
+    espaceEtudiant: "🔑 Área de estudiante",
+    welcomeTitle: "Escuela Superior de Ingeniería en Ciencias Aplicadas",
+    welcomeSubtitle: "Excelencia en formación en desarrollo y ciencias de la computación",
+    formationsBtn: "CURSOS",
+    admissionBtn: "ADMISIÓN",
+    virtualExperience: "🎥 Experiencia virtual a 360°",
   },
 };
 
@@ -243,13 +279,11 @@ function ESISAHomePageInner() {
         { label: t.profil, route: "/explore" },
         { label: t.formations, route: "/other/formation" },
         { label: t.messagerie, route: "/chat/choose" },
-        { label: t.corpsEnseignant, route: "#" },
-        { label: t.programmes, route: "#" },
-        { label: t.laboratoires, route: "#" },
+        { label: t.laboratoires, route: "/other/laboratoire" },
         { label: t.international, route: "/other/international" },
         { label: t.calendrier, route: "/other/calendrier" },
-        { label: t.campus, route: "#" },
         { label: t.einstein, route: "/chat/chatgpt" },
+        { label: t.virtualExperience, route: "/other/orbit" },
         { label: t.settings, route: "/Settings" },
         { label: t.deconnexion, route: "/", onPress: handleLogout },
       ]
@@ -272,16 +306,7 @@ function ESISAHomePageInner() {
       {codeTrailPosition.map((segment, index) => (
         <View
           key={index}
-          style={[
-            styles.codeSegment,
-            {
-              left: segment.x,
-              top: segment.y,
-              opacity: 1 - (index / codeSegments) * 0.6,
-              width: segmentSize,
-              height: segmentSize,
-            },
-          ]}
+          style={[styles.codeSegment, { left: segment.x, top: segment.y, opacity: 1 - (index / codeSegments) * 0.6, width: segmentSize, height: segmentSize }]}
         >
           <Text style={[styles.codeSymbol, { color: darkMode ? "#36D7B7" : "#1A3F6F" }]}>
             {segmentSymbols[index]}
@@ -289,7 +314,6 @@ function ESISAHomePageInner() {
         </View>
       ))}
 
-      {/* Bouton menu */}
       <TouchableOpacity
         onPress={toggleMenu}
         style={{
@@ -305,7 +329,6 @@ function ESISAHomePageInner() {
         <Icon name="menu" size={30} color="#FFD700" />
       </TouchableOpacity>
 
-      {/* Logo */}
       <View style={styles.logoContainer}>
         <Image
           source={require("../../assets/icons/icon.png")}
@@ -314,7 +337,6 @@ function ESISAHomePageInner() {
         />
       </View>
 
-      {/* Contenu principal */}
       <View style={styles.mainContent}>
         <Text style={[styles.welcomeText, { color: darkMode ? "#FFD700" : "#1A3F6F" }]}>
           {t.welcomeTitle}
@@ -367,10 +389,7 @@ function ESISAHomePageInner() {
             {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={[
-                  styles.menuItem,
-                  { borderBottomColor: darkMode ? "#1A3F6F" : "#0056b3" },
-                ]}
+                style={[styles.menuItem, { borderBottomColor: darkMode ? "#1A3F6F" : "#0056b3" }]}
                 onPress={async () => {
                   await playClickSound();
                   toggleMenu();
@@ -383,9 +402,9 @@ function ESISAHomePageInner() {
                     styles.menuText,
                     {
                       color:
-                        item.label.includes("🔑")
+                        item.label && item.label.includes("🔑")
                           ? "#4CAF50"
-                          : item.label.includes("🔓")
+                          : item.label && item.label.includes("🔓")
                           ? "#FF5252"
                           : darkMode
                           ? "#FFF"
@@ -395,6 +414,7 @@ function ESISAHomePageInner() {
                 >
                   {item.label}
                 </Text>
+
                 <Icon name="chevron-right" size={20} color={darkMode ? "#FFD700" : "#000"} />
               </TouchableOpacity>
             ))}
@@ -466,7 +486,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     width: "100%",
     marginTop: 20,
-    
   },
   actionButton: {
     paddingVertical: 15,
@@ -480,7 +499,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#FFF",
     fontWeight: "bold",
-
   },
   modalBackgroundRight: {
     flex: 1,

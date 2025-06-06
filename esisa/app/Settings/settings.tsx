@@ -18,6 +18,7 @@ import { useRouter } from "expo-router"; // Added missing import
 import { DarkModeContext } from "../context/DarkModeContext";
 import { LanguageContext } from "../context/LanguageContext";
 
+// Dummy notifications for the example
 const dummyNotifications = [
   { id: "1", title: "Nouvelle note disponible", date: "2025-06-02" },
   { id: "2", title: "Absence validée", date: "2025-06-01" },
@@ -47,12 +48,9 @@ export default function Settings() {
   };
 
   const handleLanguageChange = () => {
-    const newLang = language === "fr" ? "en" : "fr";
+    const newLang = language === "fr" ? "en" : language === "en" ? "es" : language === "es" ? "ar" : "fr";
     setLanguage(newLang);
-    Alert.alert(
-      "Langue changée",
-      `Langue définie sur ${newLang === "fr" ? "Français" : "English"}`
-    );
+    
   };
 
   const handleChangePassword = () => {
@@ -75,28 +73,17 @@ export default function Settings() {
 
   return (
     <View style={[styles.container, currentTheme.container]}>
-      
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={goBack}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={goBack} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="#FFD700" />
         </TouchableOpacity>
         
         <Text style={[styles.headerTitle, currentTheme.text]}>
-          {language === "fr" ? "Réglages" : "Settings"}
+          {language === "fr" ? "Réglages" : language === "es" ? "Configuración" : language === "ar" ? "الإعدادات" : "Settings"}
         </Text>
          
-        <TouchableOpacity
-          onPress={() => setShowNotifications(true)}
-          style={styles.iconBtn}
-        >
-          <Icon
-            name="notifications-outline"
-            size={30}
-            color={darkMode ? "#FFD700" : "#1A3F6F"}
-          />
+        <TouchableOpacity onPress={() => setShowNotifications(true)} style={styles.iconBtn}>
+          <Icon name="notifications-outline" size={30} color={darkMode ? "#FFD700" : "#1A3F6F"} />
         </TouchableOpacity>
       </View>
 
@@ -104,11 +91,11 @@ export default function Settings() {
         {/* Apparence */}
         <View style={[styles.card, currentTheme.card]}>
           <Text style={[styles.cardTitle, currentTheme.text]}>
-            {language === "fr" ? "Apparence" : "Appearance"}
+            {language === "fr" ? "Apparence" : language === "es" ? "Apariencia" : language === "ar" ? "المظهر" : "Appearance"}
           </Text>
           <View style={styles.row}>
             <Text style={[styles.text, currentTheme.text]}>
-              {language === "fr" ? "Mode sombre" : "Dark Mode"}
+              {language === "fr" ? "Mode sombre" : language === "es" ? "Modo oscuro" : language === "ar" ? "الوضع المظلم" : "Dark Mode"}
             </Text>
             <Switch
               value={darkMode}
@@ -120,14 +107,14 @@ export default function Settings() {
 
           <View style={[styles.row, styles.rowSpaced]}>
             <Text style={[styles.text, currentTheme.text]}>
-              {language === "fr" ? "Langue" : "Language"}
+              {language === "fr" ? "Langue" : language === "es" ? "Idioma" : language === "ar" ? "اللغة" : "Language"}
             </Text>
             <TouchableOpacity
               style={[styles.languageSelector, currentTheme.languageSelector]}
               onPress={handleLanguageChange}
             >
               <Text style={[styles.text, currentTheme.text]}>
-                {language === "fr" ? "Français" : "English"}
+                {language === "fr" ? "Français" : language === "es" ? "Español" : language === "ar" ? "عربي" : "English"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -136,14 +123,11 @@ export default function Settings() {
         {/* Compte */}
         <View style={[styles.card, currentTheme.card]}>
           <Text style={[styles.cardTitle, currentTheme.text]}>
-            {language === "fr" ? "Compte" : "Account"}
+            {language === "fr" ? "Compte" : language === "es" ? "Cuenta" : language === "ar" ? "الحساب" : "Account"}
           </Text>
-          <TouchableOpacity
-            style={[styles.button, currentTheme.button]}
-            onPress={() => setShowChangePassword(true)}
-          >
+          <TouchableOpacity style={[styles.button, currentTheme.button]} onPress={() => setShowChangePassword(true)}>
             <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "Changer mot de passe" : "Change password"}
+              {language === "fr" ? "Changer mot de passe" : language === "es" ? "Cambiar contraseña" : language === "ar" ? "تغيير كلمة المرور" : "Change password"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -151,36 +135,28 @@ export default function Settings() {
         {/* Aide & Support */}
         <View style={[styles.card, currentTheme.card]}>
           <Text style={[styles.cardTitle, currentTheme.text]}>
-            {language === "fr" ? "Aide & Support" : "Help & Support"}
+            {language === "fr" ? "Aide & Support" : language === "es" ? "Ayuda y Soporte" : language === "ar" ? "المساعدة والدعم" : "Help & Support"}
           </Text>
           <TouchableOpacity
             style={[styles.button, currentTheme.button]}
             onPress={() =>
-              Alert.alert(language === "fr" ? "FAQ" : "FAQ", language === "fr" ? "Ici la FAQ dédiée à la scolarité." : "School FAQ here.")
+              Alert.alert(language === "fr" ? "FAQ" : language === "es" ? "FAQ" : language === "ar" ? "الأسئلة المتكررة" : "FAQ", 
+                          language === "fr" ? "Ici la FAQ dédiée à la scolarité." : language === "es" ? "Aquí está la FAQ de la escuela." : language === "ar" ? "هنا الأسئلة المتكررة" : "School FAQ here.")
             }
           >
             <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "FAQ dédiée à la scolarité" : "School FAQ"}
+              {language === "fr" ? "FAQ dédiée à la scolarité" : language === "es" ? "FAQ de la escuela" : language === "ar" ? "الأسئلة المتكررة" : "School FAQ"}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, currentTheme.button]}
             onPress={() =>
-              Alert.alert(language === "fr" ? "Contact" : "Contact", language === "fr" ? "Contact professeurs / administration" : "Contact teachers / administration")
+              Alert.alert(language === "fr" ? "Contact" : language === "es" ? "Contacto" : language === "ar" ? "اتصال" : "Contact", 
+                          language === "fr" ? "Contact professeurs / administration" : language === "es" ? "Contacto con profesores / administración" : language === "ar" ? "اتصال مع المعلمين / الإدارة" : "Contact teachers / administration")
             }
           >
             <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "Contact professeurs / administration" : "Contact teachers / administration"}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, currentTheme.button]}
-            onPress={() =>
-              Alert.alert(language === "fr" ? "Signalement" : "Report", language === "fr" ? "Signaler un problème technique" : "Report a technical issue")
-            }
-          >
-            <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "Signaler un problème technique" : "Report a technical issue"}
+              {language === "fr" ? "Contact professeurs / administration" : language === "es" ? "Contacto con profesores / administración" : language === "ar" ? "اتصال مع المعلمين / الإدارة" : "Contact teachers / administration"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -188,11 +164,11 @@ export default function Settings() {
         {/* Infos légales */}
         <View style={[styles.card, currentTheme.card]}>
           <Text style={[styles.cardTitle, currentTheme.text]}>
-            {language === "fr" ? "Informations légales" : "Legal Information"}
+            {language === "fr" ? "Informations légales" : language === "es" ? "Información legal" : language === "ar" ? "المعلومات القانونية" : "Legal Information"}
           </Text>
           <TouchableOpacity
             style={[styles.button, currentTheme.button]}
-            onPress={() => Alert.alert("CGU", language === "fr" ? "Conditions générales d'utilisation" : "Terms and conditions")}
+            onPress={() => Alert.alert("CGU", language === "fr" ? "Conditions générales d'utilisation" : language === "es" ? "Términos y condiciones" : language === "ar" ? "شروط الاستخدام" : "Terms and conditions")}
           >
             <Text style={[styles.buttonText, currentTheme.buttonText]}>
               CGU
@@ -200,23 +176,23 @@ export default function Settings() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, currentTheme.button]}
-            onPress={() => Alert.alert("Politique", language === "fr" ? "Politique de confidentialité" : "Privacy Policy")}
+            onPress={() => Alert.alert("Politique", language === "fr" ? "Politique de confidentialité" : language === "es" ? "Política de privacidad" : language === "ar" ? "سياسة الخصوصية" : "Privacy Policy")}
           >
             <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "Politique de confidentialité" : "Privacy Policy"}
+              {language === "fr" ? "Politique de confidentialité" : language === "es" ? "Política de privacidad" : language === "ar" ? "سياسة الخصوصية" : "Privacy Policy"}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, currentTheme.button]}
-            onPress={() => Alert.alert("Règlement", language === "fr" ? "Règlement intérieur scolaire" : "School rules")}
+            onPress={() => Alert.alert("Règlement", language === "fr" ? "Règlement intérieur scolaire" : language === "es" ? "Reglamento escolar" : language === "ar" ? "القوانين المدرسية" : "School rules")}
           >
             <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "Règlement intérieur scolaire" : "School rules"}
+              {language === "fr" ? "Règlement intérieur scolaire" : language === "es" ? "Reglamento escolar" : language === "ar" ? "القوانين المدرسية" : "School rules"}
             </Text>
           </TouchableOpacity>
           <View style={styles.versionContainer}>
             <Text style={[styles.versionText, currentTheme.text]}>
-              {language === "fr" ? "Version de l'application : 1.0.0" : "App version: 1.0.0"}
+              {language === "fr" ? "Version de l'application : 1.0.0" : language === "es" ? "Versión de la aplicación: 1.0.0" : language === "ar" ? "إصدار التطبيق: 1.0.0" : "App version: 1.0.0"}
             </Text>
           </View>
         </View>

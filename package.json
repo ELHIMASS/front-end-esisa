@@ -4,8 +4,13 @@
     "expo-av": "^15.1.4",
     "expo-router": "^5.0.7",
     "react": "^19.1.0",
+    "react-intersection-observer": "^9.16.0",
     "react-native": "^0.79.2",
+    "react-native-360-image": "^1.0.0",
     "react-native-elements": "^3.4.3",
-    "react-native-safe-area-context": "^5.4.1"
+    "react-native-intersection-observer": "^0.2.1",
+    "react-native-safe-area-context": "^5.4.1",
+    "react-native-video": "^6.14.1",
+    "react-native-webview": "^13.14.1"
   }
 }

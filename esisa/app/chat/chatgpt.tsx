@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
   Text,
@@ -10,42 +10,41 @@ import {
   Platform,
   TouchableOpacity,
   SafeAreaView,
-  ListRenderItemInfo,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import config from '../../config';
+import { useRouter } from 'expo-router'; // For navigation
 import { DarkModeContext } from '../context/DarkModeContext';
-import { useTranslation } from 'react-i18next';
+import { LanguageContext } from '../context/LanguageContext';
+import { translations } from '../utils/transactions'; // Import translations from your transactions file
 
-interface Message {
-  from: string;
-  text: string;
-}
+import config from '../../config'; // Assuming config for API_URL is available
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Make sure AsyncStorage is imported
 
-export default function ChatBotScreen(): JSX.Element {
+export default function ChatBotScreen() {
   const { darkMode } = useContext(DarkModeContext);
-  const { t } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState<string>('');
-  const [username, setUsername] = useState<string>('Guest');
+  const { language, setLanguage } = useContext(LanguageContext);
+  const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [username, setUsername] = useState('Guest'); // Default 'Guest' until the username is fetched from AsyncStorage
+  const router = useRouter();
 
+  // Load user data (for username, etc.)
   useEffect(() => {
-    const loadUser = async (): Promise<void> => {
+    const loadUser = async () => {
       const stored = await AsyncStorage.getItem('user');
       if (stored) {
         const parsed = JSON.parse(stored);
-        setUsername(parsed?.name ?? 'User');
+        setUsername(parsed?.name || 'User'); // Update username if available, else default to 'User'
       }
     };
     loadUser();
-  }, []);
+    }, []); // Empty dependency array to run only once on mount
 
-  const sendMessage = async (): Promise<void> => {
+  // Send message to API
+  const sendMessage = async () => {
     if (!input.trim()) return;
 
-    setMessages(prev => [...prev, { from: username, text: input }]);
+    setMessages((prev) => [...prev, { from: username, text: input }]);
     setInput('');
 
     try {
@@ -56,15 +55,19 @@ export default function ChatBotScreen(): JSX.Element {
       });
 
       const data = await response.json();
-      const botResponse: string = data?.response ?? t('einstein_response_error');
-      setMessages(prev => [...prev, { from: t('einstein'), text: botResponse }]);
+      const botResponse = data?.response || translations[language].einstein_response_error;
+      setMessages((prev) => [...prev, { from: 'Einstein', text: botResponse }]);
     } catch (error) {
       console.error('❌ Erreur fetch:', error);
-      setMessages(prev => [...prev, { from: t('einstein'), text: t('einstein_connection_error') }]);
+      setMessages((prev) => [
+        ...prev,
+        { from: 'Einstein', text: translations[language].einstein_connection_error },
+      ]);
     }
   };
 
-  const renderItem = ({ item }: ListRenderItemInfo<Message>): JSX.Element => {
+  // Render messages
+  const renderItem = ({ item }: { item: { from: string; text: string } }) => {
     const isUser = item.from === username;
     const avatar = isUser
       ? require('../../assets/images/user.png')
@@ -90,19 +93,15 @@ export default function ChatBotScreen(): JSX.Element {
         keyboardVerticalOffset={80}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.replace('/(tabs)')}>
+          <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={darkMode ? '#FFD700' : '#007AFF'} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.topContainer}>
-          <Image
-            source={require('../../assets/images/einstein.png')}
-            style={styles.topImage}
-            resizeMode="contain"
-          />
+          <Image source={require('../../assets/images/einstein.png')} style={styles.topImage} resizeMode="contain" />
           <Text style={[styles.topTitle, { color: darkMode ? '#FFD700' : '#007AFF' }]}>
-            {t('how can we help')}
+            {translations[language].chat_with_einstein}
           </Text>
         </View>
 
@@ -121,7 +120,7 @@ export default function ChatBotScreen(): JSX.Element {
           ]}
         >
           <TextInput
-            placeholder={t('ask einstein')}
+            placeholder={translations[language].ask_einstein}
             placeholderTextColor={darkMode ? '#999' : '#666'}
             value={input}
             onChangeText={setInput}
@@ -134,8 +133,13 @@ export default function ChatBotScreen(): JSX.Element {
               },
             ]}
           />
-          <TouchableOpacity onPress={sendMessage} style={[styles.sendButton, { backgroundColor: darkMode ? '#FFD700' : '#007AFF' }]}>
-            <Text style={[styles.sendText, { color: darkMode ? '#0A1F3A' : '#FFF' }]}>{t('send')}</Text>
+          <TouchableOpacity
+            onPress={sendMessage}
+            style={[styles.sendButton, { backgroundColor: darkMode ? '#FFD700' : '#007AFF' }]}
+          >
+            <Text style={[styles.sendText, { color: darkMode ? '#0A1F3A' : '#FFF' }]}>
+              {translations[language].send}
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -153,6 +157,12 @@ const styles = StyleSheet.create({
   header: {
     padding: 10,
     marginTop: 5,
+  },
+  backButton: {
+    backgroundColor: "#1A3F6F",
+    borderRadius: 50,
+    padding: 10,
+    marginRight: "88%",
   },
   topContainer: {
     alignItems: 'center',

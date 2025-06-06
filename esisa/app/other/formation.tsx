@@ -44,10 +44,7 @@ export default function FormationScreen() {
       {/* Back Button */}
       <TouchableOpacity
         onPress={goBack}
-        style={[
-          styles.backButton,
-          { backgroundColor: darkMode ? "#1A3F6F" : "#ddd" },
-        ]}
+        style={[styles.backButton, { backgroundColor: darkMode ? "#1A3F6F" : "#ddd" }]}
       >
         <Icon name="arrow-back" size={24} color={darkMode ? "#FFD700" : "#000"} />
       </TouchableOpacity>
@@ -69,10 +66,7 @@ export default function FormationScreen() {
           {t.coursesTitle}
         </Text>
         <Text
-          style={[
-            styles.sectionDescription,
-            { color: darkMode ? "#DDD" : "#444" },
-          ]}
+          style={[styles.sectionDescription, { color: darkMode ? "#DDD" : "#444" }]}
         >
           {t.coursesIntro}
         </Text>
@@ -99,7 +93,7 @@ export default function FormationScreen() {
               {t.years12Description}
             </Text>
             <View style={styles.subjectsList}>
-              {t.years12Subjects.map((subj, i) => (
+              {(t.years12Subjects || []).map((subj, i) => (
                 <Text
                   key={i}
                   style={[styles.subjectItem, { color: darkMode ? "#BBB" : "#222" }]}
@@ -118,7 +112,7 @@ export default function FormationScreen() {
               {t.year3Description}
             </Text>
             <View style={styles.subjectsList}>
-              {t.year3Subjects.map((subj, i) => (
+              {(t.year3Subjects || []).map((subj, i) => (
                 <Text
                   key={i}
                   style={[styles.subjectItem, { color: darkMode ? "#BBB" : "#222" }]}
@@ -158,7 +152,7 @@ export default function FormationScreen() {
               {t.years45Description3}
             </Text>
             <View style={styles.subjectsList}>
-              {t.years45Options.map((opt, i) => (
+              {(t.years45Options || []).map((opt, i) => (
                 <Text
                   key={i}
                   style={[styles.subjectItem, { color: darkMode ? "#BBB" : "#222" }]}
@@ -197,6 +191,12 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   darkContainer: { backgroundColor: "#0A1F3A" },
   lightContainer: { backgroundColor: "#FFF" },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 15,
+    textAlign: "center",
+  },
   scrollView: {
     flex: 1,
   },

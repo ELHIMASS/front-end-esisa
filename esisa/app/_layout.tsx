@@ -28,6 +28,10 @@ function NavigationWithTheme() {
         <Stack.Screen name="resetpassword" options={{ headerShown: false }} />
         <Stack.Screen name="forgotpassword" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="Settings" options={{ headerShown: false }} />
+        <Stack.Screen name="admission" options={{ headerShown: false }} />
+        <Stack.Screen name="form" options={{ headerShown: false }} />
+        <Stack.Screen name="explore" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={darkMode ? "light" : "dark"} />
     </ThemeProvider>
@@ -59,11 +63,16 @@ export default function RootLayout() {
         <Stack.Screen name="prof" options={{ headerShown: false }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
         <Stack.Screen name="other" options={{ headerShown: false }} />
+        <Stack.Screen name="admission" options={{ headerShown: false }} />
+        <Stack.Screen name="form" options={{ headerShown: false }} />
+        <Stack.Screen name="explore" options={{ headerShown: false }} />
+        <Stack.Screen name="formation" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />
         <Stack.Screen name="resetpassword" options={{ headerShown: false }} />
         <Stack.Screen name="forgotpassword" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="Settings" options={{ headerShown: false }} />
+      
 
 
       </Stack>

@@ -18,13 +18,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Audio } from "expo-av";
 import config from '../../config';
 import { DarkModeContext } from '../context/DarkModeContext';
-import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
 const LoginScreen: React.FC = () => {
   const { darkMode } = useContext(DarkModeContext);
-  const { t } = useTranslation();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -42,43 +40,57 @@ const LoginScreen: React.FC = () => {
         else if (student) router.replace("/(tabs)");
         else if (prof) router.replace("/prof");
       } catch (error) {
-        console.warn(t("session_check_error"), error);
+        console.warn("Erreur de vérification de session", error);
       }
     };
     checkAlreadyLoggedIn();
-  }, [router, t]);
+  }, [router]);
 
   const playSound = useCallback(async (file: any) => {
     try {
       const { sound } = await Audio.Sound.createAsync(file);
       await sound.playAsync();
       sound.setOnPlaybackStatusUpdate((status) => {
-        if (!status.isPlaying) {
+        if (status.isLoaded && !status.isPlaying) {
           sound.unloadAsync();
         }
       });
     } catch (error) {
-      console.warn(t("audio_error"), error);
+      console.warn("Erreur de lecture audio", error);
     }
-  }, [t]);
+  }, []);
 
   const handleSubmit = useCallback(async () => {
-    setErrorMessage("");
+    setErrorMessage(""); // Réinitialiser le message d'erreur à chaque tentative
 
     if (!email || !password) {
       await playSound(require('../../assets/audio/error.mp3'));
-      setErrorMessage(t("fill_all_fields"));
+      setErrorMessage("Veuillez remplir tous les champs.");
       return;
     }
 
     try {
       setLoading(true);
+      // Affichage de l'URL et des paramètres dans la console pour le débogage
+      console.log(`Requête vers l'API: ${config.API_URL}/api/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+      
       const response = await fetch(`${config.API_URL}/api/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-      const userData: { role?: string } = await response.json();
-
-      if (!response.ok || !userData.role) {
+      
+      // Vérification du statut de la réponse
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Erreur de serveur:', errorData);
         await playSound(require('../../assets/audio/error.mp3'));
-        setErrorMessage(t("invalid_credentials"));
+        setErrorMessage("Erreur du serveur, réessayez.");
+        return;
+      }
+
+      const userData: { role?: string } = await response.json();
+      console.log('Réponse du serveur:', userData); // Vérifie la réponse dans la console
+
+      if (!userData.role) {
+        await playSound(require('../../assets/audio/error.mp3'));
+        setErrorMessage("Identifiants invalides.");
         return;
       }
 
@@ -96,15 +108,16 @@ const LoginScreen: React.FC = () => {
         router.replace("/prof");
       } else {
         await playSound(require('../../assets/audio/error.mp3'));
-        setErrorMessage(t("unknown_role"));
+        setErrorMessage("Rôle inconnu.");
       }
     } catch (err) {
-      console.error(t("login_error"), err);
-      setErrorMessage(t("server_error_try_again"));
+      console.error("Erreur de connexion", err);
+      await playSound(require('../../assets/audio/error.mp3'));
+      setErrorMessage("Erreur du serveur, réessayez.");
     } finally {
       setLoading(false);
     }
-  }, [email, password, playSound, router, t]);
+  }, [email, password, playSound, router]);
 
   const navigateToForgotPassword = () => {
     router.push("/forgotpassword");
@@ -133,7 +146,7 @@ const LoginScreen: React.FC = () => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <Text style={[styles.welcomeText, { color: darkMode ? "#6D8EB4" : "#333" }]}>{t("welcome_to")}</Text>
+            <Text style={[styles.welcomeText, { color: darkMode ? "#6D8EB4" : "#333" }]}>Bienvenue sur</Text>
             <Text style={[styles.esisaText, { color: darkMode ? "#FFD700" : "#4B72FF" }]}>ESISA</Text>
           </View>
 
@@ -142,7 +155,7 @@ const LoginScreen: React.FC = () => {
               <Icon name="email" size={20} color={darkMode ? "#FFD700" : "#007AFF"} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: darkMode ? "#FFF" : "#222" }]}
-                placeholder={t("email")}
+                placeholder="Email"
                 placeholderTextColor={darkMode ? "#999" : "#666"}
                 value={email}
                 onChangeText={setEmail}
@@ -156,7 +169,7 @@ const LoginScreen: React.FC = () => {
               <Icon name="lock" size={20} color={darkMode ? "#FFD700" : "#007AFF"} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: darkMode ? "#FFF" : "#222" }]}
-                placeholder={t("password")}
+                placeholder="Mot de passe"
                 placeholderTextColor={darkMode ? "#999" : "#666"}
                 secureTextEntry
                 value={password}
@@ -170,7 +183,7 @@ const LoginScreen: React.FC = () => {
               style={styles.forgotPasswordLink}
               onPress={navigateToForgotPassword}
             >
-              <Text style={[styles.forgotPasswordText, { color: darkMode ? "#FFD700" : "#007AFF" }]}>{t("forgot_password")}</Text>
+              <Text style={[styles.forgotPasswordText, { color: darkMode ? "#FFD700" : "#007AFF" }]}>Mot de passe oublié ?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -179,7 +192,7 @@ const LoginScreen: React.FC = () => {
               disabled={loading}
               activeOpacity={0.8}
             >
-              <Text style={styles.loginButtonText}>{t("login")}</Text>
+              <Text style={styles.loginButtonText}>Se connecter</Text>
               <Icon name="arrow-forward" size={20} color="#FFF" />
             </TouchableOpacity>
 
@@ -189,7 +202,7 @@ const LoginScreen: React.FC = () => {
           </View>
 
           <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: darkMode ? "#6D8EB4" : "#666" }]}>{t("copyright")}</Text>
+            <Text style={[styles.footerText, { color: darkMode ? "#6D8EB4" : "#666" }]}>© 2025 ESISA</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

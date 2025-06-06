@@ -1,29 +1,32 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     ActivityIndicator,
-    Alert,
     TouchableOpacity,
-    Modal,
-    Pressable,
-    Animated,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Icon } from "react-native-elements";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+// Contexte pour Dark Mode et Langue
+import { DarkModeContext } from "../context/DarkModeContext";
+import { LanguageContext } from "../context/LanguageContext";
+import { translations } from "../utils/transactions";
+
 export default function ProfilScreen() {
+    const { darkMode } = useContext(DarkModeContext);
+    const { language } = useContext(LanguageContext);
+    const t = translations[language];
+
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [isMenuVisible, setMenuVisible] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const slideAnim = useState(new Animated.Value(300))[0];
 
     useEffect(() => {
         const checkLoginStatus = async () => {
@@ -51,23 +54,6 @@ export default function ProfilScreen() {
         checkLoginStatus();
     }, []);
 
-    const toggleMenu = () => {
-        if (isMenuVisible) {
-            Animated.timing(slideAnim, {
-                toValue: 300,
-                duration: 300,
-                useNativeDriver: true,
-            }).start(() => setMenuVisible(false));
-        } else {
-            setMenuVisible(true);
-            Animated.timing(slideAnim, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: true,
-            }).start();
-        }
-    };
-
     const handleLogout = async () => {
         await AsyncStorage.multiRemove(["user", "prof", "admin"]);
         setIsLoggedIn(false);
@@ -75,29 +61,9 @@ export default function ProfilScreen() {
         router.replace("/login");
     };
 
-    const menuItems = isLoggedIn
-  ? [
-      { label: "🏠 Accueil", route: "/(tabs)" as const },
-      { label: "👤 Profil", route: "/explore" as const },
-      { label: "🎓 Formations", route: "/other/formation" as const },
-      { label: "💬 Messagerie", route: "/chat/choose"},
-      { label: "👨‍🏫 Corps enseignant", route: "#" },
-      { label: "📚 Programmes", route: "#" },
-      { label: "🔬 Laboratoires", route: "#" },
-      { label: "🌐 International", route: "/other/international" as const },
-      { label: "📅 Calendrier", route: "/other/calendrier" as const },
-      { label: "🏢 Campus", route: "#" },
-      { label: "👴 Einstein", route: "/chat/chatgpt" },
-      { label: "⚙️ Settings", route: "/Settings" },
-
-      { label: "🔓 Déconnexion", route: "/" as const, onPress: handleLogout },
-    ]
-  : [];
-
-
     if (loading) {
         return (
-            <View style={[styles.center, { backgroundColor: "#0A1F3A" }]}>
+            <View style={[styles.center, { backgroundColor: darkMode ? "#0A1F3A" : "#FFF" }]}>
                 <ActivityIndicator size="large" color="#FFD700" />
             </View>
         );
@@ -105,86 +71,21 @@ export default function ProfilScreen() {
 
     if (!user) {
         return (
-            <View style={[styles.center, { backgroundColor: "#0A1F3A" }]}>
+            <View style={[styles.center, { backgroundColor: darkMode ? "#0A1F3A" : "#FFF" }]}>
                 <Text style={{ color: "#FF5555" }}>Utilisateur non trouvé</Text>
             </View>
         );
     }
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
+        <SafeAreaView style={[styles.container, darkMode ? styles.darkContainer : styles.lightContainer]}>
+            {/* Flèche vers (tabs) */}
             <TouchableOpacity
-                onPress={toggleMenu}
-                style={{
-                    position: "absolute",
-                    top: insets.top + 10,
-                    right: 20,
-                    zIndex: 1,
-                    backgroundColor: "#1A3F6F",
-                    borderRadius: 20,
-                    padding: 10,
-                    elevation: 5,
-                    shadowColor: "#FFD700",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.8,
-                    shadowRadius: 3,
-                }}
+                onPress={() => router.replace("/(tabs)")}
+                style={[styles.menuButton, { backgroundColor: darkMode ? "#1A3F6F" : "#ddd" }]}
             >
-                <Icon name="menu" size={30} color="#FFD700" />
+                <Icon name="arrow-back" size={30} color={darkMode ? "#FFD700" : "#000"} />
             </TouchableOpacity>
-
-            <Modal
-                visible={isMenuVisible}
-                transparent={true}
-                animationType="none"
-                onRequestClose={toggleMenu}
-            >
-                <Pressable
-                    style={styles.modalBackgroundRight}
-                    onPress={toggleMenu}
-                >
-                    <Animated.View
-                        style={[
-                            styles.menuDrawerRight,
-                            { transform: [{ translateX: slideAnim }] }
-                        ]}
-                    >
-                        <View style={styles.menuHeader}>
-                            <Text style={styles.menuHeaderText}>MENU</Text>
-                        </View>
-
-                        {menuItems.map((item, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={[
-                                    styles.menuItem,
-                                    item.label.includes("Déconnexion") && {
-                                        borderTopWidth: 1,
-                                        borderTopColor: "#1A3F6F",
-                                    },
-                                ]}
-                                onPress={() => {
-                                    toggleMenu();
-                                    if (item.onPress) item.onPress();
-                                    else router.replace(item.route);
-                                }}
-                            >
-                                <Text
-                                    style={[
-                                        styles.menuText,
-                                        item.label.includes("Déconnexion") && {
-                                            color: "#FF5555",
-                                        },
-                                    ]}
-                                >
-                                    {item.label}
-                                </Text>
-                                <Icon name="chevron-right" size={20} color="#FFD700" />
-                            </TouchableOpacity>
-                        ))}
-                    </Animated.View>
-                </Pressable>
-            </Modal>
 
             <ScrollView
                 contentContainerStyle={styles.scroll}
@@ -193,20 +94,24 @@ export default function ProfilScreen() {
                 <View style={styles.avatarContainer}>
                     <View style={styles.avatar}>
                         <Text style={styles.avatarText}>
-                            {user.name.split(' ').map((item: string) => (item[0].toUpperCase()))}
+                         {user.name.split(' ').map((item: string) => (item[0].toUpperCase()))}
                         </Text>
                     </View>
                     <View style={styles.glowEffect} />
                 </View>
 
-                <Text style={styles.title}>BIENVENUE, {user.name.toUpperCase()} 👋</Text>
-                <Text style={styles.subtitle}>VOS INFORMATIONS DE PROFILE</Text>
+                <Text style={[styles.title, { color: darkMode ? "#FFD700" : "#000" }]}>
+                    {t.welcome}, {user.name.toUpperCase()} 👋
+                </Text>
+                <Text style={[styles.subtitle, { color: darkMode ? "#DDD" : "#444" }]}>
+                    {t.profileInfo}
+                </Text>
 
                 <View style={styles.infoContainer}>
                     <View style={styles.infoBox}>
                         <Icon name="email" size={20} color="#FFD700" />
                         <View style={styles.infoContent}>
-                            <Text style={styles.label}>Email :</Text>
+                            <Text style={styles.label}>{t.email} :</Text>
                             <Text style={styles.value}>{user.email}</Text>
                         </View>
                     </View>
@@ -214,7 +119,7 @@ export default function ProfilScreen() {
                     <View style={styles.infoBox}>
                         <Icon name="person" size={20} color="#FFD700" />
                         <View style={styles.infoContent}>
-                            <Text style={styles.label}>Âge :</Text>
+                            <Text style={styles.label}>{t.age} :</Text>
                             <Text style={styles.value}>{user.age}</Text>
                         </View>
                     </View>
@@ -222,7 +127,7 @@ export default function ProfilScreen() {
                     <View style={styles.infoBox}>
                         <Icon name="school" size={20} color="#FFD700" />
                         <View style={styles.infoContent}>
-                            <Text style={styles.label}>Filière :</Text>
+                            <Text style={styles.label}>{t.major} :</Text>
                             <Text style={styles.value}>{user.major}</Text>
                         </View>
                     </View>
@@ -230,7 +135,7 @@ export default function ProfilScreen() {
                     <View style={styles.infoBox}>
                         <Icon name="calendar-today" size={20} color="#FFD700" />
                         <View style={styles.infoContent}>
-                            <Text style={styles.label}>Année scolaire :</Text>
+                            <Text style={styles.label}>{t.schoolYear} :</Text>
                             <Text style={styles.value}>{user.anne_scolaire}</Text>
                         </View>
                     </View>
@@ -238,7 +143,7 @@ export default function ProfilScreen() {
                     <View style={styles.infoBox}>
                         <Icon name="cake" size={20} color="#FFD700" />
                         <View style={styles.infoContent}>
-                            <Text style={styles.label}>Date de naissance :</Text>
+                            <Text style={styles.label}>{t.birthDate} :</Text>
                             <Text style={styles.value}>{user.date}</Text>
                         </View>
                     </View>
@@ -246,7 +151,7 @@ export default function ProfilScreen() {
                     <View style={styles.infoBox}>
                         <Icon name="group" size={20} color="#FFD700" />
                         <View style={styles.infoContent}>
-                            <Text style={styles.label}>Groupe :</Text>
+                            <Text style={styles.label}>{t.group} :</Text>
                             <Text style={styles.value}>{user.group}</Text>
                         </View>
                     </View>
@@ -254,7 +159,7 @@ export default function ProfilScreen() {
                     <View style={styles.infoBox}>
                         <Icon name="wc" size={20} color="#FFD700" />
                         <View style={styles.infoContent}>
-                            <Text style={styles.label}>Sexe :</Text>
+                            <Text style={styles.label}>{t.gender} :</Text>
                             <Text style={styles.value}>{user.sex}</Text>
                         </View>
                     </View>
@@ -262,7 +167,7 @@ export default function ProfilScreen() {
                     <View style={styles.infoBox}>
                         <Icon name="phone" size={20} color="#FFD700" />
                         <View style={styles.infoContent}>
-                            <Text style={styles.label}>Téléphone :</Text>
+                            <Text style={styles.label}>{t.phone} :</Text>
                             <Text style={styles.value}>{user.tel}</Text>
                         </View>
                     </View>
@@ -272,7 +177,7 @@ export default function ProfilScreen() {
                     style={styles.logoutButton}
                     onPress={handleLogout}
                 >
-                    <Text style={styles.logoutText}>SE DÉCONNECTER</Text>
+                    <Text style={styles.logoutText}>{t.logout}</Text>
                     <Icon name="logout" size={20} color="#FFF" />
                 </TouchableOpacity>
             </ScrollView>
@@ -281,6 +186,23 @@ export default function ProfilScreen() {
 }
 
 const styles = StyleSheet.create({
+    menuButton: {
+        position: 'absolute',
+        top: 20,
+        left: 20, // Flèche à gauche
+        padding: 10,
+        borderRadius: 8,
+        zIndex: 1000,
+    },
+    container: {
+        flex: 1,
+    },
+    darkContainer: {
+        backgroundColor: "#0A1F3A",
+    },
+    lightContainer: {
+        backgroundColor: "#FFF",
+    },
     center: {
         flex: 1,
         justifyContent: "center",
@@ -392,46 +314,5 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         marginRight: 10,
         letterSpacing: 1,
-    },
-    modalBackgroundRight: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        justifyContent: 'flex-end',
-        flexDirection: 'row',
-    },
-    menuDrawerRight: {
-        width: "75%",
-        height: "100%",
-        backgroundColor: "#0A1F3A",
-        padding: 20,
-        borderTopLeftRadius: 20,
-        borderBottomLeftRadius: 20,
-        borderLeftWidth: 2,
-        borderLeftColor: "#FFD700",
-    },
-    menuHeader: {
-        paddingVertical: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: "#1A3F6F",
-        marginBottom: 20,
-    },
-    menuHeaderText: {
-        color: "#FFD700",
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        letterSpacing: 1,
-    },
-    menuItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 15,
-        borderBottomWidth: 1,
-        borderColor: "#1A3F6F",
-    },
-    menuText: {
-        fontSize: 16,
-        color: "#FFF",
     },
 });
