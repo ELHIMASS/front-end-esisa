@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
     View,
     Text,
@@ -21,10 +21,10 @@ import { Audio } from "expo-av";
 import { Ionicons } from '@expo/vector-icons';
 import config from '../../config';
 
-
-
-// Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
-
+// Contextes
+import { DarkModeContext } from "../context/DarkModeContext";
+import { LanguageContext } from "../context/LanguageContext";
+import { translations } from "../utils/transactions";
 
 interface Student {
     _id?: string;
@@ -45,6 +45,12 @@ interface Student {
 }
 
 export default function GestionEtudiant() {
+    // Contextes
+    const { darkMode } = useContext(DarkModeContext);
+    const { language } = useContext(LanguageContext);
+    const t = translations[language];
+
+    // États
     const [admin, setAdmin] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isMenuVisible, setMenuVisible] = useState(false);
@@ -73,6 +79,17 @@ export default function GestionEtudiant() {
     const insets = useSafeAreaInsets();
     const slideAnim = useState(new Animated.Value(300))[0];
 
+    // Styles dynamiques
+    const dynamicStyles = {
+        container: darkMode ? styles.darkContainer : styles.lightContainer,
+        text: darkMode ? styles.darkText : styles.lightText,
+        card: darkMode ? styles.darkCard : styles.lightCard,
+        input: darkMode ? styles.darkInput : styles.lightInput,
+        button: darkMode ? styles.darkButton : styles.lightButton,
+        modal: darkMode ? styles.darkModal : styles.lightModal,
+        header: darkMode ? styles.darkHeader : styles.lightHeader,
+    };
+
     useEffect(() => {
         const checkSession = async () => {
             try {
@@ -86,7 +103,7 @@ export default function GestionEtudiant() {
                 const parsed = JSON.parse(storedAdmin);
                 if (parsed.role !== "admin") {
                     console.log("❌ L'utilisateur n'a pas les droits d'administration");
-                    Alert.alert("Erreur", "Vous n'avez pas les droits d'administration");
+                    Alert.alert(t.error, t.noAdminRights || "Vous n'avez pas les droits d'administration");
                     router.replace("/(tabs)");
                     return;
                 }
@@ -100,7 +117,7 @@ export default function GestionEtudiant() {
                 await loadStudentsFromServer();
             } catch (error) {
                 console.error("Erreur lors de la vérification de session :", error);
-                Alert.alert("Erreur", "Impossible de charger les données");
+                Alert.alert(t.error || "Erreur", t.dataLoadError || "Impossible de charger les données");
                 router.replace("/login");
             } finally {
                 setLoading(false);
@@ -129,7 +146,7 @@ export default function GestionEtudiant() {
             });
 
             if (!response.ok) {
-                throw new Error("Erreur lors du chargement des étudiants");
+                throw new Error(t.studentLoadError || "Erreur lors du chargement des étudiants");
             }
 
             const data = await response.json();
@@ -180,7 +197,7 @@ export default function GestionEtudiant() {
       
     const handleAddStudent = async () => {
         if (!newStudent.name || !newStudent.email) {
-            Alert.alert("Erreur", "Le nom et l'email sont obligatoires");
+            Alert.alert(t.error || "Erreur", t.nameEmailRequired || "Le nom et l'email sont obligatoires");
             return;
         }
 
@@ -196,7 +213,7 @@ export default function GestionEtudiant() {
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(result.message || "Erreur lors de l'ajout");
+                throw new Error(result.message || t.addError || "Erreur lors de l'ajout");
             }
 
             const updatedStudents = [...students, result.student];
@@ -205,7 +222,7 @@ export default function GestionEtudiant() {
 
             setAddModalVisible(false);
             await playSound(require("../../assets/audio/done.mp3"));
-            Alert.alert("Succès", "Étudiant ajouté avec succès");
+            Alert.alert(t.success || "Succès", t.studentAddedSuccess || "Étudiant ajouté avec succès");
 
             setNewStudent({
                 id: "",
@@ -226,16 +243,16 @@ export default function GestionEtudiant() {
             await playSound(require("../../assets/audio/error.mp3"));
             
             if (error.message.includes("Email déjà utilisé")) {
-                Alert.alert("Erreur", "Cet email est déjà utilisé par un autre étudiant");
+                Alert.alert(t.error || "Erreur", t.emailAlreadyUsed || "Cet email est déjà utilisé par un autre étudiant");
             } else {
-                Alert.alert("Erreur", error.message || "Erreur lors de l'ajout de l'étudiant");
+                Alert.alert(t.error || "Erreur", error.message || t.addError || "Erreur lors de l'ajout de l'étudiant");
             }
         }
     };
 
     const handleEditStudent = async () => {
         if (!selectedStudent || !selectedStudent.name || !selectedStudent.email) {
-            Alert.alert("Erreur", "Le nom et l'email sont obligatoires");
+            Alert.alert(t.error || "Erreur", t.nameEmailRequired || "Le nom et l'email sont obligatoires");
             return;
         }
     
@@ -253,7 +270,7 @@ export default function GestionEtudiant() {
     
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || "Erreur lors de la modification");
+                throw new Error(errorData.message || t.updateError || "Erreur lors de la modification");
             }
     
             const updatedStudents = students.map(student =>
@@ -268,12 +285,12 @@ export default function GestionEtudiant() {
             setEditModalVisible(false);
             setSelectedStudent(null);
             await playSound(require("../../assets/audio/done.mp3"));
-            Alert.alert("Succès", "Étudiant modifié avec succès");
+            Alert.alert(t.success || "Succès", t.studentUpdatedSuccess || "Étudiant modifié avec succès");
     
         } catch (error) {
             console.error("Erreur lors de la modification:", error);
             await playSound(require("../../assets/audio/error.mp3"));
-            Alert.alert("Erreur", error.message || "Erreur lors de la modification de l'étudiant");
+            Alert.alert(t.error || "Erreur", error.message || t.updateError || "Erreur lors de la modification de l'étudiant");
         }
     };
 
@@ -294,16 +311,16 @@ export default function GestionEtudiant() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || "Erreur lors de la suppression");
+                throw new Error(errorData.message || t.deleteError || "Erreur lors de la suppression");
             }
 
             await playSound(require("../../assets/audio/supprimer.mp3"));
-            Alert.alert("Succès", "Étudiant supprimé avec succès");
+            Alert.alert(t.success || "Succès", t.studentDeletedSuccess || "Étudiant supprimé avec succès");
 
         } catch (error) {
             console.error("Erreur lors de la suppression :", error);
             await playSound(require("../../assets/audio/error.mp3"));
-            Alert.alert("Erreur", error.message || "Impossible de supprimer l'étudiant");
+            Alert.alert(t.error || "Erreur", error.message || t.deleteError || "Impossible de supprimer l'étudiant");
         }
     };
 
@@ -314,16 +331,18 @@ export default function GestionEtudiant() {
 
     if (loading) {
         return (
-            <View style={[styles.center, { backgroundColor: "#0A1F3A" }]}>
-                <ActivityIndicator size="large" color="#FFD700" />
+            <View style={[styles.center, dynamicStyles.container]}>
+                <ActivityIndicator size="large" color={darkMode ? "#FFD700" : "#3A8DFF"} />
             </View>
         );
     }
 
     if (!admin) {
         return (
-            <View style={[styles.center, { backgroundColor: "#0A1F3A" }]}>
-                <Text style={{ color: "#FF5555" }}>Administrateur non trouvé</Text>
+            <View style={[styles.center, dynamicStyles.container]}>
+                <Text style={[dynamicStyles.text, {color: "#FF5555"}]}>
+                    {t.adminNotFound || "Administrateur non trouvé"}
+                </Text>
             </View>
         );
     }
@@ -331,104 +350,104 @@ export default function GestionEtudiant() {
     const renderStudentForm = (data: Student, setData: React.Dispatch<React.SetStateAction<Student>>, isEdit = false) => (
         <View style={styles.formContainer}>
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Nom complet*</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>{t.fullName || "Nom complet"}*</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.name}
                     onChangeText={(text) => handleChange('name', text, data, setData)}
-                    placeholder="Entrez le nom complet"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterFullName || "Entrez le nom complet"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email*</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>{t.email || "Email"}*</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.email}
                     onChangeText={(text) => handleChange('email', text, data, setData)}
-                    placeholder="Entrez l'email"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterEmail || "Entrez l'email"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                     keyboardType="email-address"
                     autoCapitalize="none"
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Âge</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>{t.age || "Âge"}</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.age}
                     onChangeText={(text) => handleChange('age', text, data, setData)}
-                    placeholder="Entrez l'âge"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterAge || "Entrez l'âge"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                     keyboardType="numeric"
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Filière</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>{t.major || "Filière"}</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.major}
                     onChangeText={(text) => handleChange('major', text, data, setData)}
-                    placeholder="Entrez la filière"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterMajor || "Entrez la filière"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Année scolaire</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>{t.schoolYear || "Année scolaire"}</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.anne_scolaire}
                     onChangeText={(text) => handleChange('anne_scolaire', text, data, setData)}
-                    placeholder="Entrez l'année scolaire"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterSchoolYear || "Entrez l'année scolaire"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Date de naissance</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>{t.birthDate || "Date de naissance"}</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.date}
                     onChangeText={(text) => handleChange('date', text, data, setData)}
                     placeholder="JJ/MM/AAAA"
-                    placeholderTextColor="#6D8EB4"
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Groupe</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>{t.group || "Groupe"}</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.group}
                     onChangeText={(text) => handleChange('group', text, data, setData)}
-                    placeholder="Entrez le groupe"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterGroup || "Entrez le groupe"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Sexe</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>{t.gender || "Sexe"}</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.sex}
                     onChangeText={(text) => handleChange('sex', text, data, setData)}
-                    placeholder="Entrez le sexe"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterGender || "Entrez le sexe"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Téléphone</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>{t.phone || "Téléphone"}</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.tel}
                     onChangeText={(text) => handleChange('tel', text, data, setData)}
-                    placeholder="Entrez le téléphone"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterPhone || "Entrez le téléphone"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                     keyboardType="phone-pad"
                 />
             </View>
@@ -438,32 +457,34 @@ export default function GestionEtudiant() {
                 onPress={isEdit ? handleEditStudent : handleAddStudent}
             >
                 <Text style={styles.submitButtonText}>
-                    {isEdit ? "MODIFIER" : "AJOUTER"}
+                    {isEdit ? (t.modify || "MODIFIER") : (t.add || "AJOUTER")}
                 </Text>
             </TouchableOpacity>
         </View>
     );
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
+        <SafeAreaView style={[{ flex: 1 }, dynamicStyles.container]}>
             {/* Header avec titre et menu */}
-            <View style={styles.header}>
+            <View style={[styles.header, dynamicStyles.header]}>
                 <TouchableOpacity 
                     onPress={navigateToAdminHome}
                     style={styles.backButton}
                 >
-                    <Icon name="arrow-back" size={24} color="#FFD700" />
+                    <Icon name="arrow-back" size={24} color={darkMode ? "#FFD700" : "#3A8DFF"} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>GESTION DES ÉTUDIANTS</Text>
+                <Text style={[styles.headerTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                    {t.studentManagement || "GESTION DES ÉTUDIANTS"}
+                </Text>
                 <TouchableOpacity
                     onPress={toggleMenu}
-                    style={styles.menuButton}
+                    style={[styles.menuButton, dynamicStyles.button]}
                 >
-                    <Icon name="menu" size={30} color="#FFD700" />
+                    <Icon name="menu" size={30} color={darkMode ? "#FFD700" : "#3A8DFF"} />
                 </TouchableOpacity>
             </View>
 
-            {/* Drawer Menu - Conservé du deuxième code */}
+            {/* Drawer Menu */}
             <Modal
                 visible={isMenuVisible}
                 transparent={true}
@@ -477,36 +498,38 @@ export default function GestionEtudiant() {
                     <Animated.View
                         style={[
                             styles.menuDrawerRight,
+                            dynamicStyles.modal,
                             { transform: [{ translateX: slideAnim }] }
                         ]}
                     >
                         <View style={styles.adminInfoContainer}>
-                            <View style={styles.adminAvatar}>
-                                <Text style={styles.adminAvatarText}>
+                            <View style={[styles.adminAvatar, dynamicStyles.card]}>
+                                <Text style={[styles.adminAvatarText, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
                                     {admin.name && admin.name.charAt(0).toUpperCase()}
                                 </Text>
                             </View>
                             <View style={styles.adminInfo}>
-                                <Text style={styles.adminName}>{admin.name}</Text>
-                                <Text style={styles.adminEmail}>{admin.email}</Text>
+                                <Text style={[styles.adminName, dynamicStyles.text]}>{admin.name}</Text>
+                                <Text style={[styles.adminEmail, dynamicStyles.text]}>{admin.email}</Text>
                                 <View style={styles.adminRoleBadge}>
                                     <Text style={styles.adminRole}>{admin.role}</Text>
                                 </View>
                             </View>
                         </View>
 
-                        <View style={styles.menuDivider} />
+                        <View style={[styles.menuDivider, {backgroundColor: darkMode ? "#1A3F6F" : "#E0E0E0"}]} />
 
                         {[
-                            { label: "🏠 Accueil", section: "home", icon: "home", route: "/admin" },
-                            { label: "👥 Gestion des étudiants", section: "students", icon: "people", route: "/admin/gestionEtudiant" },
-                            { label: "👨‍🏫 Gestion des professeurs", section: "profs", icon: "school", route: "/admin/gestionProf" },
+                            { label: `🏠 ${t.home || "Accueil"}`, section: "home", icon: "home", route: "/admin" },
+                            { label: `👥 ${t.studentManagement || "Gestion des étudiants"}`, section: "students", icon: "people", route: "/admin/gestionEtudiant" },
+                            { label: `👨‍🏫 ${t.professorManagement || "Gestion des professeurs"}`, section: "profs", icon: "school", route: "/admin/gestionProf" },
                         ].map((item, index) => (
                             <TouchableOpacity
                                 key={index}
                                 style={[
                                     styles.menuItem,
-                                    selectedSection === item.section && styles.selectedMenuItem
+                                    selectedSection === item.section && styles.selectedMenuItem,
+                                    selectedSection === item.section && dynamicStyles.card
                                 ]}
                                 onPress={async () => {
                                     await playSound(require("../../assets/audio/tap.mp3"));
@@ -518,12 +541,13 @@ export default function GestionEtudiant() {
                                 <Icon
                                     name={item.icon}
                                     size={22}
-                                    color={selectedSection === item.section ? "#FFD700" : "#6D8EB4"}
+                                    color={selectedSection === item.section ? (darkMode ? "#FFD700" : "#3A8DFF") : (darkMode ? "#6D8EB4" : "#999")}
                                 />
                                 <Text
                                     style={[
                                         styles.menuText,
-                                        selectedSection === item.section && styles.selectedMenuText
+                                        dynamicStyles.text,
+                                        selectedSection === item.section && {color: darkMode ? "#FFD700" : "#3A8DFF", fontWeight: "bold"}
                                     ]}
                                 >
                                     {item.label}
@@ -531,7 +555,7 @@ export default function GestionEtudiant() {
                             </TouchableOpacity>
                         ))}
 
-                        <View style={styles.menuDivider} />
+                        <View style={[styles.menuDivider, {backgroundColor: darkMode ? "#1A3F6F" : "#E0E0E0"}]} />
 
                         <TouchableOpacity
                             style={styles.logoutMenuItem}
@@ -539,11 +563,11 @@ export default function GestionEtudiant() {
                         >
                             <Icon name="logout" size={22} color="#FF5555" />
                             <Text style={styles.logoutMenuText}>
-                                Se déconnecter
+                                {t.logout || "Se déconnecter"}
                             </Text>
                         </TouchableOpacity>
 
-                        <Text style={styles.versionText}>v1.0.0</Text>
+                        <Text style={[styles.versionText, dynamicStyles.text]}>v1.0.0</Text>
                     </Animated.View>
                 </Pressable>
             </Modal>
@@ -556,9 +580,11 @@ export default function GestionEtudiant() {
                 onRequestClose={() => setAddModalVisible(false)}
             >
                 <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
+                    <View style={[styles.modalContainer, dynamicStyles.modal]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>AJOUTER UN ÉTUDIANT</Text>
+                            <Text style={[styles.modalTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                                {t.addStudent || "AJOUTER UN ÉTUDIANT"}
+                            </Text>
                             <TouchableOpacity
                                 onPress={async () => {
                                     await playSound(require("../../assets/audio/error.mp3"));
@@ -597,9 +623,11 @@ export default function GestionEtudiant() {
                 onRequestClose={() => setEditModalVisible(false)}
             >
                 <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
+                    <View style={[styles.modalContainer, dynamicStyles.modal]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>MODIFIER UN ÉTUDIANT</Text>
+                            <Text style={[styles.modalTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                                {t.editStudent || "MODIFIER UN ÉTUDIANT"}
+                            </Text>
                             <TouchableOpacity onPress={() => {
                                 setEditModalVisible(false);
                                 setSelectedStudent(null);
@@ -615,47 +643,57 @@ export default function GestionEtudiant() {
             </Modal>
 
             {/* Main Content */}
-            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={[styles.scroll, dynamicStyles.container]} showsVerticalScrollIndicator={false}>
                 {selectedSection === "home" && (
                     <View style={styles.homeContainer}>
                         <View style={styles.avatarContainer}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
+                            <View style={[styles.avatar, dynamicStyles.card]}>
+                                <Text style={[styles.avatarText, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
                                     {admin.name && admin.name.charAt(0).toUpperCase()}
                                 </Text>
                             </View>
-                            <View style={styles.glowEffect} />
+                            <View style={[styles.glowEffect, {backgroundColor: darkMode ? "#FFD700" : "#3A8DFF"}]} />
                         </View>
-                        <Text style={styles.welcomeTitle}>GESTION ÉTUDIANTS</Text>
-                        <Text style={styles.adminInfoText}>{admin.email}</Text>
-                        <Text style={styles.subtitle}>PANNEAU D'ADMINISTRATION</Text>
+                        <Text style={[styles.welcomeTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                            {t.studentManagement || "GESTION ÉTUDIANTS"}
+                        </Text>
+                        <Text style={[styles.adminInfoText, dynamicStyles.text]}>{admin.email}</Text>
+                        <Text style={[styles.subtitle, dynamicStyles.text]}>
+                            {t.adminPanel || "PANNEAU D'ADMINISTRATION"}
+                        </Text>
 
                         <View style={styles.statsContainer}>
-                            <View style={styles.statCard}>
-                                <Icon name="people" size={30} color="#FFD700" />
-                                <Text style={styles.statNumber}>{students.length}</Text>
-                                <Text style={styles.statLabel}>ÉTUDIANTS</Text>
+                            <View style={[styles.statCard, dynamicStyles.card]}>
+                                <Icon name="people" size={30} color={darkMode ? "#FFD700" : "#3A8DFF"} />
+                                <Text style={[styles.statNumber, dynamicStyles.text]}>{students.length}</Text>
+                                <Text style={[styles.statLabel, dynamicStyles.text]}>
+                                    {t.students || "ÉTUDIANTS"}
+                                </Text>
                             </View>
 
                             <TouchableOpacity style={styles.addButton} onPress={() => setAddModalVisible(true)}>
                                 <Icon name="person-add" size={30} color="#FFF" />
-                                <Text style={styles.addButtonText}>AJOUTER</Text>
+                                <Text style={styles.addButtonText}>{t.add || "AJOUTER"}</Text>
                             </TouchableOpacity>
                         </View>
 
-                        <View style={styles.quickActionsContainer}>
-                            <Text style={styles.quickActionsTitle}>ACTIONS RAPIDES</Text>
+                        <View style={[styles.quickActionsContainer, dynamicStyles.card]}>
+                            <Text style={[styles.quickActionsTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                                {t.quickActions || "ACTIONS RAPIDES"}
+                            </Text>
                             <View style={styles.actionButtonsRow}>
                                 <TouchableOpacity
-                                    style={styles.actionButton}
+                                    style={[styles.actionButton, dynamicStyles.container]}
                                     onPress={() => setSelectedSection("students")}
                                 >
-                                    <Icon name="list" size={25} color="#FFD700" />
-                                    <Text style={styles.actionButtonText}>VOIR LA LISTE</Text>
+                                    <Icon name="list" size={25} color={darkMode ? "#FFD700" : "#3A8DFF"} />
+                                    <Text style={[styles.actionButtonText, dynamicStyles.text]}>
+                                        {t.viewList || "VOIR LA LISTE"}
+                                    </Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    style={styles.actionButton}
+                                    style={[styles.actionButton, dynamicStyles.container]}
                                     onPress={() => {
                                         setAddModalVisible(true);
                                         setNewStudent({
@@ -674,8 +712,10 @@ export default function GestionEtudiant() {
                                         });
                                     }}
                                 >
-                                    <Icon name="add-circle" size={25} color="#FFD700" />
-                                    <Text style={styles.actionButtonText}>NOUVEL ÉTUDIANT</Text>
+                                    <Icon name="add-circle" size={25} color={darkMode ? "#FFD700" : "#3A8DFF"} />
+                                    <Text style={[styles.actionButtonText, dynamicStyles.text]}>
+                                        {t.newStudent || "NOUVEL ÉTUDIANT"}
+                                    </Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -684,8 +724,12 @@ export default function GestionEtudiant() {
 
                 {selectedSection === "students" && (
                     <View style={styles.studentsContainer}>
-                        <Text style={styles.sectionTitle}>LISTE DES ÉTUDIANTS</Text>
-                        <Text style={styles.subtitle}>GESTION DES ÉTUDIANTS</Text>
+                        <Text style={[styles.sectionTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                            {t.studentsList || "LISTE DES ÉTUDIANTS"}
+                        </Text>
+                        <Text style={[styles.subtitle, dynamicStyles.text]}>
+                            {t.studentManagement || "GESTION DES ÉTUDIANTS"}
+                        </Text>
 
                         <TouchableOpacity style={styles.floatingAddButton} onPress={() => {
                             setAddModalVisible(true);
@@ -710,7 +754,7 @@ export default function GestionEtudiant() {
                         {students.length === 0 ? (
                             <View style={styles.emptyContainer}>
                                 <Icon name="people" size={40} color="#6D8EB4" />
-                                <Text style={styles.emptyText}>Aucun étudiant trouvé</Text>
+                                <Text style={[styles.emptyText, dynamicStyles.text]}>{t.noStudentsFound || "Aucun étudiant trouvé"}</Text>
                                 <TouchableOpacity style={styles.addEmptyButton} onPress={() => {
                                     setAddModalVisible(true);
                                     setNewStudent({
@@ -728,7 +772,7 @@ export default function GestionEtudiant() {
                                         password: "1234"
                                     });
                                 }}>
-                                    <Text style={styles.addEmptyButtonText}>AJOUTER UN ÉTUDIANT</Text>
+                                    <Text style={styles.addEmptyButtonText}>{t.addStudent || "AJOUTER UN ÉTUDIANT"}</Text>
                                 </TouchableOpacity>
                             </View>
                         ) : (
@@ -736,19 +780,19 @@ export default function GestionEtudiant() {
                                 data={students}
                                 keyExtractor={(item) => item.id || item._id || String(Math.random())}
                                 renderItem={({ item }) => (
-                                    <View style={styles.studentCard}>
+                                    <View style={[styles.studentCard, dynamicStyles.card]}>
                                         <View style={styles.studentInfo}>
-                                            <Text style={styles.studentName}>{item.name}</Text>
-                                            <Text style={styles.studentEmail}>{item.email}</Text>
-                                            <View style={styles.studentDetails}>
-                                                <Text style={styles.detailItem}>
-                                                    <Text style={styles.detailLabel}>Filière:</Text> {item.major || "Non spécifié"}
+                                            <Text style={[styles.studentName, dynamicStyles.text]}>{item.name}</Text>
+                                            <Text style={[styles.studentEmail, dynamicStyles.text]}>{item.email}</Text>
+                                            <View style={[styles.studentDetails, dynamicStyles.input]}>
+                                                <Text style={[styles.detailItem, dynamicStyles.text]}>
+                                                    <Text style={[styles.detailLabel, dynamicStyles.text]}>{t.major || "Filière"}:</Text> {item.major || t.notSpecified || "Non spécifié"}
                                                 </Text>
-                                                <Text style={styles.detailItem}>
-                                                    <Text style={styles.detailLabel}>Groupe:</Text> {item.group || "Non spécifié"}
+                                                <Text style={[styles.detailItem, dynamicStyles.text]}>
+                                                    <Text style={[styles.detailLabel, dynamicStyles.text]}>{t.group || "Groupe"}:</Text> {item.group || t.notSpecified || "Non spécifié"}
                                                 </Text>
-                                                <Text style={styles.detailItem}>
-                                                    <Text style={styles.detailLabel}>Téléphone:</Text> {item.tel || "Non spécifié"}
+                                                <Text style={[styles.detailItem, dynamicStyles.text]}>
+                                                    <Text style={[styles.detailLabel, dynamicStyles.text]}>{t.phone || "Téléphone"}:</Text> {item.tel || t.notSpecified || "Non spécifié"}
                                                 </Text>
                                             </View>
                                         </View>
@@ -763,12 +807,12 @@ export default function GestionEtudiant() {
                                                 style={styles.deleteButton}
                                                 onPress={() => {
                                                     Alert.alert(
-                                                        "Confirmation",
-                                                        `Voulez-vous vraiment supprimer ${item.name} ?`,
+                                                        t.confirmation || "Confirmation",
+                                                        `${t.deleteConfirm || "Voulez-vous vraiment supprimer"} ${item.name} ?`,
                                                         [
-                                                            { text: "Annuler", style: "cancel" },
+                                                            { text: t.cancel || "Annuler", style: "cancel" },
                                                             {
-                                                                text: "Confirmer",
+                                                                text: t.confirm || "Confirmer",
                                                                 onPress: () => handleDeleteStudent(item.id || item._id || ""),
                                                                 style: "destructive"
                                                             }
@@ -788,26 +832,53 @@ export default function GestionEtudiant() {
             </ScrollView>
 
             {/* Bottom Navigation */}
-            <View style={styles.bottomNavigation}>
+            <View style={[styles.bottomNavigation, dynamicStyles.header]}>
                 <TouchableOpacity 
-                    style={styles.navButton}
+                    style={[
+                        styles.navButton,
+                        selectedSection === "home" && styles.selectedNavButton
+                    ]}
                     onPress={() => setSelectedSection("home")}
                 >
-                    <Icon name="home" size={24} color="#FFF" />
-                    <Text style={styles.navButtonText}>ACCUEIL</Text>
+                    <Icon 
+                        name="home" 
+                        size={24} 
+                        color={selectedSection === "home" ? "#FFD700" : (darkMode ? "#6D8EB4" : "#999")} 
+                    />
+                    <Text style={[
+                        styles.navButtonText,
+                        selectedSection === "home" ? {color: "#FFD700"} : dynamicStyles.text
+                    ]}>
+                        {t.home || "ACCUEIL"}
+                    </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity 
-                    style={styles.navButton}
+                    style={[
+                        styles.navButton,
+                        selectedSection === "students" && styles.selectedNavButton
+                    ]}
                     onPress={() => setSelectedSection("students")}
                 >
-                    <Icon name="list" size={24} color="#FFF" />
-                    <Text style={styles.navButtonText}>LISTE</Text>
+                    <Icon 
+                        name="list" 
+                        size={24} 
+                        color={selectedSection === "students" ? "#FFD700" : (darkMode ? "#6D8EB4" : "#999")} 
+                    />
+                    <Text style={[
+                        styles.navButtonText,
+                        selectedSection === "students" ? {color: "#FFD700"} : dynamicStyles.text
+                    ]}>
+                        {t.list || "LISTE"}
+                    </Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
     );
 }
+
+
+   
 const styles = StyleSheet.create({
     center: {
         flex: 1,
@@ -1326,6 +1397,11 @@ const styles = StyleSheet.create({
         height: 80,
         paddingVertical: 10,
     },
+    selectedNavButton: {
+        backgroundColor: "#0A1F3A",
+        borderWidth: 2,
+        borderColor: "#FFD700",
+    },
     navButton: {
         flex: 1,
         backgroundColor: "#1A3F6F",
@@ -1403,5 +1479,57 @@ const styles = StyleSheet.create({
     modalCloseButton: {
         padding: 5,
     },
+     
     
+    // Dark/Light mode styles
+    darkContainer: {
+        backgroundColor: "#0A1F3A",
+    },
+    lightContainer: {
+        backgroundColor: "#F5F5F5",
+    },
+    darkText: {
+        color: "#FFFFFF",
+    },
+    lightText: {
+        color: "#333333",
+    },
+    darkCard: {
+        backgroundColor: "#1A3F6F",
+    },
+    lightCard: {
+        backgroundColor: "#FFFFFF",
+    },
+    darkInput: {
+        backgroundColor: "#0A1F3A",
+        color: "#FFFFFF",
+    },
+    lightInput: {
+        backgroundColor: "#FFFFFF",
+        color: "#333333",
+        borderWidth: 1,
+        borderColor: "#DDDDDD",
+    },
+    darkButton: {
+        backgroundColor: "#1A3F6F",
+    },
+    lightButton: {
+        backgroundColor: "#E0E0E0",
+    },
+    darkModal: {
+        backgroundColor: "#1A3F6F",
+    },
+    lightModal: {
+        backgroundColor: "#FFFFFF",
+    },
+    darkHeader: {
+        backgroundColor: "#0A1F3A",
+        borderBottomColor: "#1A3F6F",
+    },
+    lightHeader: {
+        backgroundColor: "#FFFFFF",
+        borderBottomColor: "#E0E0E0",
+    },
+
+   
 });

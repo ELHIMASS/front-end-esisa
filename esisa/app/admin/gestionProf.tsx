@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
     View,
     Text,
@@ -21,13 +21,18 @@ import { Audio } from "expo-av";
 import { Ionicons } from '@expo/vector-icons';
 import config from '../../config';
 
-
-
-// Définissez votre adresse IP ici - il suffira de la changer à un seul endroit
-
-
+// Contextes
+import { DarkModeContext } from "../context/DarkModeContext";
+import { LanguageContext } from "../context/LanguageContext";
+import { translations } from "../utils/transactions";
 
 export default function ProfScreen() {
+    // Contextes
+    const { darkMode } = useContext(DarkModeContext);
+    const { language } = useContext(LanguageContext);
+    const t = translations[language];
+
+    // États
     const [admin, setAdmin] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isMenuVisible, setMenuVisible] = useState(false);
@@ -51,6 +56,17 @@ export default function ProfScreen() {
     const insets = useSafeAreaInsets();
     const slideAnim = useState(new Animated.Value(300))[0];
 
+    // Styles dynamiques
+    const dynamicStyles = {
+        container: darkMode ? styles.darkContainer : styles.lightContainer,
+        text: darkMode ? styles.darkText : styles.lightText,
+        card: darkMode ? styles.darkCard : styles.lightCard,
+        input: darkMode ? styles.darkInput : styles.lightInput,
+        button: darkMode ? styles.darkButton : styles.lightButton,
+        modal: darkMode ? styles.darkModal : styles.lightModal,
+        header: darkMode ? styles.darkHeader : styles.lightHeader,
+    };
+
     useEffect(() => {
         const checkSession = async () => {
             try {
@@ -64,7 +80,7 @@ export default function ProfScreen() {
                 const parsed = JSON.parse(storedAdmin);
                 if (parsed.role !== "admin") {
                     console.log("❌ L'utilisateur n'a pas les droits d'administration");
-                    Alert.alert("Erreur", "Vous n'avez pas les droits d'administration");
+                    Alert.alert(t.error, t.noAdminRights || "Vous n'avez pas les droits d'administration");
                     router.replace("/(tabs)");
                     return;
                 }
@@ -78,7 +94,7 @@ export default function ProfScreen() {
                 await loadProfessorsFromServer();
             } catch (error) {
                 console.error("Erreur lors de la vérification de session :", error);
-                Alert.alert("Erreur", "Impossible de charger les données");
+                Alert.alert(t.error || "Erreur", t.dataLoadError || "Impossible de charger les données");
                 router.replace("/login");
             } finally {
                 setLoading(false);
@@ -181,7 +197,7 @@ export default function ProfScreen() {
     const handleAddProf = async () => {
         if (!newProf.name || !newProf.email || !newProf.password || 
             !newProf.age || !newProf.phone || newProf.matiere.length === 0) {
-            Alert.alert("Erreur", "Tous les champs sont obligatoires");
+            Alert.alert(t.error || "Erreur", t.allFieldsRequired || "Tous les champs sont obligatoires");
             return;
         }
 
@@ -206,7 +222,7 @@ export default function ProfScreen() {
 
             setAddModalVisible(false);
             await playSound(require("../../assets/audio/done.mp3"));
-            Alert.alert("Succès", "Professeur ajouté avec succès");
+            Alert.alert(t.success || "Succès", t.professorAddedSuccess || "Professeur ajouté avec succès");
 
             setNewProf({
                 name: '',
@@ -222,9 +238,9 @@ export default function ProfScreen() {
             await playSound(require("../../assets/audio/error.mp3"));
             
             if (error.message.includes("Email déjà utilisé")) {
-                Alert.alert("Erreur", "Cet email est déjà utilisé par un autre professeur");
+                Alert.alert(t.error || "Erreur", t.emailAlreadyUsed || "Cet email est déjà utilisé par un autre professeur");
             } else {
-                Alert.alert("Erreur", error.message || "Erreur lors de l'ajout du professeur");
+                Alert.alert(t.error || "Erreur", error.message || "Erreur lors de l'ajout du professeur");
             }
         }
     };
@@ -232,7 +248,7 @@ export default function ProfScreen() {
     const handleEditProf = async () => {
         if (!selectedProf || !selectedProf.name || !selectedProf.email || !selectedProf.password || 
             !selectedProf.age || !selectedProf.phone || selectedProf.matiere.length === 0) {
-            Alert.alert("Erreur", "Tous les champs sont obligatoires");
+            Alert.alert(t.error || "Erreur", t.allFieldsRequired || "Tous les champs sont obligatoires");
             return;
         }
     
@@ -266,12 +282,12 @@ export default function ProfScreen() {
             setSelectedProf(null);
             setMatieresList([]);
             await playSound(require("../../assets/audio/done.mp3"));
-            Alert.alert("Succès", "Professeur modifié avec succès");
+            Alert.alert(t.success || "Succès", t.professorUpdatedSuccess || "Professeur modifié avec succès");
     
         } catch (error) {
             console.error("Erreur lors de la modification:", error);
             await playSound(require("../../assets/audio/error.mp3"));
-            Alert.alert("Erreur", error.message || "Erreur lors de la modification du professeur");
+            Alert.alert(t.error || "Erreur", error.message || "Erreur lors de la modification du professeur");
         }
     };
 
@@ -296,12 +312,12 @@ export default function ProfScreen() {
             }
 
             await playSound(require("../../assets/audio/supprimer.mp3"));
-            Alert.alert("Succès", "Professeur supprimé avec succès");
+            Alert.alert(t.success || "Succès", t.professorDeletedSuccess || "Professeur supprimé avec succès");
 
         } catch (error) {
             console.error("Erreur lors de la suppression :", error);
             await playSound(require("../../assets/audio/error.mp3"));
-            Alert.alert("Erreur", error.message || "Impossible de supprimer le professeur");
+            Alert.alert(t.error || "Erreur", error.message || "Impossible de supprimer le professeur");
         }
     };
 
@@ -313,16 +329,18 @@ export default function ProfScreen() {
 
     if (loading) {
         return (
-            <View style={[styles.center, { backgroundColor: "#0A1F3A" }]}>
-                <ActivityIndicator size="large" color="#FFD700" />
+            <View style={[styles.center, dynamicStyles.container]}>
+                <ActivityIndicator size="large" color={darkMode ? "#FFD700" : "#3A8DFF"} />
             </View>
         );
     }
 
     if (!admin) {
         return (
-            <View style={[styles.center, { backgroundColor: "#0A1F3A" }]}>
-                <Text style={{ color: "#FF5555" }}>Administrateur non trouvé</Text>
+            <View style={[styles.center, dynamicStyles.container]}>
+                <Text style={[dynamicStyles.text, {color: "#FF5555"}]}>
+                    {t.adminNotFound || "Administrateur non trouvé"}
+                </Text>
             </View>
         );
     }
@@ -330,72 +348,84 @@ export default function ProfScreen() {
     const renderProfForm = (data, setData, isEdit = false) => (
         <View style={styles.formContainer}>
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Nom complet*</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>
+                    {t.fullName || "Nom complet"}*
+                </Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.name}
                     onChangeText={(text) => handleChange('name', text, data, setData)}
-                    placeholder="Entrez le nom complet"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterFullName || "Entrez le nom complet"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email*</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>
+                    {t.email || "Email"}*
+                </Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.email}
                     onChangeText={(text) => handleChange('email', text, data, setData)}
-                    placeholder="Entrez l'email"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterEmail || "Entrez l'email"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                     keyboardType="email-address"
                     autoCapitalize="none"
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Mot de passe*</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>
+                    {t.password || "Mot de passe"}*
+                </Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.password}
                     onChangeText={(text) => handleChange('password', text, data, setData)}
-                    placeholder="Entrez le mot de passe"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterPassword || "Entrez le mot de passe"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                     secureTextEntry
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Âge*</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>
+                    {t.age || "Âge"}*
+                </Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.age}
                     onChangeText={(text) => handleChange('age', text, data, setData)}
-                    placeholder="Entrez l'âge"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterAge || "Entrez l'âge"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                     keyboardType="numeric"
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Téléphone*</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>
+                    {t.phone || "Téléphone"}*
+                </Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, dynamicStyles.input]}
                     value={data.phone}
                     onChangeText={(text) => handleChange('phone', text, data, setData)}
-                    placeholder="Entrez le numéro de téléphone"
-                    placeholderTextColor="#6D8EB4"
+                    placeholder={t.enterPhone || "Entrez le numéro de téléphone"}
+                    placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                     keyboardType="phone-pad"
                 />
             </View>
 
             <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Matières enseignées*</Text>
+                <Text style={[styles.inputLabel, dynamicStyles.text]}>
+                    {t.subjectsTaught || "Matières enseignées"}*
+                </Text>
                 <View style={styles.matiereInputContainer}>
                     <TextInput
-                        style={styles.matiereInput}
-                        placeholder="Ajouter une matière"
-                        placeholderTextColor="#6D8EB4"
+                        style={[styles.matiereInput, dynamicStyles.input]}
+                        placeholder={t.addSubject || "Ajouter une matière"}
+                        placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                         value={matiere}
                         onChangeText={setMatiere}
                     />
@@ -410,10 +440,12 @@ export default function ProfScreen() {
 
             {matieresList.length > 0 && (
                 <View style={styles.matieresList}>
-                    <Text style={styles.subLabel}>Matières ajoutées :</Text>
+                    <Text style={[styles.subLabel, dynamicStyles.text]}>
+                        {t.addedSubjects || "Matières ajoutées"} :
+                    </Text>
                     {matieresList.map((item, index) => (
-                        <View key={index} style={styles.matiereItem}>
-                            <Text style={styles.matiereText}>{item}</Text>
+                        <View key={index} style={[styles.matiereItem, dynamicStyles.card]}>
+                            <Text style={[styles.matiereText, dynamicStyles.text]}>{item}</Text>
                             <TouchableOpacity onPress={() => removeMatiere(index, data, setData)}>
                                 <Ionicons name="close-circle" size={20} color="#FF6B6B" />
                             </TouchableOpacity>
@@ -427,32 +459,34 @@ export default function ProfScreen() {
                 onPress={isEdit ? handleEditProf : handleAddProf}
             >
                 <Text style={styles.submitButtonText}>
-                    {isEdit ? "MODIFIER" : "AJOUTER"}
+                    {isEdit ? (t.modify || "MODIFIER") : (t.add || "AJOUTER")}
                 </Text>
             </TouchableOpacity>
         </View>
     );
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#0A1F3A" }}>
+        <SafeAreaView style={[{ flex: 1 }, dynamicStyles.container]}>
             {/* Header avec titre et menu */}
-            <View style={styles.header}>
+            <View style={[styles.header, dynamicStyles.header]}>
                 <TouchableOpacity 
                     onPress={navigateToAdminHome}
                     style={styles.backButton}
                 >
-                    <Icon name="arrow-back" size={24} color="#FFD700" />
+                    <Icon name="arrow-back" size={24} color={darkMode ? "#FFD700" : "#3A8DFF"} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>GESTION DES PROFESSEURS</Text>
+                <Text style={[styles.headerTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                    {t.professorManagement || "GESTION DES PROFESSEURS"}
+                </Text>
                 <TouchableOpacity
                     onPress={toggleMenu}
-                    style={styles.menuButton}
+                    style={[styles.menuButton, dynamicStyles.button]}
                 >
-                    <Icon name="menu" size={30} color="#FFD700" />
+                    <Icon name="menu" size={30} color={darkMode ? "#FFD700" : "#3A8DFF"} />
                 </TouchableOpacity>
             </View>
 
-            {/* Drawer Menu - Conservé du deuxième code */}
+            {/* Drawer Menu */}
             <Modal
                 visible={isMenuVisible}
                 transparent={true}
@@ -466,36 +500,38 @@ export default function ProfScreen() {
                     <Animated.View
                         style={[
                             styles.menuDrawerRight,
+                            dynamicStyles.modal,
                             { transform: [{ translateX: slideAnim }] }
                         ]}
                     >
                         <View style={styles.adminInfoContainer}>
-                            <View style={styles.adminAvatar}>
-                                <Text style={styles.adminAvatarText}>
+                            <View style={[styles.adminAvatar, dynamicStyles.card]}>
+                                <Text style={[styles.adminAvatarText, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
                                     {admin.name && admin.name.charAt(0).toUpperCase()}
                                 </Text>
                             </View>
                             <View style={styles.adminInfo}>
-                                <Text style={styles.adminName}>{admin.name}</Text>
-                                <Text style={styles.adminEmail}>{admin.email}</Text>
+                                <Text style={[styles.adminName, dynamicStyles.text]}>{admin.name}</Text>
+                                <Text style={[styles.adminEmail, dynamicStyles.text]}>{admin.email}</Text>
                                 <View style={styles.adminRoleBadge}>
                                     <Text style={styles.adminRole}>{admin.role}</Text>
                                 </View>
                             </View>
                         </View>
 
-                        <View style={styles.menuDivider} />
+                        <View style={[styles.menuDivider, {backgroundColor: darkMode ? "#1A3F6F" : "#E0E0E0"}]} />
 
                         {[
-                            { label: "🏠 Accueil", section: "home", icon: "home", route: "/admin" },
-                            { label: "👥 Gestion des étudiants", section: "students", icon: "people", route: "/admin/gestionEtudiant" },
-                            { label: "👨‍🏫 Gestion des professeurs", section: "profs", icon: "school", route: "/admin/gestionProf" },
+                            { label: `🏠 ${t.home || "Accueil"}`, section: "home", icon: "home", route: "/admin" },
+                            { label: `👥 ${t.studentManagement || "Gestion des étudiants"}`, section: "students", icon: "people", route: "/admin/gestionEtudiant" },
+                            { label: `👨‍🏫 ${t.professorManagement || "Gestion des professeurs"}`, section: "profs", icon: "school", route: "/admin/gestionProf" },
                         ].map((item, index) => (
                             <TouchableOpacity
                                 key={index}
                                 style={[
                                     styles.menuItem,
-                                    selectedSection === item.section && styles.selectedMenuItem
+                                    selectedSection === item.section && styles.selectedMenuItem,
+                                    selectedSection === item.section && dynamicStyles.card
                                 ]}
                                 onPress={async () => {
                                     await playSound(require("../../assets/audio/tap.mp3"));
@@ -507,12 +543,13 @@ export default function ProfScreen() {
                                 <Icon
                                     name={item.icon}
                                     size={22}
-                                    color={selectedSection === item.section ? "#FFD700" : "#6D8EB4"}
+                                    color={selectedSection === item.section ? (darkMode ? "#FFD700" : "#3A8DFF") : (darkMode ? "#6D8EB4" : "#999")}
                                 />
                                 <Text
                                     style={[
                                         styles.menuText,
-                                        selectedSection === item.section && styles.selectedMenuText
+                                        dynamicStyles.text,
+                                        selectedSection === item.section && {color: darkMode ? "#FFD700" : "#3A8DFF", fontWeight: "bold"}
                                     ]}
                                 >
                                     {item.label}
@@ -520,7 +557,7 @@ export default function ProfScreen() {
                             </TouchableOpacity>
                         ))}
 
-                        <View style={styles.menuDivider} />
+                        <View style={[styles.menuDivider, {backgroundColor: darkMode ? "#1A3F6F" : "#E0E0E0"}]} />
 
                         <TouchableOpacity
                             style={styles.logoutMenuItem}
@@ -528,11 +565,11 @@ export default function ProfScreen() {
                         >
                             <Icon name="logout" size={22} color="#FF5555" />
                             <Text style={styles.logoutMenuText}>
-                                Se déconnecter
+                                {t.logout || "Se déconnecter"}
                             </Text>
                         </TouchableOpacity>
 
-                        <Text style={styles.versionText}>v1.0.0</Text>
+                        <Text style={[styles.versionText, dynamicStyles.text]}>v1.0.0</Text>
                     </Animated.View>
                 </Pressable>
             </Modal>
@@ -545,9 +582,11 @@ export default function ProfScreen() {
                 onRequestClose={() => setAddModalVisible(false)}
             >
                 <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
+                    <View style={[styles.modalContainer, dynamicStyles.modal]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>AJOUTER UN PROFESSEUR</Text>
+                            <Text style={[styles.modalTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                                {t.addProfessor || "AJOUTER UN PROFESSEUR"}
+                            </Text>
                             <TouchableOpacity
                                 onPress={async () => {
                                     await playSound(require("../../assets/audio/error.mp3"));
@@ -581,9 +620,11 @@ export default function ProfScreen() {
                 onRequestClose={() => setEditModalVisible(false)}
             >
                 <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
+                    <View style={[styles.modalContainer, dynamicStyles.modal]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>MODIFIER UN PROFESSEUR</Text>
+                            <Text style={[styles.modalTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                                {t.editProfessor || "MODIFIER UN PROFESSEUR"}
+                            </Text>
                             <TouchableOpacity onPress={() => {
                                 setEditModalVisible(false);
                                 setSelectedProf(null);
@@ -600,47 +641,57 @@ export default function ProfScreen() {
             </Modal>
 
             {/* Main Content */}
-            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={[styles.scroll, dynamicStyles.container]} showsVerticalScrollIndicator={false}>
                 {selectedSection === "home" && (
                     <View style={styles.homeContainer}>
                         <View style={styles.avatarContainer}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
+                            <View style={[styles.avatar, dynamicStyles.card]}>
+                                <Text style={[styles.avatarText, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
                                     {admin.name && admin.name.charAt(0).toUpperCase()}
                                 </Text>
                             </View>
-                            <View style={styles.glowEffect} />
+                            <View style={[styles.glowEffect, {backgroundColor: darkMode ? "#FFD700" : "#3A8DFF"}]} />
                         </View>
-                        <Text style={styles.welcomeTitle}>GESTION PROFESSEURS</Text>
-                        <Text style={styles.adminInfoText}>{admin.email}</Text>
-                        <Text style={styles.subtitle}>PANNEAU D'ADMINISTRATION</Text>
+                        <Text style={[styles.welcomeTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                            {t.professorManagement || "GESTION PROFESSEURS"}
+                        </Text>
+                        <Text style={[styles.adminInfoText, dynamicStyles.text]}>{admin.email}</Text>
+                        <Text style={[styles.subtitle, dynamicStyles.text]}>
+                            {t.adminPanel || "PANNEAU D'ADMINISTRATION"}
+                        </Text>
 
                         <View style={styles.statsContainer}>
-                            <View style={styles.statCard}>
-                                <Icon name="school" size={30} color="#FFD700" />
-                                <Text style={styles.statNumber}>{professors.length}</Text>
-                                <Text style={styles.statLabel}>PROFESSEURS</Text>
+                            <View style={[styles.statCard, dynamicStyles.card]}>
+                                <Icon name="school" size={30} color={darkMode ? "#FFD700" : "#3A8DFF"} />
+                                <Text style={[styles.statNumber, dynamicStyles.text]}>{professors.length}</Text>
+                                <Text style={[styles.statLabel, dynamicStyles.text]}>
+                                    {t.professors || "PROFESSEURS"}
+                                </Text>
                             </View>
 
                             <TouchableOpacity style={styles.addButton} onPress={() => setAddModalVisible(true)}>
                                 <Icon name="person-add" size={30} color="#FFF" />
-                                <Text style={styles.addButtonText}>AJOUTER</Text>
+                                <Text style={styles.addButtonText}>{t.add || "AJOUTER"}</Text>
                             </TouchableOpacity>
                         </View>
 
-                        <View style={styles.quickActionsContainer}>
-                            <Text style={styles.quickActionsTitle}>ACTIONS RAPIDES</Text>
+                        <View style={[styles.quickActionsContainer, dynamicStyles.card]}>
+                            <Text style={[styles.quickActionsTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                                {t.quickActions || "ACTIONS RAPIDES"}
+                            </Text>
                             <View style={styles.actionButtonsRow}>
                                 <TouchableOpacity
-                                    style={styles.actionButton}
+                                    style={[styles.actionButton, dynamicStyles.container]}
                                     onPress={() => setSelectedSection("professors")}
                                 >
-                                    <Icon name="list" size={25} color="#FFD700" />
-                                    <Text style={styles.actionButtonText}>VOIR LA LISTE</Text>
+                                    <Icon name="list" size={25} color={darkMode ? "#FFD700" : "#3A8DFF"} />
+                                    <Text style={[styles.actionButtonText, dynamicStyles.text]}>
+                                        {t.viewList || "VOIR LA LISTE"}
+                                    </Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    style={styles.actionButton}
+                                    style={[styles.actionButton, dynamicStyles.container]}
                                     onPress={() => {
                                         setAddModalVisible(true);
                                         setNewProf({
@@ -654,8 +705,10 @@ export default function ProfScreen() {
                                         setMatieresList([]);
                                     }}
                                 >
-                                    <Icon name="add-circle" size={25} color="#FFD700" />
-                                    <Text style={styles.actionButtonText}>NOUVEAU PROFESSEUR</Text>
+                                    <Icon name="add-circle" size={25} color={darkMode ? "#FFD700" : "#3A8DFF"} />
+                                    <Text style={[styles.actionButtonText, dynamicStyles.text]}>
+                                        {t.newProfessor || "NOUVEAU PROFESSEUR"}
+                                    </Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -664,8 +717,12 @@ export default function ProfScreen() {
 
                 {selectedSection === "professors" && (
                     <View style={styles.professorsContainer}>
-                        <Text style={styles.sectionTitle}>LISTE DES PROFESSEURS</Text>
-                        <Text style={styles.subtitle}>GESTION DU CORPS PROFESSORAL</Text>
+                        <Text style={[styles.sectionTitle, {color: darkMode ? "#FFD700" : "#3A8DFF"}]}>
+                            {t.professorsList || "LISTE DES PROFESSEURS"}
+                        </Text>
+                        <Text style={[styles.subtitle, dynamicStyles.text]}>
+                            {t.facultyManagement || "GESTION DU CORPS PROFESSORAL"}
+                        </Text>
 
                         <TouchableOpacity style={styles.floatingAddButton} onPress={() => {
                             setAddModalVisible(true);
@@ -683,7 +740,7 @@ export default function ProfScreen() {
                         </TouchableOpacity>
 
                         {professors.length === 0 ? (
-                            <View style={styles.emptyContainer}>
+                                                        <View style={styles.emptyContainer}>
                                 <Icon name="school" size={40} color="#6D8EB4" />
                                 <Text style={styles.emptyText}>Aucun professeur trouvé</Text>
                                 <TouchableOpacity style={styles.addEmptyButton} onPress={() => {
@@ -750,7 +807,7 @@ export default function ProfScreen() {
                                             </TouchableOpacity>
                                         </View>
                                     </View>
-                                    )}
+                                )}
                             />
                         )}
                     </View>
@@ -760,24 +817,49 @@ export default function ProfScreen() {
             {/* Bottom Navigation */}
             <View style={styles.bottomNavigation}>
                 <TouchableOpacity 
-                    style={styles.navButton}
+                    style={[
+                        styles.navButton,
+                        selectedSection === "home" && styles.selectedNavButton
+                    ]}
                     onPress={() => setSelectedSection("home")}
                 >
-                    <Icon name="home" size={24} color="#FFF" />
-                    <Text style={styles.navButtonText}>ACCUEIL</Text>
+                    <Icon 
+                        name="home" 
+                        size={24} 
+                        color={selectedSection === "home" ? "#FFD700" : "#6D8EB4"} 
+                    />
+                    <Text style={[
+                        styles.navButtonText,
+                        selectedSection === "home" && styles.selectedNavButtonText
+                    ]}>
+                        ACCUEIL
+                    </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity 
-                    style={styles.navButton}
+                    style={[
+                        styles.navButton,
+                        selectedSection === "professors" && styles.selectedNavButton
+                    ]}
                     onPress={() => setSelectedSection("professors")}
                 >
-                    <Icon name="list" size={24} color="#FFF" />
-                    <Text style={styles.navButtonText}>LISTE</Text>
+                    <Icon 
+                        name="list" 
+                        size={24} 
+                        color={selectedSection === "professors" ? "#FFD700" : "#6D8EB4"} 
+                    />
+                    <Text style={[
+                        styles.navButtonText,
+                        selectedSection === "professors" && styles.selectedNavButtonText
+                    ]}>
+                        LISTE
+                    </Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
     );
 }
+
 
 const styles = StyleSheet.create({
     center: {
@@ -785,15 +867,65 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
+    
+    // Dark/Light mode styles
+    darkContainer: {
+        backgroundColor: "#0A1F3A",
+    },
+    lightContainer: {
+        backgroundColor: "#F5F5F5",
+    },
+    darkText: {
+        color: "#FFFFFF",
+    },
+    lightText: {
+        color: "#333333",
+    },
+    darkCard: {
+        backgroundColor: "#1A3F6F",
+    },
+    lightCard: {
+        backgroundColor: "#FFFFFF",
+    },
+    darkInput: {
+        backgroundColor: "#0A1F3A",
+        color: "#FFFFFF",
+    },
+    lightInput: {
+        backgroundColor: "#FFFFFF",
+        color: "#333333",
+        borderWidth: 1,
+        borderColor: "#DDDDDD",
+    },
+    darkButton: {
+        backgroundColor: "#1A3F6F",
+    },
+    lightButton: {
+        backgroundColor: "#E0E0E0",
+    },
+    darkModal: {
+        backgroundColor: "#1A3F6F",
+    },
+    lightModal: {
+        backgroundColor: "#FFFFFF",
+    },
+    darkHeader: {
+        backgroundColor: "#0A1F3A",
+        borderBottomColor: "#1A3F6F",
+    },
+    lightHeader: {
+        backgroundColor: "#FFFFFF",
+        borderBottomColor: "#E0E0E0",
+    },
+
+    // Common component styles
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingVertical: 15,
-        backgroundColor: "#0A1F3A",
         borderBottomWidth: 1,
-        borderBottomColor: "#1A3F6F",
         elevation: 3,
     },
     backButton: {
@@ -802,24 +934,17 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: "#FFD700",
         letterSpacing: 1,
     },
     menuButton: {
-        backgroundColor: "#1A3F6F",
         borderRadius: 20,
         padding: 8,
         elevation: 5,
-        shadowColor: "#FFD700",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.8,
-        shadowRadius: 3,
     },
     scroll: {
         padding: 20,
         minHeight: "100%",
-        backgroundColor: "#0A1F3A",
-        paddingBottom: 80, // Pour laisser de la place à la navigation en bas
+        paddingBottom: 80,
     },
     homeContainer: {
         width: "100%",
@@ -835,24 +960,20 @@ const styles = StyleSheet.create({
         width: 120,
         height: 120,
         borderRadius: 60,
-        backgroundColor: "#1A3F6F",
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 3,
-        borderColor: '#FFD700',
         zIndex: 2,
     },
     avatarText: {
         fontSize: 40,
         fontWeight: 'bold',
-        color: '#FFD700',
     },
     glowEffect: {
         position: 'absolute',
         width: 140,
         height: 140,
         borderRadius: 70,
-        backgroundColor: '#FFD700',
         opacity: 0.3,
         top: -10,
         left: -10,
@@ -863,12 +984,10 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         marginBottom: 10,
         textAlign: "center",
-        color: "#FFD700",
         letterSpacing: 2,
     },
     adminInfoText: {
         fontSize: 16,
-        color: "#FFF",
         marginBottom: 5,
         textAlign: "center",
     },
@@ -876,7 +995,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginBottom: 30,
         textAlign: "center",
-        color: "#6D8EB4",
         letterSpacing: 1,
     },
     statsContainer: {
@@ -886,7 +1004,6 @@ const styles = StyleSheet.create({
         marginBottom: 30,
     },
     statCard: {
-        backgroundColor: "#1A3F6F",
         borderRadius: 15,
         padding: 20,
         alignItems: "center",
@@ -901,12 +1018,10 @@ const styles = StyleSheet.create({
     statNumber: {
         fontSize: 24,
         fontWeight: "bold",
-        color: "#FFF",
         marginVertical: 10,
     },
     statLabel: {
         fontSize: 10,
-        color: "#6D8EB4",
         fontWeight: "bold",
     },
     addButton: {
@@ -917,10 +1032,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         width: "48%",
         elevation: 4,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
     },
     addButtonText: {
         fontSize: 12,
@@ -930,14 +1041,12 @@ const styles = StyleSheet.create({
     },
     quickActionsContainer: {
         width: "100%",
-        backgroundColor: "#1A3F6F",
         borderRadius: 15,
         padding: 20,
         marginBottom: 20,
     },
     quickActionsTitle: {
         fontSize: 14,
-        color: "#FFD700",
         fontWeight: "bold",
         marginBottom: 15,
     },
@@ -946,7 +1055,6 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     actionButton: {
-        backgroundColor: "#0A1F3A",
         borderRadius: 10,
         padding: 15,     
         alignItems: "center",
@@ -954,7 +1062,6 @@ const styles = StyleSheet.create({
     },
     actionButtonText: {
         fontSize: 10,
-        color: "#B4C6E2",
         fontWeight: "bold",
         marginTop: 10,
         textAlign: "center",
@@ -966,7 +1073,6 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 20,
         fontWeight: "bold",
-        color: "#FFD700",
         marginBottom: 5,
     },
     floatingAddButton: {
@@ -980,10 +1086,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         elevation: 5,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
     },
     emptyContainer: {
         alignItems: "center",
@@ -992,7 +1094,6 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-        color: "#6D8EB4",
         marginVertical: 15,
     },
     addEmptyButton: {
@@ -1008,7 +1109,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     professorCard: {
-        backgroundColor: "#1A3F6F",
         borderRadius: 15,
         padding: 15,
         marginVertical: 8,
@@ -1016,10 +1116,6 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "flex-start",
         elevation: 3,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
     },
     professorInfo: {
         flex: 1,
@@ -1028,44 +1124,36 @@ const styles = StyleSheet.create({
     professorName: {
         fontSize: 16,
         fontWeight: "bold",
-        color: "#FFF",
         marginBottom: 4,
     },
     professorEmail: {
         fontSize: 12,
-        color: "#B4C6E2",
         marginBottom: 8,
     },
     professorDetails: {
-        backgroundColor: "#0A1F3A",
         borderRadius: 8,
         padding: 10,
     },
     detailItem: {
         fontSize: 12,
-        color: "#B4C6E2",
         marginBottom: 3,
     },
     detailLabel: {
         fontWeight: "bold",
-        color: "#6D8EB4",
     },
     actionButtons: {
         flexDirection: "column",
         justifyContent: "flex-start",
     },
     editButton: {
-        backgroundColor: "#0A1F3A",
         padding: 8,
         borderRadius: 8,
         marginBottom: 8,
     },
     deleteButton: {
-        backgroundColor: "#0A1F3A",
         padding: 8,
         borderRadius: 8,
     },
-    // Modal styles
     modalBackground: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.6)",
@@ -1073,7 +1161,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     modalContainer: {
-        backgroundColor: "#1A3F6F",
         borderRadius: 15,
         width: "90%",
         maxHeight: "80%",
@@ -1086,12 +1173,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: "#2A4A73",
     },
     modalTitle: {
         fontSize: 18,
         fontWeight: "bold",
-        color: "#FFD700",
     },
     formContainer: {
         padding: 20,
@@ -1101,14 +1186,11 @@ const styles = StyleSheet.create({
     },
     inputLabel: {
         fontSize: 14,
-        color: "#B4C6E2",
         marginBottom: 5,
         fontWeight: "600",
     },
     input: {
-        backgroundColor: "#0A1F3A",
         borderRadius: 8,
-        color: "#FFF",
         paddingVertical: 10,
         paddingHorizontal: 15,
         fontSize: 16,
@@ -1117,10 +1199,8 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
     },
-        matiereInput: {
-        backgroundColor: "#0A1F3A",
+    matiereInput: {
         borderRadius: 8,
-        color: "#FFF",
         paddingVertical: 10,
         paddingHorizontal: 15,
         fontSize: 16,
@@ -1146,21 +1226,18 @@ const styles = StyleSheet.create({
     },
     subLabel: {
         fontSize: 12,
-        color: "#6D8EB4",
         marginBottom: 8,
     },
     matiereItem: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#0A1F3A",
         borderRadius: 8,
         paddingVertical: 8,
         paddingHorizontal: 12,
         marginBottom: 6,
     },
     matiereText: {
-        color: "#B4C6E2",
         fontSize: 14,
     },
     submitButton: {
@@ -1175,7 +1252,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
     },
-    // Menu Drawer styles (conservés du deuxième code)
     modalBackgroundRight: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.5)",
@@ -1185,12 +1261,10 @@ const styles = StyleSheet.create({
     menuDrawerRight: {
         width: "75%",
         height: "100%",
-        backgroundColor: "#0A1F3A",
         padding: 20,
         borderTopLeftRadius: 20,
         borderBottomLeftRadius: 20,
         borderLeftWidth: 2,
-        borderLeftColor: "#FFD700",
         display: 'flex',
         flexDirection: 'column',
     },
@@ -1204,16 +1278,13 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 25,
-        backgroundColor: "#1A3F6F",
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#FFD700',
     },
     adminAvatarText: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#FFD700',
     },
     adminInfo: {
         marginLeft: 15,
@@ -1221,11 +1292,9 @@ const styles = StyleSheet.create({
     adminName: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: "#FFF",
     },
     adminEmail: {
         fontSize: 14,
-        color: "#6D8EB4",
         marginBottom: 5,
     },
     adminRoleBadge: {
@@ -1241,7 +1310,6 @@ const styles = StyleSheet.create({
     },
     menuDivider: {
         height: 1,
-        backgroundColor: "#1A3F6F",
         marginVertical: 15,
     },
     menuItem: {
@@ -1253,15 +1321,12 @@ const styles = StyleSheet.create({
         marginBottom: 5,
     },
     selectedMenuItem: {
-        backgroundColor: "#1A3F6F",
     },
     menuText: {
         fontSize: 16,
-        color: "#FFF",
         marginLeft: 15,
     },
     selectedMenuText: {
-        color: "#FFD700",
         fontWeight: "bold",
     },
     logoutMenuItem: {
@@ -1279,27 +1344,22 @@ const styles = StyleSheet.create({
     },
     versionText: {
         fontSize: 12,
-        color: "#6D8EB4",
         textAlign: "center",
         marginTop: 10,
         marginBottom: 5,
     },
-    // Bottom Navigation styles
     bottomNavigation: {
         position: "absolute",
         bottom: 0,
         left: 0,
         right: 0,
         flexDirection: "row",
-        backgroundColor: "#0A1F3A",
         borderTopWidth: 1,
-        borderTopColor: "#1A3F6F",
         height: 80,
         paddingVertical: 10,
     },
     navButton: {
         flex: 1,
-        backgroundColor: "#1A3F6F",
         margin: 8,
         borderRadius: 12,
         justifyContent: "center",
@@ -1310,10 +1370,14 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 5,
     },
+    selectedNavButton: {
+        borderWidth: 1,
+    },
     navButtonText: {
-        color: "#FFF",
         fontWeight: "bold",
         fontSize: 12,
         marginTop: 5,
+    },
+    selectedNavButtonText: {
     },
 });

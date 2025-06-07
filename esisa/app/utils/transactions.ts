@@ -332,6 +332,18 @@ export const translations = {
     home: "Accueil",
     dashboard: "Tableau de bord",
     profile: "Profil",
+
+    adminDashboard: "TABLEAU DE BORD ADMIN",
+        welcomeAdmin: "BIENVENUE ADMIN",
+        adminPanel: "PANNEAU D'ADMINISTRATION",
+        studentManagement: "GESTION DES ÉTUDIANTS",
+        studentManagementShort: "GÉRER ÉTUDIANTS",
+        professorManagement: "GESTION DES PROFESSEURS",
+        professorManagementShort: "GÉRER PROFESSEURS",
+        academicCalendar: "CALENDRIER ACADÉMIQUE",
+        statistics: "STATISTIQUES",
+        noAdminRights: "Vous n'avez pas les droits d'administration",
+        adminNotFound: "Administrateur non trouvé",
   },
 
 
@@ -670,6 +682,19 @@ error: "Error",
     dashboard: "Dashboard",
     profile: "Profile",
 
+
+    adminDashboard: "ADMIN DASHBOARD",
+        welcomeAdmin: "WELCOME ADMIN",
+        adminPanel: "ADMINISTRATION PANEL",
+        studentManagement: "STUDENT MANAGEMENT",
+        studentManagementShort: "MANAGE STUDENTS",
+        professorManagement: "PROFESSOR MANAGEMENT",
+        professorManagementShort: "MANAGE PROFESSORS",
+        academicCalendar: "ACADEMIC CALENDAR",
+        statistics: "STATISTICS",
+        noAdminRights: "You don't have admin rights",
+        adminNotFound: "Admin not found",
+
   
   },
 
@@ -954,6 +979,17 @@ error: "Error",
     home: "الرئيسية",
     dashboard: "لوحة التحكم",
     profile: "الملف الشخصي",
+    adminDashboard: "لوحة تحكم المشرف",
+        welcomeAdmin: "مرحباً بك أيها المشرف",
+        adminPanel: "لوحة الإدارة",
+        studentManagement: "إدارة الطلاب",
+        studentManagementShort: "إدارة الطلاب",
+        professorManagement: "إدارة الأساتذة",
+        professorManagementShort: "إدارة الأساتذة",
+        academicCalendar: "التقويم الأكاديمي",
+        statistics: "الإحصائيات",
+        noAdminRights: "ليست لديك صلاحيات المسؤول",
+        adminNotFound: "المسؤول غير موجود",
 
 
 
@@ -1228,6 +1264,19 @@ error: "Error",
     home: "Inicio",
     dashboard: "Panel",
     profile: "Perfil",
+
+
+    adminDashboard: "TABLERO DE ADMINISTRADOR",
+        welcomeAdmin: "BIENVENIDO ADMIN",
+        adminPanel: "PANEL DE ADMINISTRACIÓN",
+        studentManagement: "GESTIÓN DE ESTUDIANTES",
+        studentManagementShort: "ADMINISTRAR ESTUDIANTES",
+        professorManagement: "GESTIÓN DE PROFESORES",
+        professorManagementShort: "ADMINISTRAR PROFESORES",
+        academicCalendar: "CALENDARIO ACADÉMICO",
+        statistics: "ESTADÍSTICAS",
+        noAdminRights: "No tienes derechos de administrador",
+        adminNotFound: "Administrador no encontrado",
 
 
   },
