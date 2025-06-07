@@ -18,6 +18,9 @@ import { useRouter } from "expo-router"; // Added missing import
 import { DarkModeContext } from "../context/DarkModeContext";
 import { LanguageContext } from "../context/LanguageContext";
 
+import { useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 // Dummy notifications for the example
 const dummyNotifications = [
   { id: "1", title: "Nouvelle note disponible", date: "2025-06-02" },
@@ -37,10 +40,29 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const insets = useSafeAreaInsets();
 
-  const goBack = () => {
-    // Navigate back using Expo Router
-    router.replace("/(tabs)");
+  
+
+  useEffect(() => {
+  const goBackByRole = async () => {
+    const role = await AsyncStorage.getItem("role");
+    const currentRoute = router.pathname;
+
+    if (currentRoute === "/settings") {
+      if (role === "admin") {
+        router.replace("/admin");
+      } else if (role === "prof") {
+        router.replace("/prof");
+      } else if (role === "student" || role === null) {
+        router.replace("/(tabs)");
+      }
+    }
   };
+
+  goBackByRole();
+}, []);
+
+
+  
 
   const handleToggleDarkMode = () => {
     toggleDarkMode();
@@ -74,7 +96,7 @@ export default function Settings() {
   return (
     <View style={[styles.container, currentTheme.container]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={goBack} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="#FFD700" />
         </TouchableOpacity>
         
