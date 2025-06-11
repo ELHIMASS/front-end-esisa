@@ -490,8 +490,8 @@ export default function ProfessorDashboard() {
             </View>
 
             {[
-              { label: `🏠 ${t.home}`, route: "/(tabs)/index" },
-              { label: `📊 ${t.dashboard}`, route: "#" },
+              { label: `🏠 ${t.home}`, route: "/prof" },
+              { label: `📊 ${t.dashboard}`, route: "/prof/infoEtudiant" },
               { label: `📝 ${t.profile}`, route: "#" },
               { label: `⚙️ ${t.settings}`, route: "/Settings" },
             ].map((item, index) => (
