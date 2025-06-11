@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router"; // Added missing import
+import { useRouter } from "expo-router";
 
 import { DarkModeContext } from "../context/DarkModeContext";
 import { LanguageContext } from "../context/LanguageContext";
@@ -21,12 +21,8 @@ import { LanguageContext } from "../context/LanguageContext";
 import { useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Dummy notifications for the example
-const dummyNotifications = [
-  { id: "1", title: "Nouvelle note disponible", date: "2025-06-02" },
-  { id: "2", title: "Absence validée", date: "2025-06-01" },
-  { id: "3", title: "Message de M. Dupont", date: "2025-05-30" },
-];
+import { router } from "expo-router";
+
 
 export default function Settings() {
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
@@ -40,29 +36,30 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const insets = useSafeAreaInsets();
 
-  
 
-  useEffect(() => {
-  const goBackByRole = async () => {
-    const role = await AsyncStorage.getItem("role");
-    const currentRoute = router.pathname;
 
-    if (currentRoute === "/settings") {
-      if (role === "admin") {
+const goBackByRole = async () => {
+    try {
+      const parsed =
+        (await AsyncStorage.getItem("user")) ||
+        (await AsyncStorage.getItem("prof")) ||
+        (await AsyncStorage.getItem("admin")) ||
+        null;
+
+      const user = parsed ? JSON.parse(parsed) : null;
+
+      if (user?.role === "admin") {
         router.replace("/admin");
-      } else if (role === "prof") {
+      } else if (user?.role === "prof") {
         router.replace("/prof");
-      } else if (role === "student" || role === null) {
+      } else {
         router.replace("/(tabs)");
       }
+    } catch (error) {
+      console.error("Erreur lors de la récupération du rôle :", error);
+      router.replace("/(tabs)");
     }
   };
-
-  goBackByRole();
-}, []);
-
-
-  
 
   const handleToggleDarkMode = () => {
     toggleDarkMode();
@@ -96,7 +93,7 @@ export default function Settings() {
   return (
     <View style={[styles.container, currentTheme.container]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => goBackByRole() } style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="#FFD700" />
         </TouchableOpacity>
         
@@ -104,9 +101,7 @@ export default function Settings() {
           {language === "fr" ? "Réglages" : language === "es" ? "Configuración" : language === "ar" ? "الإعدادات" : "Settings"}
         </Text>
          
-        <TouchableOpacity onPress={() => setShowNotifications(true)} style={styles.iconBtn}>
-          <Icon name="notifications-outline" size={30} color={darkMode ? "#FFD700" : "#1A3F6F"} />
-        </TouchableOpacity>
+        
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -142,124 +137,10 @@ export default function Settings() {
           </View>
         </View>
 
-        {/* Compte */}
-        <View style={[styles.card, currentTheme.card]}>
-          <Text style={[styles.cardTitle, currentTheme.text]}>
-            {language === "fr" ? "Compte" : language === "es" ? "Cuenta" : language === "ar" ? "الحساب" : "Account"}
-          </Text>
-          <TouchableOpacity style={[styles.button, currentTheme.button]} onPress={() => setShowChangePassword(true)}>
-            <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "Changer mot de passe" : language === "es" ? "Cambiar contraseña" : language === "ar" ? "تغيير كلمة المرور" : "Change password"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Aide & Support */}
-        <View style={[styles.card, currentTheme.card]}>
-          <Text style={[styles.cardTitle, currentTheme.text]}>
-            {language === "fr" ? "Aide & Support" : language === "es" ? "Ayuda y Soporte" : language === "ar" ? "المساعدة والدعم" : "Help & Support"}
-          </Text>
-          <TouchableOpacity
-            style={[styles.button, currentTheme.button]}
-            onPress={() =>
-              Alert.alert(language === "fr" ? "FAQ" : language === "es" ? "FAQ" : language === "ar" ? "الأسئلة المتكررة" : "FAQ", 
-                          language === "fr" ? "Ici la FAQ dédiée à la scolarité." : language === "es" ? "Aquí está la FAQ de la escuela." : language === "ar" ? "هنا الأسئلة المتكررة" : "School FAQ here.")
-            }
-          >
-            <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "FAQ dédiée à la scolarité" : language === "es" ? "FAQ de la escuela" : language === "ar" ? "الأسئلة المتكررة" : "School FAQ"}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, currentTheme.button]}
-            onPress={() =>
-              Alert.alert(language === "fr" ? "Contact" : language === "es" ? "Contacto" : language === "ar" ? "اتصال" : "Contact", 
-                          language === "fr" ? "Contact professeurs / administration" : language === "es" ? "Contacto con profesores / administración" : language === "ar" ? "اتصال مع المعلمين / الإدارة" : "Contact teachers / administration")
-            }
-          >
-            <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "Contact professeurs / administration" : language === "es" ? "Contacto con profesores / administración" : language === "ar" ? "اتصال مع المعلمين / الإدارة" : "Contact teachers / administration"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Infos légales */}
-        <View style={[styles.card, currentTheme.card]}>
-          <Text style={[styles.cardTitle, currentTheme.text]}>
-            {language === "fr" ? "Informations légales" : language === "es" ? "Información legal" : language === "ar" ? "المعلومات القانونية" : "Legal Information"}
-          </Text>
-          <TouchableOpacity
-            style={[styles.button, currentTheme.button]}
-            onPress={() => Alert.alert("CGU", language === "fr" ? "Conditions générales d'utilisation" : language === "es" ? "Términos y condiciones" : language === "ar" ? "شروط الاستخدام" : "Terms and conditions")}
-          >
-            <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              CGU
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, currentTheme.button]}
-            onPress={() => Alert.alert("Politique", language === "fr" ? "Politique de confidentialité" : language === "es" ? "Política de privacidad" : language === "ar" ? "سياسة الخصوصية" : "Privacy Policy")}
-          >
-            <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "Politique de confidentialité" : language === "es" ? "Política de privacidad" : language === "ar" ? "سياسة الخصوصية" : "Privacy Policy"}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, currentTheme.button]}
-            onPress={() => Alert.alert("Règlement", language === "fr" ? "Règlement intérieur scolaire" : language === "es" ? "Reglamento escolar" : language === "ar" ? "القوانين المدرسية" : "School rules")}
-          >
-            <Text style={[styles.buttonText, currentTheme.buttonText]}>
-              {language === "fr" ? "Règlement intérieur scolaire" : language === "es" ? "Reglamento escolar" : language === "ar" ? "القوانين المدرسية" : "School rules"}
-            </Text>
-          </TouchableOpacity>
-          <View style={styles.versionContainer}>
-            <Text style={[styles.versionText, currentTheme.text]}>
-              {language === "fr" ? "Version de l'application : 1.0.0" : language === "es" ? "Versión de la aplicación: 1.0.0" : language === "ar" ? "إصدار التطبيق: 1.0.0" : "App version: 1.0.0"}
-            </Text>
-          </View>
-        </View>
+ 
       </ScrollView>
 
-      {/* Modal Notifications */}
-      <Modal
-        visible={showNotifications}
-        animationType="slide"
-        onRequestClose={() => setShowNotifications(false)}
-      >
-        <View style={[styles.modalContainer, currentTheme.container]}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, currentTheme.text]}>
-              {language === "fr" ? "Notifications" : "Notifications"}
-            </Text>
-            <TouchableOpacity onPress={() => setShowNotifications(false)}>
-              <Icon
-                name="close"
-                size={28}
-                color={darkMode ? "#FFD700" : "#1A3F6F"}
-              />
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            data={dummyNotifications}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.notificationItem}>
-                <Text style={[styles.notificationTitle, currentTheme.text]}>
-                  {item.title}
-                </Text>
-                <Text style={[styles.notificationDate, currentTheme.text]}>
-                  {item.date}
-                </Text>
-              </View>
-            )}
-            ListEmptyComponent={
-              <Text style={[styles.emptyText, currentTheme.text]}>
-                {language === "fr" ? "Aucune notification" : "No notifications"}
-              </Text>
-            }
-          />
-        </View>
-      </Modal>
+      
 
       {/* Modal Changer mot de passe */}
       <Modal

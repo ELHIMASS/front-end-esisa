@@ -46,12 +46,9 @@ const translations = {
     profil: "👤 Profile",
     formations: "🎓 Courses",
     messagerie: "💬 Messaging",
-    corpsEnseignant: "👨‍🏫 Faculty",
-    programmes: "📚 Programs",
     laboratoires: "🔬 Labs",
     international: "🌐 International",
     calendrier: "📅 Calendar",
-    campus: "🏢 Campus",
     einstein: "👴 Einstein",
     settings: "⚙️ Settings",
     deconnexion: "🔓 Logout",
@@ -293,7 +290,7 @@ function ESISAHomePageInner() {
         { label: t.international, route: "/other/international" },
         { label: t.calendrier, route: "/other/calendrier" },
         { label: t.einstein, route: "/chat/chatgpt" },
-        { label: t.settings, route: "/Settings/settings" },
+        { label: t.settings, route: "/Settings" },
         { label: t.espaceEtudiant, route: "/login" },
       ];
 
