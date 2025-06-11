@@ -27,7 +27,7 @@ const chatGptRoute = require('./routes/chatgpt');
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
+app.use(express.json());
 
 
 
@@ -64,21 +64,35 @@ const connectDB = async () => {
   }
 };
 connectDB();
-
-// Routes backend
 app.get("/", (req, res) => res.send("🚀 API en ligne !"));
 
+
+// --- Routes pour les étudiants ---
 app.use("/api/students", require("./routes/studentRoutes"));
-app.use("/api/login", require("./routes/loginRoute"));
 app.use("/api/add", require("./routes/addStudent"));
 app.use("/api/update", require("./routes/modifieStudent"));
-app.use("/api", require("./routes/emailRoute"));
+// delete student
+
+// --- Routes pour les professeurs ---
+app.use('/api/prof', require('./routes/profRoute'));
+// modifier
 app.use("/api/addProf", require("./routes/addProf"));
+// suprimer
+
+// --- Routes pour les calendriers ---
+app.use("/api/calendrier", require("./routes/clandrierRoutes"));
+
+
+
+
+// ---  ---
+
+app.use("/api", require("./routes/emailRoute"));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/channels', require('./routes/channels'));
 app.use('/api/chat', chatGptRoute);
 app.use('/api/forgotpassword', require('./routes/forgotpassword'));
-app.use('/api/prof', require('./routes/profRoute'));
+app.use("/api/login", require("./routes/loginRoute"));
 
 
 

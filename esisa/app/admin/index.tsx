@@ -213,9 +213,10 @@ export default function AdminHomePage() {
 
                         {[
                             { label: `🏠 ${t.home}`, section: "home", icon: "home", route: "/admin" },
-                            { label: `👥 ${t.studentManagement}`, section: "students", icon: "people", route: "/admin/gestionEtudiant" },
+                            { label: `👥 ${t.studentManagement}`, section: "students", icon: "people", route: "/admin/gestonEtudiant" },
                             { label: `👨‍🏫 ${t.professorManagement}`, section: "profs", icon: "school", route: "/admin/gestionProf" },
-                            { label: `⚙️ ${t.settings}`, route: "/Settings" },
+                            { label: `📅 Calendrier`, section: "calendar", icon: "event", route: "/other/calendrier" },
+                            { label: `⚙️ ${t.settings}`, section: "settings", icon: "settings", route: "/Settings" }
                         ].map((item, index) => (
                             <TouchableOpacity
                                 key={index}

@@ -522,9 +522,11 @@ export default function ProfScreen() {
                         <View style={[styles.menuDivider, {backgroundColor: darkMode ? "#1A3F6F" : "#E0E0E0"}]} />
 
                         {[
-                            { label: `🏠 ${t.home || "Accueil"}`, section: "home", icon: "home", route: "/admin" },
-                            { label: `👥 ${t.studentManagement || "Gestion des étudiants"}`, section: "students", icon: "people", route: "/admin/gestionEtudiant" },
-                            { label: `👨‍🏫 ${t.professorManagement || "Gestion des professeurs"}`, section: "profs", icon: "school", route: "/admin/gestionProf" },
+                            { label: `🏠 ${t.home}`, section: "home", icon: "home", route: "/admin" },
+                            { label: `👥 ${t.studentManagement}`, section: "students", icon: "people", route: "/admin/gestonEtudiant" },
+                            { label: `👨‍🏫 ${t.professorManagement}`, section: "profs", icon: "school", route: "/admin/gestionProf" },
+                            { label: `📅 Calendrier`, section: "calendar", icon: "event", route: "/other/calendrier" },
+                            { label: `⚙️ ${t.settings}`, section: "settings", icon: "settings", route: "/Settings" }
                         ].map((item, index) => (
                             <TouchableOpacity
                                 key={index}
