@@ -41,6 +41,8 @@ export default function ProfScreen() {
     const [isAddModalVisible, setAddModalVisible] = useState(false);
     const [isEditModalVisible, setEditModalVisible] = useState(false);
     const [selectedProf, setSelectedProf] = useState(null);
+    const [profToDelete, setProfToDelete] = useState(null);
+    const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
     const [matiere, setMatiere] = useState('');
     const [matieresList, setMatieresList] = useState([]);
     const [newProf, setNewProf] = useState({
@@ -246,44 +248,50 @@ export default function ProfScreen() {
     };
 
     const handleEditProf = async () => {
-        if (!selectedProf || !selectedProf.name || !selectedProf.email || !selectedProf.password || 
+        if (!selectedProf || !selectedProf.name || !selectedProf.email || 
             !selectedProf.age || !selectedProf.phone || selectedProf.matiere.length === 0) {
             Alert.alert(t.error || "Erreur", t.allFieldsRequired || "Tous les champs sont obligatoires");
             return;
         }
-    
+
         try {
-            const response = await fetch(`${config.API_URL}/api/updateProf`, {
+            const response = await fetch(`${config.API_URL}/api/updateProf/${selectedProf._id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
+                    name: selectedProf.name,
                     email: selectedProf.email,
-                    ...selectedProf
+                    password: selectedProf.password || undefined, // Ne pas envoyer si vide
+                    age: selectedProf.age,
+                    phone: selectedProf.phone,
+                    matiere: selectedProf.matiere
                 })
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Erreur lors de la modification");
             }
-    
-            const updatedProfessors = professors.map(prof =>
-                prof._id === selectedProf._id || prof.email === selectedProf.email 
-                    ? selectedProf 
-                    : prof
+
+            const result = await response.json();
+
+            // Mettre à jour la liste locale
+            const updatedProfessors = professors.map(prof => 
+                prof._id === selectedProf._id ? result.professor : prof
             );
             
             setProfessors(updatedProfessors);
             await AsyncStorage.setItem("professors", JSON.stringify(updatedProfessors));
-    
+
             setEditModalVisible(false);
             setSelectedProf(null);
             setMatieresList([]);
+            
             await playSound(require("../../assets/audio/done.mp3"));
             Alert.alert(t.success || "Succès", t.professorUpdatedSuccess || "Professeur modifié avec succès");
-    
+
         } catch (error) {
             console.error("Erreur lors de la modification:", error);
             await playSound(require("../../assets/audio/error.mp3"));
@@ -291,15 +299,17 @@ export default function ProfScreen() {
         }
     };
 
-    const handleDeleteProf = async (id) => {
+    const handleDeleteProf = async () => {
+        if (!profToDelete) return;
+
         try {
-            const updatedProfessors = professors.filter(prof => {
-                return prof._id !== id;
-            });
+            // Optimistic update - supprimer de l'interface d'abord
+            const updatedProfessors = professors.filter(prof => prof._id !== profToDelete._id);
             setProfessors(updatedProfessors);
             await AsyncStorage.setItem("professors", JSON.stringify(updatedProfessors));
 
-            const response = await fetch(`${config.API_URL}/api/prof/${id}`, {
+            // Ensuite faire l'appel API
+            const response = await fetch(`${config.API_URL}/api/deleteProf/${profToDelete._id}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json"
@@ -307,24 +317,48 @@ export default function ProfScreen() {
             });
 
             if (!response.ok) {
+                // Si l'API échoue, restaurer la liste précédente
+                setProfessors(professors);
+                await AsyncStorage.setItem("professors", JSON.stringify(professors));
+                
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Erreur lors de la suppression");
             }
 
             await playSound(require("../../assets/audio/supprimer.mp3"));
-            Alert.alert(t.success || "Succès", t.professorDeletedSuccess || "Professeur supprimé avec succès");
+            Alert.alert(
+                t.success || "Succès", 
+                `Le professeur "${profToDelete.name}" a été supprimé avec succès`
+            );
 
         } catch (error) {
             console.error("Erreur lors de la suppression :", error);
             await playSound(require("../../assets/audio/error.mp3"));
-            Alert.alert(t.error || "Erreur", error.message || "Impossible de supprimer le professeur");
+            Alert.alert(
+                t.error || "Erreur", 
+                `Impossible de supprimer le professeur "${profToDelete.name}": ${error.message}`
+            );
+        } finally {
+            setDeleteModalVisible(false);
+            setProfToDelete(null);
         }
     };
 
     const openEditModal = (prof) => {
-        setSelectedProf({...prof});
-        setMatieresList(prof.matiere || []);
+        const profCopy = {
+            ...prof,
+            matiere: [...(prof.matiere || [])]
+        };
+        
+        setSelectedProf(profCopy);
+        setMatieresList([...(prof.matiere || [])]);
+        setMatiere('');
         setEditModalVisible(true);
+    };
+
+    const openDeleteModal = (prof) => {
+        setProfToDelete(prof);
+        setDeleteModalVisible(true);
     };
 
     if (loading) {
@@ -383,7 +417,7 @@ export default function ProfScreen() {
                     style={[styles.input, dynamicStyles.input]}
                     value={data.password}
                     onChangeText={(text) => handleChange('password', text, data, setData)}
-                    placeholder={t.enterPassword || "Entrez le mot de passe"}
+                    placeholder={isEdit ? t.enterNewPasswordOptional || "Nouveau mot de passe (optionnel)" : t.enterPassword || "Entrez le mot de passe"}
                     placeholderTextColor={darkMode ? "#6D8EB4" : "#999"}
                     secureTextEntry
                 />
@@ -641,6 +675,62 @@ export default function ProfScreen() {
                     </View>
                 </View>
             </Modal>
+            
+            {/* Delete Confirmation Modal */}
+            <Modal
+                visible={isDeleteModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setDeleteModalVisible(false)}
+            >
+                <View style={styles.deleteModalBackground}>
+                    <View style={[styles.deleteModalContainer, dynamicStyles.modal]}>
+                        <View style={styles.deleteModalHeader}>
+                            <Icon name="warning" size={40} color="#FF5555" />
+                        </View>
+                        
+                        <Text style={[styles.deleteModalTitle, dynamicStyles.text]}>
+                            Confirmer la suppression
+                        </Text>
+                        
+                        <Text style={[styles.deleteModalMessage, dynamicStyles.text]}>
+                            Êtes-vous sûr de vouloir supprimer le professeur{' '}
+                            <Text style={styles.deleteModalProfName}>
+                                "{profToDelete?.name}"
+                            </Text>
+                            ?
+                        </Text>
+                        
+                        <Text style={[styles.deleteModalWarning, {color: "#FF8A80"}]}>
+                            Cette action est irréversible.
+                        </Text>
+
+                        <View style={styles.deleteModalActions}>
+                            <TouchableOpacity
+                                style={[styles.deleteModalButton, styles.cancelButton]}
+                                onPress={async () => {
+                                    await playSound(require("../../assets/audio/tap.mp3"));
+                                    setDeleteModalVisible(false);
+                                    setProfToDelete(null);
+                                }}
+                            >
+                                <Text style={styles.cancelButtonText}>Annuler</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity
+                                style={[styles.deleteModalButton, styles.confirmButton]}
+                                onPress={async () => {
+                                    await playSound(require("../../assets/audio/supprimer.mp3"));
+                                    handleDeleteProf();
+                                }}
+                            >
+                                <Text style={styles.confirmButtonText}>Supprimer</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+            
 
             {/* Main Content */}
             <ScrollView contentContainerStyle={[styles.scroll, dynamicStyles.container]} showsVerticalScrollIndicator={false}>
@@ -742,7 +832,7 @@ export default function ProfScreen() {
                         </TouchableOpacity>
 
                         {professors.length === 0 ? (
-                                                        <View style={styles.emptyContainer}>
+                            <View style={styles.emptyContainer}>
                                 <Icon name="school" size={40} color="#6D8EB4" />
                                 <Text style={styles.emptyText}>Aucun professeur trouvé</Text>
                                 <TouchableOpacity style={styles.addEmptyButton} onPress={() => {
@@ -790,19 +880,9 @@ export default function ProfScreen() {
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={styles.deleteButton}
-                                                onPress={() => {
-                                                    Alert.alert(
-                                                        "Confirmation",
-                                                        `Voulez-vous vraiment supprimer ${item.name} ?`,
-                                                        [
-                                                            { text: "Annuler", style: "cancel" },
-                                                            {
-                                                                text: "Confirmer",
-                                                                onPress: () => handleDeleteProf(item._id),
-                                                                style: "destructive"
-                                                            }
-                                                        ]
-                                                    );
+                                                onPress={async () => {
+                                                    await playSound(require("../../assets/audio/tap.mp3"));
+                                                    openDeleteModal(item);
                                                 }}
                                             >
                                                 <Icon name="delete" size={20} color="#FF5555" />
@@ -1514,6 +1594,101 @@ const styles = StyleSheet.create({
         backgroundColor: "#FFFFFF",
         borderBottomColor: "#E0E0E0",
     },
+    
+    deleteModalBackground: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    deleteModalContainer: {
+        backgroundColor: "#1A3F6F",
+        borderRadius: 20,
+        padding: 25,
+        width: "85%",
+        maxWidth: 400,
+        alignItems: "center",
+        elevation: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+        borderWidth: 2,
+        borderColor: "#FF5555",
+    },
+    deleteModalHeader: {
+        alignItems: "center",
+        marginBottom: 20,
+    },
+    deleteModalTitle: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#FFF",
+        marginBottom: 10,
+        textAlign: "center",
+    },
+    deleteModalMessage: {
+        fontSize: 16,
+        color: "#B4C6E2",
+        textAlign: "center",
+        marginBottom: 15,
+        lineHeight: 22,
+    },
+    deleteModalProfName: {
+        fontWeight: "bold",
+        color: "#FFD700",
+    },
+    deleteModalWarning: {
+        fontSize: 14,
+        color: "#FF8A80",
+        textAlign: "center",
+        marginBottom: 25,
+        fontStyle: "italic",
+    },
+    deleteModalActions: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        width: "100%",
+        paddingHorizontal: 10,
+    },
+    deleteModalButton: {
+        flex: 1,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        marginHorizontal: 5,
+        alignItems: "center",
+        justifyContent: "center",
+    },
 
+    cancelButton: {
+        backgroundColor: "#6D8EB4",
+        borderWidth: 1,
+        borderColor: "#B4C6E2",
+    },
+    confirmButton: {
+        backgroundColor: "#FF5555",
+        elevation: 3,
+        shadowColor: "#FF5555",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+    },
+    cancelButtonText: {
+        color: "#FFF",
+        fontSize: 16,
+        fontWeight: "600",
+    },
+    confirmButtonText: {
+        color: "#FFF",
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    selectedNavButtonText: {
+        color: "#FFD700",
+        fontWeight: "bold",
+        fontSize: 12,
+        marginTop: 5,
+    },
    
 });

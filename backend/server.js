@@ -71,22 +71,19 @@ app.get("/", (req, res) => res.send("🚀 API en ligne !"));
 app.use("/api/students", require("./routes/studentRoutes"));
 app.use("/api/add", require("./routes/addStudent"));
 app.use("/api/update", require("./routes/modifieStudent"));
-// delete student
+app.use("/api/delete", require("./routes/deleteStudent"));
 
 // --- Routes pour les professeurs ---
 app.use('/api/prof', require('./routes/profRoute'));
-// modifier
 app.use("/api/addProf", require("./routes/addProf"));
-// suprimer
+app.use("/api/updateProf", require("./routes/modifieProf"));
+app.use("/api/deleteProf", require("./routes/deleteProf"));
+
 
 // --- Routes pour les calendriers ---
 app.use("/api/calendrier", require("./routes/clandrierRoutes"));
 
-
-
-
 // ---  ---
-
 app.use("/api", require("./routes/emailRoute"));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/channels', require('./routes/channels'));

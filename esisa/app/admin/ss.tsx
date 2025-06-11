@@ -58,9 +58,9 @@ export default function GestionEtudiant() {
     const [students, setStudents] = useState<Student[]>([]);
     const [isAddModalVisible, setAddModalVisible] = useState(false);
     const [isEditModalVisible, setEditModalVisible] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-    const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+    const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
    
     const [newStudent, setNewStudent] = useState<Student>({
         id: "",
@@ -296,7 +296,12 @@ export default function GestionEtudiant() {
         }
     };
 
-   const handleDeleteStudent = async () => {
+    const confirmDeleteStudent = (student: Student) => {
+        setStudentToDelete(student);
+        setDeleteModalVisible(true);
+    };
+
+    const handleDeleteStudent = async () => {
         if (!studentToDelete) return;
 
         try {
@@ -314,7 +319,12 @@ export default function GestionEtudiant() {
                 throw new Error(errorData.message || t.deleteError || "Erreur lors de la suppression");
             }
 
-            loadStudentsFromServer();
+            // Suppression locale seulement après succès du serveur
+            const updatedStudents = students.filter(student => {
+                return student.id !== studentToDelete.id && student._id !== studentToDelete._id;
+            });
+            setStudents(updatedStudents);
+            await AsyncStorage.setItem("students", JSON.stringify(updatedStudents));
 
             await playSound(require("../../assets/audio/supprimer.mp3"));
             Alert.alert(t.success || "Succès", t.studentDeletedSuccess || "Étudiant supprimé avec succès");
@@ -328,7 +338,6 @@ export default function GestionEtudiant() {
             setStudentToDelete(null);
         }
     };
-
     const openEditModal = (student: Student) => {
         setSelectedStudent({...student});
         setEditModalVisible(true);
@@ -651,45 +660,45 @@ export default function GestionEtudiant() {
             </Modal>
 
             {/* Delete Confirmation Modal */}
-                        <Modal
-                            visible={isDeleteModalVisible}
-                            transparent={true}
-                            animationType="fade"
-                            onRequestClose={() => setDeleteModalVisible(false)}
-                        >
-                            <View style={styles.modalBackground}>
-                                <View style={[styles.confirmationModal, dynamicStyles.modal]}>
-                                    <Text style={[styles.confirmationTitle, dynamicStyles.text]}>
-                                        {t.confirmDelete || "Confirmer la suppression"}
-                                    </Text>
-                                    <Text style={[styles.confirmationMessage, dynamicStyles.text]}>
-                                        {t.deleteConfirm || "Voulez-vous vraiment supprimer l'étudiant"} {studentToDelete?.name} ?
-                                    </Text>
-                                    <View style={styles.confirmationButtons}>
-                                        <TouchableOpacity
-                                            style={[styles.confirmationButton, styles.cancelButton]}
-                                            onPress={() => {
-                                                playSound(require("../../assets/audio/error.mp3"));
-                                                setDeleteModalVisible(false);
-                                                setStudentToDelete(null);
-                                            }}
-                                        >
-                                            <Text style={styles.cancelButtonText}>
-                                                {t.cancel || "Annuler"}
-                                            </Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={[styles.confirmationButton, styles.deleteButton]}
-                                            onPress={handleDeleteStudent}
-                                        >
-                                            <Text style={styles.deleteButtonText}>
-                                                {t.confirm || "Supprimer"}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            </View>
-                        </Modal>
+            <Modal
+                visible={isDeleteModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setDeleteModalVisible(false)}
+            >
+                <View style={styles.modalBackground}>
+                    <View style={[styles.confirmationModal, dynamicStyles.modal]}>
+                        <Text style={[styles.confirmationTitle, dynamicStyles.text]}>
+                            {t.confirmDelete || "Confirmer la suppression"}
+                        </Text>
+                        <Text style={[styles.confirmationMessage, dynamicStyles.text]}>
+                            {t.deleteConfirm || "Voulez-vous vraiment supprimer l'étudiant"} {studentToDelete?.name} ?
+                        </Text>
+                        <View style={styles.confirmationButtons}>
+                            <TouchableOpacity
+                                style={[styles.confirmationButton, styles.cancelButton]}
+                                onPress={() => {
+                                    playSound(require("../../assets/audio/error.mp3"));
+                                    setDeleteModalVisible(false);
+                                    setStudentToDelete(null);
+                                }}
+                            >
+                                <Text style={styles.cancelButtonText}>
+                                    {t.cancel || "Annuler"}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.confirmationButton, styles.deleteButton]}
+                                onPress={handleDeleteStudent}
+                            >
+                                <Text style={styles.deleteButtonText}>
+                                    {t.confirm || "Supprimer"}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
 
             {/* Main Content */}
             <ScrollView contentContainerStyle={[styles.scroll, dynamicStyles.container]} showsVerticalScrollIndicator={false}>
@@ -854,13 +863,10 @@ export default function GestionEtudiant() {
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={styles.deleteButton}
-                                                onPress={() => {
-                                                    setStudentToDelete(item);
-                                                    setDeleteModalVisible(true);
-                                                }}
+                                                onPress={() => confirmDeleteStudent(item)}
                                             >
                                                 <Icon name="delete" size={20} color="#FF5555" />
-                                        </TouchableOpacity>
+                                            </TouchableOpacity>
                                         </View>
                                     </View>
                                 )}
@@ -916,8 +922,6 @@ export default function GestionEtudiant() {
     );
 }
 
-
-   
 const styles = StyleSheet.create({
     center: {
         flex: 1,
